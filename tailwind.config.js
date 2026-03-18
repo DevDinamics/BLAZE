@@ -1,13 +1,14 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{html,ts}"],
+  content: [
+    "./src/**/*.{html,ts,scss,css}", // 👈 Agregamos scss y css por si acaso
+    "./src/index.html",
+  ],
   theme: {
     extend: {
       fontFamily: {
-        // 'sans' será Poppins (para texto normal)
         sans: ['Poppins', 'sans-serif'], 
-        // Creamos 'heading' para Montserrat (para títulos agresivos)
         heading: ['Montserrat', 'sans-serif'],
-
         rajdhani: ['Rajdhani', 'sans-serif'],
       },
     },
