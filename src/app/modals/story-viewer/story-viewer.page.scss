@@ -1,0 +1,24 @@
+.animate-progress {
+    animation-name: progress;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+  
+  @keyframes progress {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+  
+  .animate-float-up {
+    animation: floatUp 1s ease-out forwards;
+  }
+  
+  @keyframes floatUp {
+    0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+    20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
+    100% { transform: translate(-50%, -150px) scale(1); opacity: 0; }
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top); /* Respeta el notch del iPhone */
+  }

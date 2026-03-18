@@ -1,15 +1,13 @@
 /*
  * App Global CSS
  * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
  */
 
 /* Core CSS required for Ionic components to work properly */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import "@ionic/angular/css/core.css";
 
 /* Basic CSS for apps built with Ionic */
@@ -25,13 +23,112 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
+/* FONT */
 /**
  * Ionic Dark Mode
  * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
  */
-
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+
+/* Ocultar flechas en inputs de número (Chrome, Safari, Edge, Opera) */
+input.remove-arrow::-webkit-outer-spin-button,
+input.remove-arrow::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ocultar flechas en Firefox */
+input.remove-arrow[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Estilo para modales tipo hoja */
+ion-modal.sheet-modal-pro {
+  --border-radius: 20px 20px 0 0;
+  --backdrop-opacity: 0.6;
+}
+
+/* ==========================================================
+ * 📱 ÁREAS SEGURAS (SAFE AREAS) PARA IOS (NOTCH / ISLA DINÁMICA)
+ * ========================================================== */
+
+/* 1. Para el contenido normal de Ionic */
+ion-content {
+  --padding-top: env(safe-area-inset-top);
+  --padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 2. Clases personalizadas de Tailwind para Headers y Menús flotantes */
+@layer utilities {
+  .pt-safe {
+    /* Usamos max() para dar un margen mínimo en pantallas cuadradas o sin notch */
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+
+  .estilo {
+    /* Ejemplo de estilo personalizado para un botón */
+    background-color: #ffa500; /* Color naranja */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px; /* Botón redondeado */
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease;
+  }
+
+
+  /* =======================================
+   🍞 TOAST PREMIUM ESTILO APPLE (PÍLDORA)
+   ======================================= */
+ion-toast.apple-pill-toast {
+  --background: #111111; 
+  --color: #ffffff; 
+  --border-radius: 100px; 
+  --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  margin-top: calc(env(safe-area-inset-top) + 12px);
+
+  &::part(container) {
+    /* LA OPCIÓN NUCLEAR: Altura fija inamovible */
+    height: 42px !important; 
+    min-height: 42px !important;
+    width: max-content !important;
+    max-width: 90vw !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    
+    /* Alineamos todo al centro perfectamente */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  &::part(message) {
+    /* Matamos cualquier relleno arriba y abajo que lo infle */
+    padding: 0 20px !important; 
+    margin: 0 !important;
+    line-height: 1 !important; /* Evita que el texto empuje la caja */
+    
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  &::part(icon) {
+    font-size: 18px !important;
+    padding-start: 16px !important;
+    padding-end: 0 !important;
+  }
+}
+
+/* Colorear SOLO el ícono según el tipo de mensaje */
+ion-toast.apple-pill-toast.toast-success::part(icon) { color: #10b981 !important; } /* Verde */
+ion-toast.apple-pill-toast.toast-danger::part(icon) { color: #ef4444 !important; } /* Rojo */
+ion-toast.apple-pill-toast.toast-warning::part(icon) { color: #ffa500 !important; } /* Naranja Blaze */
+  
+}

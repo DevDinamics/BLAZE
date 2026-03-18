@@ -1,0 +1,103 @@
+<ion-content [fullscreen]="true" style="--background: #ffffff;">
+  
+  <div class="min-h-full bg-white flex flex-col font-sans text-gray-900">
+    
+    <div class="flex-1 flex flex-col justify-center px-8 pt-12 pb-8">
+      
+      <div class="text-center mb-10"> 
+        
+        <div class="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 px-4 py-2 rounded-full mb-6 shadow-sm animate-fade-in-up">
+   <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">En asociación con</span>
+   
+   <img src="assets/fitgo-logo.png" alt="Partner Gym" class="h-6 w-auto object-contain brightness(0)">
+</div>
+
+        <div class="mx-auto mb-6 relative group cursor-pointer">
+           <img src="assets/logo_blaze.png" alt="Logo Blaze"
+                class="h-16 w-auto mx-auto object-contain brightness(0) scale-125 hover:scale-150 transition-transform duration-300 animate-fade-in-up">
+        </div>
+
+        <h2 class="text-4xl font-black tracking-tighter text-gray-900 leading-none">
+          BLAZE<span class="text-emerald-500">.</span>
+        </h2>
+        <p class="text-gray-500 text-sm font-medium mt-2">Acceso exclusivo a socios</p>
+      </div>
+
+      <div class="space-y-4">
+        
+        <div class="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm flex items-center gap-4 group focus-within:border-gray-400 transition-all focus-within:bg-[#f9fafb]">
+          <ion-icon name="mail-outline" class="text-gray-400 group-focus-within:text-gray-900 transition-colors text-xl shrink-0"></ion-icon>
+          <input [(ngModel)]="credenciales.email" type="email" 
+                 class="bg-transparent w-full text-gray-900 font-bold text-sm outline-none placeholder-gray-400"
+                 placeholder="Correo electrónico">
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm flex items-center gap-4 group focus-within:border-gray-400 transition-all focus-within:bg-[#f9fafb] relative mt-2">
+          <ion-icon name="lock-closed-outline" class="text-gray-400 group-focus-within:text-gray-900 transition-colors text-xl shrink-0"></ion-icon>
+          <input [(ngModel)]="credenciales.password" [type]="mostrarPassword ? 'text' : 'password'"
+                 class="bg-transparent w-full text-gray-900 font-bold text-sm outline-none placeholder-gray-400 pr-10"
+                 placeholder="Contraseña">
+          
+          <div class="absolute inset-y-0 right-0 flex items-center pr-5 cursor-pointer z-10" (click)="mostrarPassword = !mostrarPassword">
+            <ion-icon [name]="mostrarPassword ? 'eye-off-outline' : 'eye-outline'" class="text-gray-400 hover:text-gray-900 transition-colors text-xl"></ion-icon>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end text-sm pt-1">
+          <button class="font-bold text-gray-400 hover:text-gray-900 transition-colors text-xs active:scale-95">
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+
+        <button 
+          (click)="login()" 
+          [disabled]="cargando || cargandoGoogle"
+          class="flex w-full mt-4 justify-center items-center gap-2 rounded-full bg-gray-900 text-white font-bold py-5 text-sm active:scale-[0.98] transition-all shadow-md shadow-gray-200 disabled:opacity-30 hover:bg-black">
+          
+          <ng-container *ngIf="!cargando">
+            Ingresar <ion-icon name="arrow-forward-outline" class="text-lg"></ion-icon>
+          </ng-container>
+
+          <ion-spinner *ngIf="cargando" name="crescent" color="light"></ion-spinner>
+        </button>
+
+      </div>
+
+      <div class="relative mt-10 mb-8">
+        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="w-full border-t border-gray-100"></div>
+        </div>
+        <div class="relative flex justify-center text-[10px] uppercase tracking-wider font-bold">
+          <span class="bg-white px-4 text-gray-400">O ingresa con</span>
+        </div>
+      </div>
+
+      <div class="flex justify-center gap-4">
+        
+        <button 
+          (click)="loginGoogle()" 
+          [disabled]="cargandoGoogle || cargando"
+          class="h-14 w-14 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100">
+          <ion-spinner *ngIf="cargandoGoogle" name="crescent" color="dark" class="h-5 w-5"></ion-spinner>
+          <ion-icon *ngIf="!cargandoGoogle" name="logo-google" class="text-xl"></ion-icon>
+        </button>
+
+        <button class="h-14 w-14 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-all active:scale-95">
+          <ion-icon name="logo-apple" class="text-2xl mb-0.5"></ion-icon>
+        </button>
+        
+      </div>
+
+    </div> 
+    
+    <div class="w-full bg-white p-6 pb-8 border-t border-gray-50 flex justify-center mt-auto">
+      <p class="text-center text-xs text-gray-500 font-medium">
+        ¿Aún no eres miembro?
+        <a routerLink="/registro" class="font-bold text-gray-900 hover:underline cursor-pointer ml-1">
+          Crea tu cuenta aquí
+        </a>
+      </p>
+    </div>
+
+  </div>
+</ion-content>

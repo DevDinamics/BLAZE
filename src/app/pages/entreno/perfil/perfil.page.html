@@ -1,0 +1,304 @@
+<ion-content [fullscreen]="true" style="--background: #ffffff;">
+  
+  <div class="min-h-full bg-white pb-24 font-sans text-gray-900">
+
+    <div class="pt-12 pb-8 flex flex-col items-center">
+      
+      <div class="relative mb-4 z-10">
+        <div class="h-28 w-28 rounded-full bg-gray-50 overflow-hidden shadow-sm border border-gray-200">
+          <img [src]="usuario.avatar" class="h-full w-full object-contain mix-blend-multiply">
+        </div>
+        <button *ngIf="editando" (click)="abrirModalFoto()" class="absolute bottom-0 right-0 h-9 w-9 bg-black text-white rounded-full border-4 border-white shadow-sm flex items-center justify-center cursor-pointer active:scale-90 transition-transform">
+          <ion-icon name="camera-outline" class="text-sm"></ion-icon>
+        </button>
+      </div>
+      
+      <div class="text-center px-4">
+        <h1 class="text-2xl font-black tracking-tight text-black flex items-center justify-center gap-1 mb-1">
+          {{ usuario.nombre }} {{ usuario.apellido }}
+          <ion-icon name="checkmark-circle" class="text-green-500 text-xl"></ion-icon>
+        </h1>
+        
+        <div class="flex items-center justify-center gap-3 mt-3 text-gray-500 text-xs font-medium">
+          <span class="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100"><ion-icon name="happy-outline"></ion-icon> 26 años</span>
+          <span class="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100"><ion-icon name="calendar-outline"></ion-icon> Se unió en {{ usuario.miembroDesde }}</span>
+        </div>
+
+        <button (click)="alternarEdicion()" class="mt-6 bg-black text-white font-bold text-sm px-8 py-3 rounded-full active:scale-95 transition-transform shadow-md hover:bg-gray-800">
+          {{ editando ? 'Guardar Cambios' : 'Editar Perfil' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="flex overflow-x-auto gap-3 px-6 mb-8 pb-2 scrollbar-hide">
+      <button (click)="tabActual = 'personal'" 
+              class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+              [ngClass]="tabActual === 'personal' ? 'bg-black text-white shadow-md' : 'bg-white text-black border border-gray-200 hover:bg-gray-50'">
+        Personal
+      </button>
+      <button (click)="tabActual = 'preferencias'" 
+              class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+              [ngClass]="tabActual === 'preferencias' ? 'bg-black text-white shadow-md' : 'bg-white text-black border border-gray-200 hover:bg-gray-50'">
+        Preferencias
+      </button>
+      <button (click)="tabActual = 'actividad'" 
+              class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+              [ngClass]="tabActual === 'actividad' ? 'bg-black text-white shadow-md' : 'bg-white text-black border border-gray-200 hover:bg-gray-50'">
+        Actividad
+      </button>
+    </div>
+
+    <div *ngIf="tabActual === 'personal'" class="px-6 animate-fade-in">
+      
+      <div class="mb-10">
+        <h3 class="font-black text-xl tracking-tight text-black mb-1">Información de contacto</h3>
+        <p class="text-gray-500 text-sm font-medium mb-6">Datos de contacto y comunicación</p>
+
+        <div class="space-y-6">
+          <div class="border-b border-gray-100 pb-5">
+            <p class="text-sm font-bold text-black mb-1">Biografía</p>
+            <p class="text-gray-400 text-sm">No has agregado una biografía aún</p>
+          </div>
+
+          <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
+            <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+              <ion-icon name="mail-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-bold text-black">Correo electrónico</p>
+              <p class="text-gray-500 text-sm truncate">diegoarmando6090@gmail.com</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
+            <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+              <ion-icon name="gift-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-bold text-black">Fecha de nacimiento</p>
+              <p class="text-gray-500 text-sm">8 de octubre de 1998</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
+            <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+              <ion-icon name="person-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-bold text-black">Nombre</p>
+              <p *ngIf="!editando" class="text-gray-500 text-sm">{{ usuario.nombre }} {{ usuario.apellido }}</p>
+              <div *ngIf="editando" class="flex gap-2 mt-2">
+                 <input [(ngModel)]="usuario.nombre" placeholder="Nombre" class="bg-gray-50 border border-gray-200 w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+                 <input [(ngModel)]="usuario.apellido" placeholder="Apellido" class="bg-gray-50 border border-gray-200 w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="font-black text-xl tracking-tight text-black mb-6">Información Física</h3>
+        
+        <div class="bg-gray-50 rounded-3xl border border-gray-200 shadow-sm p-2 mb-8">
+          
+          <div class="flex items-center p-4 border-b border-gray-200/60">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
+              <ion-icon name="scale-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Peso Actual</p>
+              <div *ngIf="!editando">
+                <span class="text-gray-500 text-sm font-medium">{{ usuario.peso }} kg</span>
+              </div>
+              <div *ngIf="editando">
+                <input type="number" [(ngModel)]="usuario.peso" class="bg-white text-black border border-gray-200 w-24 px-3 py-1.5 rounded-lg text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4 border-b border-gray-200/60">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
+              <ion-icon name="body-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Estatura</p>
+              <div *ngIf="!editando">
+                <span class="text-gray-500 text-sm font-medium">{{ usuario.altura }} m</span>
+              </div>
+              <div *ngIf="editando">
+                <input type="number" [(ngModel)]="usuario.altura" class="bg-white text-black border border-gray-200 w-24 px-3 py-1.5 rounded-lg text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 relative shadow-sm border border-gray-100">
+              <ion-icon name="fitness-outline" class="text-gray-600 text-lg"></ion-icon>
+              <div class="absolute top-0 right-0 h-3 w-3 rounded-full border-2 border-white" [ngClass]="imcColor"></div>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Índice de Masa Corporal</p>
+              <p class="text-gray-500 text-sm font-medium">{{ bmi }} <span class="font-bold ml-1" [ngClass]="imcTextColor">({{ imcEstado }})</span></p>
+            </div>
+          </div>
+
+        </div>
+
+        <button (click)="logout()" class="w-full bg-white text-gray-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 hover:text-black">
+           <ion-icon name="log-out-outline" class="text-lg"></ion-icon> Cerrar Sesión
+        </button>
+
+      </div>
+    </div>
+
+    <div *ngIf="tabActual === 'preferencias'" class="px-6 animate-fade-in">
+      <h3 class="font-black text-xl tracking-tight text-black mb-1">Preferencias de perfil</h3>
+      <p class="text-gray-500 text-sm font-medium mb-8">Personaliza tu experiencia de entrenamiento</p>
+
+      <div class="space-y-6">
+        
+        <div class="border-b border-gray-100 pb-5">
+          <p class="text-sm font-bold text-black mb-1">Objetivo actual</p>
+          
+          <div *ngIf="!editando">
+            <span class="inline-block bg-black text-white text-xs font-bold px-4 py-2 rounded-full mt-1">{{ usuario.objetivo }}</span>
+          </div>
+          
+          <div *ngIf="editando" class="mt-2">
+            <select [(ngModel)]="usuario.objetivo" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              <option value="Perder peso">Perder peso</option>
+              <option value="Aumentar músculo">Aumentar músculo</option>
+              <option value="Recomposición">Recomposición (Mantener)</option>
+              <option value="Rendimiento">Mejorar Rendimiento</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="border-b border-gray-100 pb-5">
+          <p class="text-sm font-bold text-black mb-1">Nivel de experiencia</p>
+          
+          <div *ngIf="!editando">
+            <p class="text-gray-500 text-sm font-medium">{{ usuario.experiencia }}</p>
+          </div>
+
+          <div *ngIf="editando" class="mt-2">
+            <select [(ngModel)]="usuario.experiencia" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              <option value="Principiante">Principiante</option>
+              <option value="Intermedio">Intermedio</option>
+              <option value="Avanzado">Avanzado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center border-b border-gray-100 pb-5">
+          <div>
+            <p class="text-sm font-bold text-black mb-1">Notificaciones Push</p>
+            <p class="text-gray-500 text-xs font-medium">Recibe alertas de tus entrenamientos</p>
+          </div>
+          <div class="h-6 w-11 bg-black rounded-full relative cursor-pointer">
+            <div class="h-5 w-5 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10">
+        <h3 class="font-bold text-red-600 text-sm mb-2 uppercase tracking-wide">Zona de Peligro</h3>
+        
+        <div class="bg-red-50 border border-red-100 rounded-3xl p-6 text-center shadow-sm">
+          <p class="text-red-700 text-sm font-black mb-2 tracking-tight">Eliminar cuenta permanentemente</p>
+          <p class="text-red-600/70 text-xs mb-5 font-medium leading-relaxed">Una vez eliminada, no podrás recuperar tu cuenta ni tus datos registrados.</p>
+          <button class="w-full bg-[#d32f2f] text-white font-bold text-sm py-3.5 rounded-xl shadow-md active:scale-95 transition-transform hover:bg-red-800">
+            Eliminar cuenta
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="tabActual === 'actividad'" class="px-6 animate-fade-in">
+      
+      <h3 class="font-black text-xl tracking-tight text-black mb-4">Estadísticas de Racha</h3>
+      
+      <div class="grid grid-cols-2 gap-4 mb-10">
+        <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
+          <div class="h-12 w-12 rounded-full bg-orange-50 flex items-center justify-center mb-3 border border-orange-100">
+             <ion-icon name="flame" class="text-[#f57c00] text-2xl"></ion-icon>
+          </div>
+          <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Racha Actual</p>
+          <p class="font-black text-3xl text-black tracking-tight">{{ usuario.rachaActual }} <span class="text-sm font-bold text-gray-400">días</span></p>
+        </div>
+        
+        <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
+          <div class="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center mb-3 border border-gray-100">
+             <ion-icon name="barbell-outline" class="text-black text-2xl"></ion-icon>
+          </div>
+          <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Entrenos</p>
+          <p class="font-black text-3xl text-black tracking-tight">{{ usuario.totalEntrenos }} <span class="text-sm font-bold text-gray-400">total</span></p>
+        </div>
+      </div>
+
+      <h3 class="font-black text-xl tracking-tight text-black mb-1">Actividad Anual</h3>
+      <p class="text-gray-500 text-sm font-medium mb-4">Resumen de tus entrenamientos</p>
+
+      <div class="bg-gray-50 rounded-3xl border border-gray-200 p-5 overflow-x-auto shadow-sm">
+        <div class="flex gap-1.5 min-w-max pb-2">
+          <div *ngFor="let col of [1,2,3,4,5,6,7,8,9,10,11,12]" class="flex flex-col gap-1.5">
+            <div *ngFor="let cell of [1,2,3,4,5,6,7]" class="h-4 w-4 rounded-[4px] bg-gray-200 border border-gray-300/50"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-4 text-xs font-bold text-gray-400">
+          <span>Menos</span>
+          <div class="flex gap-1.5">
+            <div class="h-3 w-3 rounded-[3px] bg-gray-200"></div>
+            <div class="h-3 w-3 rounded-[3px] bg-[#f57c00]/30"></div>
+            <div class="h-3 w-3 rounded-[3px] bg-[#f57c00]/70"></div>
+            <div class="h-3 w-3 rounded-[3px] bg-[#f57c00]"></div>
+          </div>
+          <span>Más</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>
+
+<ion-modal [isOpen]="mostrarModalAvatares" 
+           (didDismiss)="mostrarModalAvatares = false"
+           [initialBreakpoint]="0.6" 
+           [breakpoints]="[0, 0.6, 0.8]" 
+           handleBehavior="cycle"
+           class="avatar-modal">
+  <ng-template>
+    <ion-content style="--background: #ffffff;">
+      <div class="p-6 pt-8">
+        
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-black text-black tracking-tight">Cambia tu estilo</h2>
+          <p class="text-gray-500 text-sm font-medium mt-1">Selecciona tu nuevo avatar 3D</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-5 px-2 pb-10">
+          
+          <div *ngFor="let avatar of avataresDisponibles" 
+               (click)="seleccionarAvatar(avatar)"
+               class="relative cursor-pointer transition-transform active:scale-95">
+            
+            <div class="rounded-full p-1.5 transition-all duration-300 border-2"
+                 [ngClass]="usuario.avatar === avatar ? 'border-black shadow-md scale-105 bg-gray-50' : 'border-transparent bg-transparent opacity-70 hover:opacity-100'">
+              
+              <img [src]="avatar" class="w-full aspect-square rounded-full object-cover bg-gray-100 border border-gray-200 mix-blend-multiply">
+              
+            </div>
+
+            <div *ngIf="usuario.avatar === avatar" class="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 shadow-md animate-fade-in z-10 border-2 border-white">
+              <ion-icon name="checkmark-outline" class="text-white text-lg block font-bold"></ion-icon>
+            </div>
+            
+          </div>
+          
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

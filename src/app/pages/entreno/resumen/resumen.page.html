@@ -1,0 +1,101 @@
+<ion-content [fullscreen]="true" style="--background: #f9fafb;">
+  
+  <div class="min-h-full flex flex-col justify-between p-6 bg-[#f9fafb] font-sans">
+    
+    <div class="flex-1 flex flex-col justify-center">
+
+      <div class="text-center mb-10 animate-fade-in-up">
+        
+        <div class="h-28 w-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-md border border-gray-100 relative">
+          <div class="absolute inset-0 bg-[#f57c00]/10 rounded-full blur-md"></div>
+          <ion-icon name="trophy-outline" class="text-6xl text-[#f57c00] relative z-10"></ion-icon>
+        </div>
+        
+        <h1 class="text-4xl font-black text-black tracking-tight leading-none mb-2">
+          ¡MISIÓN<br><span class="text-[#f57c00]">CUMPLIDA!</span>
+        </h1>
+        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs">Entrenamiento finalizado</p>
+      </div>
+
+      <div class="w-full bg-white border border-gray-200 rounded-3xl p-6 mb-6 shadow-sm animate-fade-in-up" style="animation-delay: 0.1s;">
+        <div class="flex justify-between items-end mb-5">
+          <div>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Experiencia Ganada</p>
+            <p class="text-4xl font-black text-black leading-none tracking-tight">
+              +{{ xpDisplay | number:'1.0-0' }} <span class="text-base text-[#f57c00] ml-1">XP</span>
+            </p>
+          </div>
+          <div class="text-right pb-1">
+             <p class="text-sm font-black text-black">Nivel {{ resumen.nivelUsuario }}</p>
+             <p class="text-[10px] text-gray-500 font-bold">Coach Pro</p>
+          </div>
+        </div>
+
+        <div class="h-3 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200 shadow-inner">
+          <div class="h-full bg-[#f57c00] transition-all duration-1000 ease-out relative" [style.width.%]="resumen.progresoNivel * 100">
+             <div class="absolute inset-0 w-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+          </div>
+        </div>
+        <div class="flex justify-between mt-2">
+           <span class="text-[9px] text-gray-400 font-bold">Nivel {{ resumen.nivelUsuario }}</span>
+           <span class="text-[9px] text-gray-400 font-bold">Nivel {{ resumen.nivelUsuario + 1 }}</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 w-full animate-fade-in-up" style="animation-delay: 0.2s;">
+        
+        <div class="bg-white p-5 rounded-3xl border border-gray-200 flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md transition-shadow">
+          <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 mb-1 border border-gray-100">
+            <ion-icon name="time-outline" class="text-xl"></ion-icon>
+          </div>
+          <p class="text-2xl font-black text-black tracking-tight">{{ resumen.tiempo }}</p>
+          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Duración</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-200 flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md transition-shadow">
+          <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 mb-1 border border-gray-100">
+            <ion-icon name="barbell-outline" class="text-xl"></ion-icon>
+          </div>
+          <p class="text-2xl font-black text-black tracking-tight">{{ resumen.totalKilos / 1000 | number:'1.1-1' }}k</p>
+          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Kg Movidos</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="w-full space-y-3 pt-8 pb-4 animate-fade-in-up" style="animation-delay: 0.3s;">
+      
+      <button (click)="compartir()" class="w-full bg-gray-50 border border-gray-200 py-4 rounded-full text-black font-bold text-sm shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-100">
+        <ion-icon name="share-social-outline" class="text-lg"></ion-icon>
+        Compartir Logro
+      </button>
+
+      <button (click)="volverAlHome()" class="w-full bg-black py-4 rounded-full text-white font-bold text-sm shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-900">
+        <ion-icon name="home-outline" class="text-lg"></ion-icon>
+        Volver al Inicio
+      </button>
+
+    </div>
+
+  </div>
+</ion-content>
+
+<style>
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+</style>

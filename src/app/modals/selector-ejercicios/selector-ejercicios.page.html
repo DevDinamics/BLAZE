@@ -1,0 +1,65 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: #ffffff;">
+    
+    <div class="px-5 pt-4 flex justify-between items-center">
+      <div>
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Librería</p>
+        <h2 class="text-2xl text-black font-black tracking-tight leading-none">
+          Ejercicios
+        </h2>
+      </div>
+
+      <button (click)="cancelar()" class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 active:scale-90 hover:bg-gray-200 hover:text-black transition-all">
+        <ion-icon name="close-outline" class="text-xl"></ion-icon>
+      </button>
+    </div>
+
+    <div class="px-5 py-4">
+      <div class="bg-gray-50 rounded-2xl flex items-center px-4 py-1 border border-gray-200 focus-within:border-black transition-colors shadow-sm">
+        <ion-icon name="search-outline" class="text-gray-400 text-xl mr-2"></ion-icon>
+        <input (input)="buscar($event)" type="text" placeholder="Buscar ejercicio..." 
+               class="bg-transparent w-full text-black font-medium text-sm h-11 outline-none placeholder-gray-400">
+      </div>
+    </div>
+
+  </ion-toolbar>
+
+  <ion-toolbar *ngIf="seleccionados.length > 0" style="--background: #ffffff; border-bottom: 1px solid #f3f4f6;">
+    <div class="px-5 pb-3">
+      <button (click)="confirmar()" class="w-full bg-black text-white font-bold text-sm py-3.5 rounded-2xl shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-800">
+        <ion-icon name="add-circle-outline" class="text-lg"></ion-icon>
+        AGREGAR {{ seleccionados.length }} {{ seleccionados.length === 1 ? 'EJERCICIO' : 'EJERCICIOS' }}
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content style="--background: #f9fafb;">
+  <div class="px-5 pb-10 space-y-3 mt-4">
+    
+    <div *ngIf="filtrados.length === 0" class="text-center py-10 opacity-50">
+       <p class="text-black font-bold text-sm">No se encontraron resultados</p>
+    </div>
+
+    <div *ngFor="let item of filtrados" (click)="toggleSeleccion(item)"
+         class="bg-white rounded-2xl border p-3 flex items-center gap-4 transition-all active:scale-[0.98] cursor-pointer shadow-sm"
+         [ngClass]="esSeleccionado(item.id) ? 'border-black ring-1 ring-black bg-gray-50/50' : 'border-gray-200 hover:border-gray-300'">
+      
+      <div class="h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0"
+           [ngClass]="esSeleccionado(item.id) ? 'border-black bg-black' : 'border-gray-300'">
+        <ion-icon name="checkmark-outline" class="text-white text-sm font-bold" *ngIf="esSeleccionado(item.id)"></ion-icon>
+      </div>
+
+      <div class="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+         <img [src]="item.imagen" *ngIf="item.imagen" class="h-full w-full object-contain mix-blend-multiply">
+         <ion-icon name="barbell-outline" *ngIf="!item.imagen" class="text-gray-400 text-xl"></ion-icon>
+      </div>
+      
+      <div class="flex-1">
+        <h3 class="text-black font-bold text-sm leading-tight mb-1 line-clamp-1">{{ item.nombre }}</h3>
+        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wide bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">{{ item.musculo }}</span>
+      </div>
+
+    </div>
+  </div>
+</ion-content>

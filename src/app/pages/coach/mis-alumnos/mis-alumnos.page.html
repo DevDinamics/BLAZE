@@ -1,0 +1,159 @@
+<ion-content [fullscreen]="true" style="--background: #f9fafb;">
+  <div class="min-h-full bg-[#f9fafb] px-6 pt-12 pb-20 font-sans">
+
+    <div class="flex items-center gap-4 mb-6 pt-safe">
+      <button (click)="regresar()" class="h-10 w-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-black hover:bg-gray-50 active:scale-95 transition-all shadow-sm">
+        <ion-icon name="arrow-back-outline" class="text-xl"></ion-icon>
+      </button>
+      
+      <div class="leading-none mt-1">
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Directorio</p>
+        <h1 class="text-2xl font-black text-black tracking-tight">MIS ALUMNOS</h1>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl flex items-center px-4 py-1.5 border border-gray-200 shadow-sm mb-8 focus-within:border-black transition-colors">
+      <ion-icon name="search-outline" class="text-gray-400 text-xl mr-2"></ion-icon>
+      <input (input)="buscarAlumno($event)" type="text" placeholder="Buscar por nombre..." 
+             class="bg-transparent w-full text-black font-medium text-sm h-11 outline-none placeholder-gray-400">
+    </div>
+
+    <div *ngIf="cargando" class="flex justify-center py-20">
+      <ion-spinner name="crescent" color="dark"></ion-spinner>
+    </div>
+
+    <div *ngIf="!cargando" class="space-y-4">
+
+      <div *ngIf="alumnosFiltrados.length === 0" class="flex flex-col items-center justify-center py-20 opacity-60">
+        <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200">
+          <ion-icon name="person-outline" class="text-4xl text-gray-400"></ion-icon>
+        </div>
+        <p class="text-black font-bold text-lg tracking-tight">Directorio vacío</p>
+        <p class="text-sm text-gray-500 mt-1 max-w-[240px] text-center font-medium leading-relaxed">Comparte tu código de equipo para que tus alumnos se unan a tu escuadrón.</p>
+      </div>
+
+      <div *ngFor="let alumno of alumnosFiltrados" 
+           (click)="abrirExpediente(alumno)"
+           class="bg-white rounded-3xl p-4 border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform hover:shadow-md hover:border-gray-300">
+        
+        <div class="h-14 w-14 rounded-full bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+          <img [src]="alumno.foto" class="h-full w-full object-cover mix-blend-multiply">
+        </div>
+
+        <div class="flex-1 overflow-hidden">
+          <h3 class="text-black font-bold text-base leading-tight truncate">{{ alumno.nombre }} {{ alumno.apellido }}</h3>
+          <p class="text-xs text-gray-500 font-medium truncate mt-0.5 flex items-center gap-1">
+            <ion-icon name="mail-outline"></ion-icon> {{ alumno.email }}
+          </p>
+        </div>
+
+        <div class="shrink-0">
+           <span class="bg-gray-50 border border-gray-200 text-gray-600 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md">
+             {{ alumno.experiencia }}
+           </span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>
+
+
+<ion-modal [isOpen]="mostrarExpediente" 
+           (didDismiss)="cerrarExpediente()"
+           [initialBreakpoint]="0.85" 
+           [breakpoints]="[0, 0.85]" 
+           handleBehavior="cycle"
+           class="modal-light">
+  <ng-template>
+    <ion-content style="--background: #f9fafb;">
+      <div class="px-6 pt-8 pb-10 font-sans" *ngIf="alumnoSeleccionado">
+
+        <div class="flex justify-between items-start mb-6">
+          <div class="h-20 w-20 rounded-full bg-white shadow-sm border border-gray-200 overflow-hidden">
+            <img [src]="alumnoSeleccionado.foto" class="h-full w-full object-cover mix-blend-multiply">
+          </div>
+          <button (click)="cerrarExpediente()" class="h-8 w-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center active:scale-90 hover:bg-gray-300 transition-colors">
+            <ion-icon name="close-outline" class="text-xl"></ion-icon>
+          </button>
+        </div>
+
+        <div class="mb-8">
+          <h2 class="text-2xl font-black text-black tracking-tight leading-none mb-2">
+            {{ alumnoSeleccionado.nombre }} {{ alumnoSeleccionado.apellido }}
+          </h2>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-white border border-gray-200 text-gray-600 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm">
+              <ion-icon name="star-outline"></ion-icon> {{ alumnoSeleccionado.experiencia }}
+            </span>
+            <span class="bg-white border border-gray-200 text-gray-600 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm">
+              <ion-icon name="calendar-outline"></ion-icon> Se unió en {{ alumnoSeleccionado.fechaRegistro | date:'MMM yyyy' }}
+            </span>
+          </div>
+        </div>
+
+        <h3 class="text-black font-black text-lg tracking-tight mb-3">Perfil Físico y Metas</h3>
+
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-2 mb-8">
+          
+          <div class="flex items-center p-4 border-b border-gray-100">
+  <div class="h-10 w-10 rounded-full bg-orange-50 flex items-center justify-center mr-4 border border-orange-100">
+    <ion-icon name="flag-outline" class="text-orange-500 text-lg"></ion-icon>
+  </div>
+  <div class="flex-1">
+    <p class="font-bold text-sm text-black mb-0.5">Objetivo Principal</p>
+    <p class="text-orange-600 text-sm font-bold">{{ alumnoSeleccionado.objetivo }}</p>
+  </div>
+</div>
+
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center mr-4 border border-gray-100">
+              <ion-icon name="scale-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-0.5">Peso Registrado</p>
+              <p class="text-gray-500 text-sm font-medium">{{ alumnoSeleccionado.peso || 0 }} kg</p>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center mr-4 border border-gray-100">
+              <ion-icon name="body-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-0.5">Estatura</p>
+              <p class="text-gray-500 text-sm font-medium">{{ alumnoSeleccionado.altura || 0 }} m</p>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4">
+            <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center mr-4 border border-gray-100">
+              <ion-icon name="fitness-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-0.5">IMC / Estado</p>
+              <p class="text-gray-500 text-sm font-medium">{{ bmi }} <span class="font-bold ml-1 text-black">({{ imcEstado }})</span></p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="text-black font-black text-lg tracking-tight mb-3">Acciones Rápidas</h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="irACrearRutina()" class="w-full bg-white border border-gray-200 text-black font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1 hover:bg-gray-50 shadow-sm">
+            <ion-icon name="barbell-outline" class="text-2xl text-gray-400"></ion-icon>
+            Crear Rutina
+          </button>
+
+          <button (click)="irACrearDieta()" class="w-full bg-white border border-gray-200 text-black font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1 hover:bg-gray-50 shadow-sm">
+            <ion-icon name="restaurant-outline" class="text-2xl text-gray-400"></ion-icon>
+            Crear Dieta
+          </button>
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

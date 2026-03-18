@@ -1,0 +1,154 @@
+<ion-content [fullscreen]="true" style="--background: #f9fafb;">
+  <div class="min-h-full bg-[#f9fafb] px-6 pt-12 pb-20 font-sans">
+
+    <div class="flex justify-between items-center mb-6 pt-safe">
+      <div>
+        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-0.5 leading-none">Nutrición</p>
+        <h1 class="text-2xl font-black text-black uppercase tracking-tight leading-none">
+          SMART <span class="text-emerald-500">FUEL</span>
+        </h1>
+      </div>
+      <button class="h-10 w-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-black hover:bg-gray-50 active:scale-95 transition-transform shadow-sm">
+        <ion-icon name="scan-outline" class="text-xl"></ion-icon>
+      </button>
+    </div>
+
+    <div *ngIf="cargando" class="h-64 flex items-center justify-center">
+      <ion-spinner name="crescent" color="dark"></ion-spinner>
+    </div>
+
+    <div *ngIf="!cargando && !tienePlan" class="h-full flex flex-col justify-center mt-16 relative animate-fade-in-up">
+      <div class="text-center px-4 bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
+        <div class="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
+          <ion-icon name="lock-closed-outline" class="text-4xl text-gray-400"></ion-icon>
+        </div>
+        <h2 class="text-2xl font-black text-black tracking-tight mb-2">Plan <span class="text-emerald-500">Privado</span></h2>
+        <p class="text-gray-500 text-sm mb-8 leading-relaxed font-medium">
+          El servicio de nutrición se diseña 100% a medida. Contacta a tu coach para adquirir tu dieta y desbloquear esta sección.
+        </p>
+        <button (click)="regresar()" class="w-full bg-black text-white font-bold py-4 rounded-full text-sm shadow-md active:scale-95 transition-transform hover:bg-gray-800">
+          Regresar
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="!cargando && tienePlan" class="animate-fade-in-up space-y-6">
+      
+      <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm relative overflow-hidden">
+        
+        <div class="flex justify-between items-end mb-6 relative z-10">
+          <div>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Calorías Consumidas</p>
+            <p class="text-3xl font-black text-black leading-none">
+              {{ consumo.calorias }} <span class="text-sm text-gray-400 font-bold">/ {{ metas.calorias }}</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-emerald-600 font-bold uppercase bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">{{ (pCalorias * 100) | number:'1.0-0' }}% Meta</span>
+          </div>
+        </div>
+
+        <div class="h-2.5 w-full bg-gray-100 rounded-full mb-8 relative z-10 overflow-hidden shadow-inner">
+          <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" [style.width.%]="pCalorias * 100"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 relative z-10">
+          
+          <div class="text-center">
+            <div class="relative h-14 w-14 mx-auto mb-3 flex items-center justify-center">
+              <svg class="w-full h-full -rotate-90 transition-all duration-500" viewBox="0 0 36 36">
+                <path class="text-gray-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" />
+                <path class="text-blue-500 transition-all duration-500" [attr.stroke-dasharray]="(pProteina * 100) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+              </svg>
+              <ion-icon name="restaurant-outline" class="text-gray-400 text-sm absolute"></ion-icon>
+            </div>
+            <p class="text-black font-bold text-sm">{{ consumo.proteina }}g</p>
+            <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Proteína</p>
+          </div>
+
+          <div class="text-center">
+            <div class="relative h-14 w-14 mx-auto mb-3 flex items-center justify-center">
+              <svg class="w-full h-full -rotate-90 transition-all duration-500" viewBox="0 0 36 36">
+                <path class="text-gray-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" />
+                <path class="text-yellow-400 transition-all duration-500" [attr.stroke-dasharray]="(pCarbos * 100) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+              </svg>
+              <ion-icon name="leaf-outline" class="text-gray-400 text-sm absolute"></ion-icon>
+            </div>
+            <p class="text-black font-bold text-sm">{{ consumo.carbos }}g</p>
+            <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Carbos</p>
+          </div>
+
+          <div class="text-center">
+            <div class="relative h-14 w-14 mx-auto mb-3 flex items-center justify-center">
+              <svg class="w-full h-full -rotate-90 transition-all duration-500" viewBox="0 0 36 36">
+                <path class="text-gray-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" />
+                <path class="text-purple-500 transition-all duration-500" [attr.stroke-dasharray]="(pGrasa * 100) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+              </svg>
+              <ion-icon name="flame-outline" class="text-gray-400 text-sm absolute"></ion-icon>
+            </div>
+            <p class="text-black font-bold text-sm">{{ consumo.grasa }}g</p>
+            <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Grasa</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="bg-blue-50 border border-blue-100 rounded-3xl p-5 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="h-12 w-12 rounded-full bg-white flex items-center justify-center text-blue-500 border border-blue-100 shadow-sm">
+            <ion-icon name="water-outline" class="text-2xl"></ion-icon>
+          </div>
+          <div>
+            <p class="text-black font-black text-lg">{{ consumo.agua }} ml</p>
+            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Meta Diaria: {{ metas.agua }} ml</p>
+          </div>
+        </div>
+        <button (click)="agregarAgua()" class="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center active:scale-90 transition-transform shadow-md hover:bg-blue-700">
+          <ion-icon name="add-outline" class="text-2xl"></ion-icon>
+        </button>
+      </div>
+
+      <div>
+        <h3 class="text-black font-black text-xl tracking-tight mb-5">
+          Tu Menú de Hoy
+        </h3>
+
+        <div class="space-y-4">
+          
+          <div *ngFor="let comida of comidas; let i = index" 
+               class="group relative bg-white rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 shadow-sm flex items-center"
+               [ngClass]="{'opacity-50 grayscale bg-gray-50': comida.completado}">
+            
+            <div class="w-24 h-24 shrink-0 relative bg-gray-100">
+                 <img [src]="comida.imagen" class="absolute inset-0 w-full h-full object-cover">
+            </div>
+
+            <div class="flex-1 py-3 px-4 flex flex-col justify-center">
+                 <div class="flex items-center gap-2 mb-1.5">
+                   <span class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">{{ comida.tipo }}</span>
+                   <span class="text-[10px] text-gray-400 font-bold"><ion-icon name="time-outline" class="mr-0.5"></ion-icon>{{ comida.hora }}</span>
+                 </div>
+                 
+                 <h4 class="text-black font-bold text-sm leading-tight mb-1 transition-all line-clamp-1" [ngClass]="{'line-through text-gray-500': comida.completado}">
+                   {{ comida.nombre }}
+                 </h4>
+                 
+                 <p class="text-[10px] text-gray-500 font-bold">{{ comida.calorias }} kcal • {{ comida.macros }}</p>
+            </div>
+
+            <div class="pr-4 shrink-0">
+              <button (click)="toggleComida(i)" class="h-10 w-10 rounded-full border-2 flex items-center justify-center transition-all active:scale-90"
+                      [ngClass]="comida.completado ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : 'bg-gray-50 border-gray-200 text-gray-300 hover:border-gray-300 hover:bg-gray-100'">
+                 <ion-icon name="checkmark-outline" class="text-xl font-black" *ngIf="comida.completado"></ion-icon>
+              </button>
+            </div>
+            
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>

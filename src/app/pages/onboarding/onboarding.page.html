@@ -1,0 +1,173 @@
+<ion-content [fullscreen]="true" style="--background: #0a0a0a;">
+  
+  <div class="min-h-full bg-[#0a0a0a] flex flex-col font-sans text-white">
+    
+    <div class="px-6 pt-14 pb-4 flex items-center justify-between gap-4">
+      <button (click)="pasoAnterior()" [disabled]="pasoActual === 1" 
+              class="h-8 w-8 flex items-center justify-center rounded-full disabled:opacity-0 active:scale-90 transition-all bg-white/5 hover:bg-white/10">
+        <ion-icon name="arrow-back-outline" class="text-xl text-white"></ion-icon>
+      </button>
+
+      <div class="flex-1 flex gap-1 h-1.5">
+        <div *ngFor="let p of generarArregloPasos(); let i = index" 
+             class="flex-1 h-full rounded-full transition-colors duration-300"
+             [ngClass]="i < pasoActual ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'bg-gray-800'">
+        </div>
+      </div>
+
+      <span class="text-xs font-bold text-gray-500 w-8 text-right">{{ pasoActual }}/{{ totalPasos }}</span>
+    </div>
+
+    <div class="flex-1 px-6 pt-6 overflow-y-auto pb-20">
+      
+      <div *ngIf="pasoActual === 1" class="animate-fade-in">
+        <h1 class="text-3xl font-bold text-center mb-2 tracking-tight">¿Cómo quieres usar Blaze?</h1>
+        <p class="text-gray-400 text-sm text-center mb-10">Elige tu rol para personalizar tu experiencia</p>
+
+        <button (click)="seleccionarRol('atleta')" 
+                class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 mb-4 border-2 transition-all duration-300 active:scale-[0.98]"
+                [ngClass]="datos.rol === 'atleta' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
+          <ion-icon name="person-outline" class="text-2xl" [ngClass]="datos.rol === 'atleta' ? 'text-white' : 'text-gray-500'"></ion-icon>
+          <div class="text-left">
+            <p class="font-bold text-base text-white">Atleta</p>
+            <p class="text-gray-500 text-xs mt-0.5">Entrena, sigue tu progreso y alcanza tus metas</p>
+          </div>
+        </button>
+
+        <button (click)="seleccionarRol('coach')" 
+                class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
+                [ngClass]="datos.rol === 'coach' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
+          <ion-icon name="people-outline" class="text-2xl" [ngClass]="datos.rol === 'coach' ? 'text-white' : 'text-gray-500'"></ion-icon>
+          <div class="text-left">
+            <p class="font-bold text-base text-white">Instructor</p>
+            <p class="text-gray-500 text-xs mt-0.5">Gestiona estudiantes y crea planes personalizados</p>
+          </div>
+        </button>
+      </div>
+
+      <ng-container *ngIf="datos.rol === 'atleta'">
+        
+        <div *ngIf="pasoActual === 2" class="animate-fade-in text-center">
+          <h1 class="text-3xl font-bold mb-2 tracking-tight">¿Cuál es tu género?</h1>
+          <p class="text-gray-400 text-sm mb-10">Lo usamos para personalizar tu plan de entrenamiento</p>
+
+          <div class="space-y-3">
+            <button *ngFor="let gen of ['Hombre', 'Mujer', 'Prefiero no decirlo']"
+                    (click)="datos.genero = gen"
+                    class="w-full bg-[#111111] p-5 rounded-2xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
+                    [ngClass]="datos.genero === gen ? 'border-white shadow-lg shadow-white/10 opacity-100 scale-105' : 'border-transparent opacity-50 hover:opacity-100'">
+              <ion-icon name="person-outline" class="text-xl" [ngClass]="datos.genero === gen ? 'text-white' : 'text-gray-500'"></ion-icon>
+              <span class="font-bold text-sm">{{ gen }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="pasoActual === 3" class="animate-fade-in text-center">
+          <h1 class="text-3xl font-bold mb-2 tracking-tight">¿Cuánto pesas?</h1>
+          <p class="text-gray-400 text-sm mb-10">Tu peso actual nos ayuda a calcular tu IMC</p>
+
+          <div class="flex justify-center mb-8">
+            <div class="bg-[#111111] p-1 rounded-full flex gap-1">
+              <button class="px-6 py-2 rounded-full text-sm font-bold bg-white text-black transition-all">kg</button>
+              <button class="px-6 py-2 rounded-full text-sm font-bold text-gray-500 transition-all">lbs</button>
+            </div>
+          </div>
+
+          <div class="flex items-baseline justify-center gap-2 mb-10">
+            <input type="number" [(ngModel)]="datos.peso" placeholder="70"
+                   class="bg-transparent text-white font-bold text-7xl w-32 text-center outline-none placeholder-gray-800">
+            <span class="text-2xl text-gray-500 font-bold">kg</span>
+          </div>
+        </div>
+
+        <div *ngIf="pasoActual === 4" class="animate-fade-in text-center">
+          <h1 class="text-3xl font-bold mb-2 tracking-tight">¿Cuál es tu objetivo?</h1>
+          <p class="text-gray-400 text-sm mb-10">Adaptamos tu plan a tu meta principal</p>
+
+          <div class="space-y-3 text-left">
+            <button (click)="datos.objetivo = 'Perder peso'"
+                    class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
+                    [ngClass]="datos.objetivo === 'Perder peso' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
+              <div class="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
+                <ion-icon name="scale-outline" class="text-xl text-gray-300"></ion-icon>
+              </div>
+              <div>
+                <p class="font-bold text-sm text-white">Perder peso</p>
+                <p class="text-gray-500 text-[11px] mt-0.5">Reducir grasa corporal de forma saludable</p>
+              </div>
+            </button>
+
+            <button (click)="datos.objetivo = 'Ganar músculo'"
+                    class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
+                    [ngClass]="datos.objetivo === 'Ganar músculo' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
+              <div class="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
+                <ion-icon name="barbell-outline" class="text-xl text-gray-300"></ion-icon>
+              </div>
+              <div>
+                <p class="font-bold text-sm text-white">Ganar músculo</p>
+                <p class="text-gray-500 text-[11px] mt-0.5">Aumentar masa muscular y fuerza</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+      </ng-container>
+
+      <ng-container *ngIf="datos.rol === 'coach'">
+        <div *ngIf="pasoActual === 2" class="animate-fade-in text-center">
+          <h1 class="text-3xl font-bold mb-2 tracking-tight">Crea tu perfil Pro</h1>
+          <p class="text-gray-400 text-sm mb-10">Ayuda a tus alumnos a conocerte mejor</p>
+
+          <div class="space-y-4 text-left">
+            <div>
+              <label class="text-xs font-bold text-gray-500 uppercase ml-1">Especialidad</label>
+              <input type="text" [(ngModel)]="datos.especialidad" placeholder="Ej: Hipertrofia, Powerlifting..."
+                     class="w-full mt-2 bg-[#111111] border border-gray-800 rounded-2xl px-4 py-4 text-white font-bold focus:border-white outline-none transition-all">
+            </div>
+            
+            <div>
+              <label class="text-xs font-bold text-gray-500 uppercase ml-1">Tu Bio (Breve)</label>
+              <textarea [(ngModel)]="datos.bio" placeholder="Cuenta un poco sobre tu filosofía de entrenamiento..." rows="3"
+                     class="w-full mt-2 bg-[#111111] border border-gray-800 rounded-2xl px-4 py-4 text-white text-sm focus:border-white outline-none transition-all resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <div *ngIf="pasoActual === totalPasos && pasoActual > 1" class="animate-fade-in text-center pb-8">
+        <h1 class="text-3xl font-bold mb-2 tracking-tight text-white">Elige tu avatar</h1>
+        <p class="text-gray-400 text-sm mb-10">Tu identidad en la comunidad BLAZE</p>
+
+        <div class="grid grid-cols-3 gap-5 px-2">
+          
+          <div *ngFor="let avatar of avataresDisponibles" 
+               (click)="datos.avatar = avatar"
+               class="relative cursor-pointer transition-transform active:scale-95">
+            
+            <div class="rounded-full p-1 transition-all duration-300"
+                 [ngClass]="datos.avatar === avatar ? 'bg-white shadow-[0_0_20px_rgba(255,255,255,0.25)] scale-110' : 'bg-transparent scale-100 opacity-40 hover:opacity-80'">
+              
+              <img [src]="avatar" class="w-full aspect-square rounded-full object-cover bg-gray-900 border border-gray-800">
+              
+            </div>
+
+            <div *ngIf="datos.avatar === avatar" class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md animate-fade-in z-10">
+              <ion-icon name="checkmark-circle-outline" class="text-black text-xl block"></ion-icon>
+            </div>
+            
+          </div>
+          
+        </div>
+      </div>
+
+    </div>
+
+    <div class="p-6 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a] to-transparent z-20">
+      <button (click)="pasoSiguiente()" [disabled]="!puedeAvanzar()"
+              class="w-full bg-white text-black font-bold py-4 rounded-full text-sm shadow-lg active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100">
+        {{ pasoActual === totalPasos ? 'Finalizar Configuración' : 'Continuar' }}
+      </button>
+    </div>
+
+  </div>
+</ion-content>

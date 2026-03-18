@@ -1,0 +1,57 @@
+<ion-content [fullscreen]="true" style="--background: #000;">
+  <div class="min-h-full flex flex-col items-center justify-center px-6 relative overflow-hidden font-sans">
+
+    <div class="absolute top-[-10%] left-[-10%] w-[120%] h-[50%] bg-[#ffa500]/10 blur-[100px] pointer-events-none rounded-full"></div>
+
+    <div class="text-center mb-10 relative z-10 animate-fade-in-up">
+      <div class="h-20 w-20 bg-[#111] border border-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(255,165,0,0.2)]">
+        <ion-icon name="people" class="text-4xl text-[#ffa500]"></ion-icon>
+      </div>
+      
+      <h1 class="text-3xl font-heading font-black text-white uppercase italic tracking-tight mb-2">
+        Únete al <span class="text-[#ffa500]">Team</span>
+      </h1>
+      <p class="text-gray-400 text-sm font-medium">Ingresa el Código de Acceso que te dio tu Coach para comenzar.</p>
+    </div>
+
+    <div class="w-full max-w-xs mb-10 relative z-10">
+      
+      <ion-input #codigoInput
+                 type="tel" 
+                 maxlength="6"
+                 [(ngModel)]="codigo"
+                 (ionInput)="onCodigoChange($event)"
+                 class="opacity-0 absolute inset-0 h-full w-full z-20 cursor-text">
+      </ion-input>
+
+      <div class="flex justify-between gap-2" (click)="setFocus()">
+        <div *ngFor="let caja of cajas; let i = index" 
+             class="h-14 w-12 rounded-xl border-2 flex items-center justify-center transition-all duration-300 bg-[#0a0a0a]"
+             [ngClass]="{
+               'border-[#ffa500] shadow-[0_0_15px_rgba(255,165,0,0.3)] scale-110': codigo.length === i, 
+               'border-gray-800': codigo.length !== i,
+               'border-[#ffa500]/50': codigo.length > i
+             }">
+          <span class="text-2xl font-mono font-black text-white">
+            {{ codigo[i] || '' }}
+          </span>
+        </div>
+      </div>
+      
+    </div>
+
+    <div class="w-full max-w-xs relative z-10">
+      <button (click)="unirseAlEquipo()" 
+              [disabled]="codigo.length < 6"
+              class="w-full bg-[#ffa500] text-black font-heading font-black py-4 rounded-xl text-lg uppercase shadow-[0_0_20px_rgba(255,165,0,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale disabled:shadow-none hover:bg-[#ffb700]">
+        <span *ngIf="!cargando">Validar Código</span>
+        <ion-spinner name="crescent" *ngIf="cargando" class="text-black"></ion-spinner>
+      </button>
+
+      <p class="text-center mt-6 text-xs text-gray-600">
+        ¿No tienes código? <span class="text-gray-400 font-bold">Pídeselo a tu coach.</span>
+      </p>
+    </div>
+
+  </div>
+</ion-content>

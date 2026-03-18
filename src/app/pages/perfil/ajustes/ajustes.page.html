@@ -1,0 +1,170 @@
+<ion-content [fullscreen]="true" style="--background: #000;">
+  <div class="min-h-full bg-black px-6 pt-6 pb-20 font-sans">
+
+    <div class="flex justify-between items-center mb-8">
+      <button (click)="regresar()" class="h-10 w-10 rounded-full border border-gray-800 flex items-center justify-center text-white hover:text-[#ffa500] active:scale-95">
+        <ion-icon name="arrow-back" class="text-xl"></ion-icon>
+      </button>
+      <h1 class="text-lg font-bold text-white uppercase tracking-widest">Ajustes</h1>
+      <button (click)="guardarCambios()" class="text-[#ffa500] font-bold text-xs uppercase bg-[#ffa500]/10 px-3 py-1.5 rounded-lg border border-[#ffa500]/20 active:scale-95">
+        Guardar
+      </button>
+    </div>
+
+    <div class="flex flex-col items-center mb-10">
+      <div class="relative group cursor-pointer">
+        <div class="h-28 w-28 rounded-full p-1 bg-gradient-to-tr from-gray-800 to-gray-900 border border-gray-700">
+          <img src="https://i.pravatar.cc/300?u=diego" class="h-full w-full rounded-full object-cover">
+        </div>
+        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <ion-icon name="camera" class="text-white text-3xl"></ion-icon>
+        </div>
+        <div class="absolute bottom-0 right-0 h-8 w-8 bg-[#ffa500] rounded-full flex items-center justify-center shadow-lg border-2 border-black">
+          <ion-icon name="camera" class="text-black text-sm"></ion-icon>
+        </div>
+      </div>
+      <p class="text-gray-500 text-xs font-bold mt-3 uppercase tracking-wider">Toca para cambiar foto</p>
+    </div>
+
+    <div class="mb-8">
+      <h3 class="text-white font-bold text-sm uppercase mb-4 flex items-center gap-2 border-l-2 border-[#ffa500] pl-3">
+        Tus Métricas
+      </h3>
+
+      <div class="grid grid-cols-2 gap-4">
+        
+        <div class="bg-[#111] p-3 rounded-xl border border-gray-800 focus-within:border-[#ffa500] transition-colors">
+          <div class="flex items-center gap-2 mb-1">
+            <ion-icon name="speedometer" class="text-gray-500 text-xs"></ion-icon>
+            <label class="text-[10px] text-gray-400 font-bold uppercase">Peso (kg)</label>
+          </div>
+          <input type="number" [(ngModel)]="perfil.peso" class="w-full bg-transparent text-white font-mono font-bold text-xl focus:outline-none placeholder-gray-700">
+        </div>
+
+        <div class="bg-[#111] p-3 rounded-xl border border-gray-800 focus-within:border-[#ffa500] transition-colors">
+          <div class="flex items-center gap-2 mb-1">
+            <ion-icon name="swap-vertical" class="text-gray-500 text-xs"></ion-icon>
+            <label class="text-[10px] text-gray-400 font-bold uppercase">Altura (cm)</label>
+          </div>
+          <input type="number" [(ngModel)]="perfil.altura" class="w-full bg-transparent text-white font-mono font-bold text-xl focus:outline-none placeholder-gray-700">
+        </div>
+
+        <div class="col-span-2 bg-gray-900/50 p-4 rounded-xl border border-dashed border-gray-700 flex justify-between items-center">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <ion-icon name="calculator" class="text-gray-400 text-xs"></ion-icon>
+              <label class="text-[10px] text-gray-400 font-bold uppercase">Tu IMC Calculado</label>
+            </div>
+            <p class="text-xs font-bold uppercase tracking-wider" [ngClass]="imcColor">
+              {{ imcEstado }}
+            </p>
+          </div>
+          
+          <div class="text-right">
+             <span class="text-3xl font-black text-white leading-none">{{ imcValor }}</span>
+             <span class="text-[10px] text-gray-500 block">kg/m²</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h3 class="text-white font-bold text-sm uppercase mb-4 flex items-center gap-2 border-l-2 border-blue-500 pl-3">
+        Cuenta
+      </h3>
+      
+      <div class="space-y-3">
+        <div class="bg-[#111] px-4 py-3 rounded-xl border border-gray-800">
+          <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Nombre</label>
+          <input type="text" [(ngModel)]="perfil.nombre" class="w-full bg-transparent text-white font-bold text-sm focus:outline-none">
+        </div>
+
+        <div class="bg-[#111] px-4 py-3 rounded-xl border border-gray-800">
+          <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Apellido</label>
+          <input type="text" [(ngModel)]="perfil.apellido" class="w-full bg-transparent text-white font-bold text-sm focus:outline-none">
+        </div>
+
+        <div class="bg-[#111] px-4 py-3 rounded-xl border border-gray-800 opacity-60">
+          <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Email (No editable)</label>
+          <input type="email" [(ngModel)]="perfil.email" readonly class="w-full bg-transparent text-gray-400 font-bold text-sm focus:outline-none">
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-8">
+        <h3 class="text-white font-bold text-sm uppercase mb-4 flex items-center gap-2 border-l-2 border-red-500 pl-3">
+          Seguridad
+        </h3>
+
+        <ion-accordion-group>
+            <ion-accordion value="seguridad" style="background: #111; border-radius: 12px; border: 1px solid #333;">
+              
+              <ion-item slot="header" color="none" style="--background: transparent; --color: #fff; --min-height: 48px;">
+                <ion-icon name="lock-closed" slot="start" class="text-gray-400 text-sm"></ion-icon>
+                <ion-label class="text-xs font-bold uppercase tracking-wide">Cambiar Contraseña</ion-label>
+              </ion-item>
+              
+              <div class="p-4 bg-black/50 space-y-3 border-t border-gray-900" slot="content">
+                
+                <div class="relative">
+                  <input [type]="mostrarPass ? 'text' : 'password'" [(ngModel)]="passwords.actual" placeholder="Contraseña Actual" class="w-full bg-[#111] border border-gray-800 rounded px-3 py-2 text-white text-xs focus:border-[#ffa500] focus:outline-none transition-colors">
+                </div>
+    
+                <div class="relative">
+                  <input [type]="mostrarPass ? 'text' : 'password'" [(ngModel)]="passwords.nueva" placeholder="Nueva Contraseña" class="w-full bg-[#111] border border-gray-800 rounded px-3 py-2 text-white text-xs focus:border-[#ffa500] focus:outline-none transition-colors">
+                </div>
+    
+                <div class="relative">
+                  <input [type]="mostrarPass ? 'text' : 'password'" [(ngModel)]="passwords.confirmar" placeholder="Confirmar Nueva Contraseña" class="w-full bg-[#111] border border-gray-800 rounded px-3 py-2 text-white text-xs focus:border-[#ffa500] focus:outline-none transition-colors">
+                </div>
+                
+                <div class="flex justify-between items-center pt-2">
+                  <button (click)="togglePass()" class="text-gray-500 text-[10px] font-bold uppercase flex items-center gap-1 hover:text-white transition-colors">
+                    <ion-icon [name]="mostrarPass ? 'eye-off' : 'eye'"></ion-icon> 
+                    {{ mostrarPass ? 'Ocultar' : 'Mostrar' }}
+                  </button>
+    
+                  <button (click)="cambiarPassword()" class="bg-gray-800 text-white text-[10px] font-bold px-4 py-2 rounded hover:bg-[#ffa500] hover:text-black transition-colors">
+                    ACTUALIZAR
+                  </button>
+                </div>
+    
+              </div>
+            </ion-accordion>
+          </ion-accordion-group>
+    </div>
+    <div class="mb-8">
+      <h3 class="text-white font-bold text-sm uppercase mb-4 flex items-center gap-2 border-l-2 border-purple-500 pl-3">
+        Preferencias
+      </h3>
+
+      <div class="space-y-1">
+        
+        <div class="flex items-center justify-between bg-[#111] p-4 rounded-xl border border-gray-800">
+          <div class="flex items-center gap-3">
+            <ion-icon name="notifications" class="text-gray-400"></ion-icon>
+            <span class="text-white text-sm font-bold">Notificaciones</span>
+          </div>
+          <ion-toggle [(ngModel)]="configuracion.notificaciones" mode="ios" color="warning"></ion-toggle>
+        </div>
+
+        <div class="flex items-center justify-between bg-[#111] p-4 rounded-xl border border-gray-800">
+          <div class="flex items-center gap-3">
+            <ion-icon name="moon" class="text-gray-400"></ion-icon>
+            <span class="text-white text-sm font-bold">Modo Oscuro</span>
+          </div>
+          <ion-toggle [(ngModel)]="configuracion.modoOscuro" mode="ios" color="warning" [disabled]="true"></ion-toggle>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="pt-4 pb-8">
+       <button class="w-full border border-red-500/30 bg-red-500/10 text-red-500 font-bold text-xs uppercase py-4 rounded-xl active:scale-95 transition-transform hover:bg-red-500/20">
+         Cerrar Sesión en todos los dispositivos
+       </button>
+    </div>
+
+  </div>
+</ion-content>

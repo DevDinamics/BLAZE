@@ -1,0 +1,156 @@
+<ion-content [fullscreen]="true" style="--background: #f9fafb;">
+  <div class="min-h-full bg-[#f9fafb] px-6 pt-12 pb-20 font-sans">
+
+    <div class="flex justify-between items-center mb-6">
+      <button (click)="regresar()" class="h-10 w-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-black active:scale-95 transition-transform hover:bg-gray-50">
+        <ion-icon name="arrow-back" class="text-xl"></ion-icon>
+      </button>
+      
+      <div class="text-center">
+        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-0.5 leading-none">Mis Planes</p>
+        <h1 class="text-xl font-black text-black uppercase tracking-tight leading-none">
+          RUTI<span class="text-[#f57c00]">NAS</span>
+        </h1>
+      </div>
+
+      <button (click)="crearNuevo()" class="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white active:scale-95 transition-all shadow-md hover:bg-gray-800">
+        <ion-icon name="add" class="text-xl"></ion-icon>
+      </button>
+    </div>
+
+    <div class="bg-gray-100 p-1 rounded-2xl mb-8 flex shadow-sm border border-gray-200 sticky top-0 z-20">
+      <button (click)="segmento = 'activas'" 
+              class="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-300"
+              [ngClass]="segmento === 'activas' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+        Asignadas
+      </button>
+      <button (click)="segmento = 'plantillas'" 
+              class="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-300"
+              [ngClass]="segmento === 'plantillas' ? 'bg-white text-[#f57c00] shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+        Plantillas
+      </button>
+    </div>
+
+    <div *ngIf="cargando" class="flex justify-center items-center py-10">
+      <ion-spinner name="crescent" color="dark"></ion-spinner>
+    </div>
+
+    <div *ngIf="!cargando && segmento === 'activas'" class="space-y-5 animate-fade-in">
+      
+      <div *ngIf="rutinasActivas.length === 0" class="flex flex-col items-center justify-center py-16 opacity-60">
+        <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200">
+          <ion-icon name="document-text-outline" class="text-4xl text-gray-400"></ion-icon>
+        </div>
+        <p class="text-black font-bold text-lg tracking-tight">Cero rutinas activas</p>
+        <p class="text-sm text-gray-500 mt-1 max-w-[220px] text-center font-medium leading-relaxed">Crea un plan y asígnalo a tus alumnos.</p>
+      </div>
+
+      <div *ngFor="let item of rutinasActivas" class="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
+        
+        <button (click)="abrirOpciones(item)" class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur text-gray-600 hover:bg-gray-100 transition-colors z-20 active:scale-90 shadow-sm border border-gray-200">
+          <ion-icon name="ellipsis-vertical"></ion-icon>
+        </button>
+
+        <div class="h-32 w-full relative bg-gray-100 flex items-center justify-center overflow-hidden">
+          <img [src]="item.imagen || 'https://ionicframework.com/docs/img/demos/thumbnail.svg'" class="w-full h-full object-cover opacity-90 mix-blend-multiply">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+          
+          <div class="absolute bottom-3 left-4 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg border border-white/20 shadow-sm">
+            <span class="text-[10px] font-black text-black uppercase tracking-widest">{{ item.nivel || 'General' }}</span>
+          </div>
+        </div>
+
+        <div class="p-5">
+          <h3 class="text-xl font-black text-black uppercase tracking-tight leading-tight mb-2 truncate">
+            {{ item.nombre }}
+          </h3>
+          
+          <div class="flex items-center gap-2 mb-4">
+            <div class="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <ion-icon name="person-outline" class="text-gray-500 text-[10px]"></ion-icon>
+            </div>
+            <p class="text-[#f57c00] text-xs font-bold uppercase truncate">
+              {{ item.nombreAlumno || 'Sin Asignar' }}
+            </p>
+          </div>
+          
+          <div class="flex gap-2">
+            <span class="bg-gray-50 text-gray-600 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg border border-gray-200">
+              {{ item.semanas }} Semanas
+            </span> 
+            <span class="bg-gray-50 text-gray-600 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg border border-gray-200">
+              {{ item.totalEjercicios || 0 }} Ejer.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!cargando && segmento === 'plantillas'" class="space-y-4 animate-fade-in">
+
+      <div *ngIf="misPlantillas.length === 0" class="flex flex-col items-center justify-center py-16 opacity-60">
+        <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200">
+          <ion-icon name="folder-open-outline" class="text-4xl text-gray-400"></ion-icon>
+        </div>
+        <p class="text-black font-bold text-lg tracking-tight">Tu librería está vacía</p>
+        <p class="text-sm text-gray-500 mt-1 max-w-[220px] text-center font-medium leading-relaxed">Marca "Guardar como plantilla" al crear una rutina.</p>
+      </div>
+
+      <div *ngFor="let plan of misPlantillas" (click)="abrirOpciones(plan)" class="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-5 relative active:scale-[0.98] transition-all cursor-pointer hover:border-[#f57c00]/50 hover:bg-[#fff9f0]">
+        
+        <div class="absolute top-4 right-4 h-10 w-10 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100">
+            <ion-icon name="copy-outline" class="text-lg text-gray-400"></ion-icon>
+        </div>
+
+        <span class="bg-blue-50 text-blue-600 text-[9px] font-bold px-2.5 py-1 rounded-md border border-blue-100 uppercase tracking-widest mb-3 inline-block">
+          Plantilla Base
+        </span>
+
+        <h3 class="text-black font-black text-xl uppercase tracking-tight leading-tight mb-2 pr-12">
+            {{ plan.nombre.replace('(Plantilla)', '').replace('(Copia)', '') }}
+        </h3>
+        
+        <p class="text-xs text-gray-500 font-medium flex items-center gap-1.5">
+          <ion-icon name="layers-outline"></ion-icon> {{ plan.totalEjercicios || 0 }} Ejercicios <span class="text-gray-300">•</span> {{ plan.nivel || 'General' }}
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>
+
+<ion-modal [isOpen]="mostrarModalOpciones" 
+           (didDismiss)="cerrarOpciones()"
+           [initialBreakpoint]="0.35" 
+           [breakpoints]="[0, 0.35]" 
+           handleBehavior="cycle">
+  <ng-template>
+    <ion-content style="--background: #ffffff;">
+      <div class="px-6 pt-6 pb-8" *ngIf="rutinaSeleccionada">
+
+        <div class="text-center mb-6">
+          <h3 class="text-xl font-black text-black uppercase tracking-tight truncate px-2">
+            {{ rutinaSeleccionada.nombre.replace('(Plantilla)', '').replace('(Copia)', '') }}
+          </h3>
+          <p class="text-xs text-gray-500 font-medium mt-1">
+            {{ rutinaSeleccionada.esPlantilla ? 'Plantilla Guardada' : 'Asignada a: ' + (rutinaSeleccionada.nombreAlumno || 'Sin asignar') }}
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          
+          <button (click)="editarRutina()" class="w-full bg-gray-50 border border-gray-200 text-black font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-100 shadow-sm">
+            <ion-icon name="create-outline" class="text-lg"></ion-icon> Editar / Ver Plan
+          </button>
+
+          <button (click)="iniciarBorrado()" class="w-full bg-red-50 border border-red-100 text-red-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-red-100 shadow-sm">
+            <ion-icon name="trash-outline" class="text-lg"></ion-icon> Eliminar permanentemente
+          </button>
+
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

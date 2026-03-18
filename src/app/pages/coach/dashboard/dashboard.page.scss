@@ -1,0 +1,6 @@
+/* En tu dashboard.page.scss */
+.cursor-pointer {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent; /* Quita el flash gris feo al tocar */
+  touch-action: manipulation; /* Mejora la respuesta al toque */
+}

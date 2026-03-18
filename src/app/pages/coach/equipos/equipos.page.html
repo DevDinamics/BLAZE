@@ -1,0 +1,172 @@
+<ion-content [fullscreen]="true" style="--background: #ffffff;">
+  <div class="min-h-full bg-white px-6 pt-12 pb-20 font-sans">
+
+    <div class="flex justify-between items-center mb-6">
+      <button (click)="regresar()" class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-black active:scale-95 transition-transform hover:bg-gray-100">
+        <ion-icon name="arrow-back" class="text-xl"></ion-icon>
+      </button>
+      <h1 class="text-lg font-bold text-black uppercase tracking-widest">Accesos</h1>
+      
+      <button (click)="crearNuevoEquipo()" 
+              class="h-10 w-10 rounded-full flex items-center justify-center active:scale-95 transition-all shadow-sm"
+              [ngClass]="equipos.length >= miPlan.maxEquipos ? 'bg-gray-100 text-gray-400 border border-gray-200' : 'bg-black text-white hover:bg-gray-800'">
+        <ion-icon [name]="equipos.length >= miPlan.maxEquipos ? 'lock-closed' : 'add'" class="text-xl"></ion-icon>
+      </button>
+    </div>
+
+    <div class="mb-8 bg-[#fff9f0] border border-[#ffe0b2] rounded-2xl p-4 animate-fade-in-up shadow-sm">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-[#f57c00] font-bold text-xs uppercase flex items-center gap-1">
+          <ion-icon name="star"></ion-icon> {{ miPlan.nombre }}
+        </h3>
+        <span class="bg-white px-2 py-1 rounded-md text-gray-500 text-[10px] uppercase font-bold border border-[#ffe0b2]">
+          Uso: <span class="text-black">{{ equipos.length }}</span> / {{ miPlan.maxEquipos }}
+        </span>
+      </div>
+      <p class="text-gray-600 text-xs leading-relaxed font-medium">
+        Gestiona hasta <strong class="text-black">{{ miPlan.maxMiembrosPorEquipo }} alumnos</strong> por equipo.
+      </p>
+    </div>
+
+    <div class="mb-6">
+      <h2 class="text-2xl font-black text-black italic uppercase tracking-tight">
+        Tus <span class="text-[#f57c00]">Equipos</span>
+      </h2>
+      <p class="text-gray-500 text-sm font-medium">Comparte estos códigos para dar acceso.</p>
+    </div>
+
+    <div *ngIf="cargando" class="flex justify-center py-10">
+      <ion-spinner name="crescent" color="dark"></ion-spinner>
+    </div>
+
+    <div *ngIf="!cargando" class="space-y-4">
+      
+      <div *ngFor="let equipo of equipos; let i = index" class="relative group animate-fade-in-up" [style.animation-delay]="i * 100 + 'ms'">
+        
+        <div class="bg-white rounded-3xl border border-gray-200 p-5 relative overflow-hidden transition-all shadow-sm hover:shadow-md">
+          
+          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#f57c00]"></div>
+
+          <button (click)="opcionesEquipo(equipo)" class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:text-black hover:bg-gray-100 transition-colors z-20 active:scale-90">
+            <ion-icon name="ellipsis-vertical"></ion-icon>
+          </button>
+          
+          <div class="flex justify-between items-start mb-5 pl-3 pr-6"> 
+            <div>
+              <h3 class="text-black font-black text-lg uppercase tracking-tight leading-none mb-1.5">{{ equipo.nombre }}</h3>
+              <p class="text-gray-500 text-xs font-medium truncate max-w-[150px]">{{ equipo.descripcion || 'Sin descripción' }}</p>
+            </div>
+            
+            <div class="flex items-center gap-1 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 mt-1">
+              <ion-icon name="people" class="text-gray-500 text-sm"></ion-icon> 
+              <span class="text-[11px] font-bold" 
+                    [ngClass]="(equipo.miembros?.length || 0) >= miPlan.maxMiembrosPorEquipo ? 'text-red-500' : 'text-gray-700'">
+                {{ equipo.miembros?.length || 0 }} / {{ miPlan.maxMiembrosPorEquipo }}
+              </span>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 border border-dashed border-gray-300 rounded-2xl p-4 flex items-center justify-between relative">
+            <div class="absolute -left-2 top-1/2 -translate-y-1/2 h-4 w-4 bg-white rounded-full border-r border-gray-300"></div>
+            <div class="absolute -right-2 top-1/2 -translate-y-1/2 h-4 w-4 bg-white rounded-full border-l border-gray-300"></div>
+
+            <div class="pl-2">
+              <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Código de Acceso</p>
+              <p class="text-2xl font-mono font-black text-black tracking-widest select-all cursor-text">{{ equipo.codigo }}</p>
+            </div>
+
+            <div class="flex gap-2 z-10">
+              <button (click)="copiarCodigo(equipo.codigo)" class="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black active:scale-90 hover:bg-black hover:text-white transition-colors shadow-sm">
+                <ion-icon name="copy-outline"></ion-icon>
+              </button>
+              <button class="h-10 w-10 rounded-xl bg-black flex items-center justify-center text-white active:scale-90 hover:bg-gray-800 transition-colors shadow-sm">
+                <ion-icon name="share-social-outline"></ion-icon>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="(equipo.miembros?.length || 0) >= miPlan.maxMiembrosPorEquipo" class="mt-4 text-center">
+             <p class="text-xs text-red-600 font-bold uppercase bg-red-50 py-1.5 rounded-lg border border-red-100 inline-flex items-center justify-center gap-1.5 px-3 w-full">
+               <ion-icon name="alert-circle" class="text-base"></ion-icon> Límite de alumnos alcanzado
+             </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="!cargando && equipos.length === 0" class="text-center py-20 flex flex-col items-center">
+      <div class="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-200 shadow-sm">
+        <ion-icon name="key-outline" class="text-4xl text-gray-400"></ion-icon>
+      </div>
+      <p class="text-black font-bold text-lg tracking-tight">Tu imperio comienza aquí</p>
+      <p class="text-sm text-gray-500 mt-1 max-w-[220px] font-medium leading-relaxed">Crea tu primer equipo para obtener un código de acceso.</p>
+    </div>
+
+  </div>
+</ion-content>
+
+<ion-modal [isOpen]="mostrarModalPro" 
+           (didDismiss)="mostrarModalPro = false"
+           [initialBreakpoint]="0.75" 
+           [breakpoints]="[0, 0.75, 0.9]" 
+           handleBehavior="cycle">
+  <ng-template>
+    <ion-content style="--background: #ffffff;">
+      <div class="px-6 pt-8 pb-10">
+        
+        <div class="flex justify-end mb-2">
+          <button (click)="mostrarModalPro = false" class="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 active:scale-90">
+            <ion-icon name="close-outline" class="text-xl"></ion-icon>
+          </button>
+        </div>
+
+        <div class="text-center mb-8">
+          <span class="inline-flex items-center gap-1 bg-[#fff9f0] border border-[#ffe0b2] text-[#f57c00] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-widest mb-3">
+            <ion-icon name="rocket-outline" class="text-sm"></ion-icon> BLAZE PRO
+          </span>
+          <h2 class="text-3xl font-black text-black tracking-tight leading-tight">Lleva tu negocio al <br>siguiente nivel</h2>
+        </div>
+
+        <div class="space-y-4 mb-10 px-2">
+          <div class="flex items-center gap-4">
+            <div class="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+              <ion-icon name="checkmark-circle" class="text-green-500 text-xl"></ion-icon>
+            </div>
+            <div>
+              <p class="text-black font-bold text-sm">Equipos ilimitados</p>
+              <p class="text-gray-500 text-xs">Crea todos los grupos que necesites.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+              <ion-icon name="checkmark-circle" class="text-green-500 text-xl"></ion-icon>
+            </div>
+            <div>
+              <p class="text-black font-bold text-sm">Hasta 50 alumnos por equipo</p>
+              <p class="text-gray-500 text-xs">Expande tu capacidad de entrenamiento.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+              <ion-icon name="checkmark-circle" class="text-green-500 text-xl"></ion-icon>
+            </div>
+            <div>
+              <p class="text-black font-bold text-sm">Análisis Avanzados</p>
+              <p class="text-gray-500 text-xs">Métricas detalladas de progreso.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="w-full bg-black text-white font-bold text-base py-4 rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-900">
+          <ion-icon name="star"></ion-icon> Obtener BLAZE PRO
+        </button>
+        <p class="text-center text-gray-400 text-xs mt-4 font-medium">Cancela en cualquier momento.</p>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

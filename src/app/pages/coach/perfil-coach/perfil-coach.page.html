@@ -1,0 +1,240 @@
+<ion-content [fullscreen]="true" style="--background: #ffffff;">
+  
+  <div class="min-h-full bg-white pb-24 font-sans text-gray-900 relative">
+
+    <button (click)="regresar()" class="absolute top-12 left-6 h-10 w-10 z-20 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-black hover:bg-gray-100 transition-colors shadow-sm active:scale-95">
+      <ion-icon name="arrow-back"></ion-icon>
+    </button>
+
+    <div *ngIf="cargando" class="flex justify-center items-center py-20">
+      <ion-spinner name="crescent" color="dark"></ion-spinner>
+    </div>
+
+    <div *ngIf="!cargando">
+      <div class="pt-16 pb-8 flex flex-col items-center">
+        
+        <div class="relative mb-4 z-10">
+          <div class="h-28 w-28 rounded-full bg-gray-50 overflow-hidden shadow-sm border border-gray-200">
+            <img [src]="coach.foto" class="h-full w-full object-contain mix-blend-multiply">
+          </div>
+          <button *ngIf="editando" (click)="abrirModalFoto()" class="absolute bottom-0 right-0 h-9 w-9 bg-black text-white rounded-full border-4 border-white shadow-sm flex items-center justify-center cursor-pointer active:scale-90 transition-transform">
+            <ion-icon name="camera-outline" class="text-sm"></ion-icon>
+          </button>
+        </div>
+        
+        <div class="text-center px-6">
+          <h1 class="text-2xl font-black tracking-tight text-black flex items-center justify-center gap-1 mb-1">
+            {{ coach.nombre }} {{ coach.apellido }}
+            <ion-icon name="checkmark-circle" class="text-green-500 text-xl"></ion-icon>
+          </h1>
+          <p class="text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">{{ coach.titulo }}</p>
+
+          <button (click)="alternarEdicion()" class="mt-6 bg-black text-white font-bold text-sm px-8 py-3 rounded-full active:scale-95 transition-transform shadow-md hover:bg-gray-800">
+            {{ editando ? 'Guardar Cambios' : 'Editar Perfil' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-center gap-3 px-6 mb-8">
+        <button (click)="tabActual = 'personal'" 
+                class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+                [ngClass]="tabActual === 'personal' ? 'bg-black text-white shadow-md' : 'bg-white text-black border border-gray-200 hover:bg-gray-50'">
+          Personal
+        </button>
+        <button (click)="tabActual = 'profesion'" 
+                class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+                [ngClass]="tabActual === 'profesion' ? 'bg-black text-white shadow-md' : 'bg-white text-black border border-gray-200 hover:bg-gray-50'">
+          Profesión
+        </button>
+        <button (click)="tabActual = 'cuenta'" 
+                class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+                [ngClass]="tabActual === 'cuenta' ? 'bg-black text-white shadow-md' : 'bg-white text-black border border-gray-200 hover:bg-gray-50'">
+          Cuenta
+        </button>
+      </div>
+
+      <div *ngIf="tabActual === 'personal'" class="px-6 animate-fade-in space-y-6">
+        
+        <div>
+          <h3 class="font-black text-xl tracking-tight text-black mb-1">Sobre ti</h3>
+          <p class="text-gray-500 text-sm font-medium mb-4">Ayuda a tus alumnos a conocerte mejor.</p>
+        </div>
+
+        <div class="border-b border-gray-100 pb-5">
+          <p class="text-sm font-bold text-black mb-2">Tu Biografía</p>
+          <div *ngIf="!editando">
+            <p class="text-gray-500 text-sm leading-relaxed">{{ coach.bio || 'No has agregado una biografía aún.' }}</p>
+          </div>
+          <div *ngIf="editando">
+            <textarea [(ngModel)]="coach.bio" rows="4" placeholder="Escribe un poco sobre tu filosofía..." 
+                      class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm resize-none"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
+          <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+            <ion-icon name="person-outline" class="text-gray-600 text-lg"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-bold text-black">Nombre Completo</p>
+            <p *ngIf="!editando" class="text-gray-500 text-sm">{{ coach.nombre }} {{ coach.apellido }}</p>
+            <div *ngIf="editando" class="flex gap-2 mt-2">
+                <input [(ngModel)]="coach.nombre" placeholder="Nombre" class="bg-gray-50 border border-gray-200 w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+                <input [(ngModel)]="coach.apellido" placeholder="Apellido" class="bg-gray-50 border border-gray-200 w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="tabActual === 'profesion'" class="px-6 animate-fade-in space-y-6">
+        
+        <div>
+          <h3 class="font-black text-xl tracking-tight text-black mb-1">Ficha Técnica</h3>
+          <p class="text-gray-500 text-sm font-medium mb-4">Tus credenciales como profesional.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-3xl border border-gray-200 shadow-sm p-2">
+          
+          <div class="flex items-center p-4 border-b border-gray-200/60">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
+              <ion-icon name="briefcase-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Cargo / Título</p>
+              <div *ngIf="!editando"><span class="text-gray-500 text-sm font-medium">{{ coach.titulo || 'No especificado' }}</span></div>
+              <div *ngIf="editando">
+                <input type="text" [(ngModel)]="coach.titulo" placeholder="Ej: Head Coach" class="bg-white text-black border border-gray-200 w-full px-3 py-2 rounded-lg text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4 border-b border-gray-200/60">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
+              <ion-icon name="ribbon-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Especialidad</p>
+              <div *ngIf="!editando"><span class="text-gray-500 text-sm font-medium">{{ coach.especialidad || 'No especificado' }}</span></div>
+              <div *ngIf="editando">
+                <input type="text" [(ngModel)]="coach.especialidad" placeholder="Ej: Hipertrofia" class="bg-white text-black border border-gray-200 w-full px-3 py-2 rounded-lg text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4 border-b border-gray-200/60">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
+              <ion-icon name="time-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Experiencia</p>
+              <div *ngIf="!editando"><span class="text-gray-500 text-sm font-medium">{{ coach.experiencia || 'No especificado' }}</span></div>
+              <div *ngIf="editando">
+                <input type="text" [(ngModel)]="coach.experiencia" placeholder="Ej: 5 años" class="bg-white text-black border border-gray-200 w-full px-3 py-2 rounded-lg text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center p-4">
+            <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
+              <ion-icon name="school-outline" class="text-gray-600 text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm text-black mb-1">Certificaciones</p>
+              <div *ngIf="!editando"><span class="text-gray-500 text-sm font-medium">{{ coach.certificaciones || 'No especificado' }}</span></div>
+              <div *ngIf="editando">
+                <input type="text" [(ngModel)]="coach.certificaciones" placeholder="Ej: ISSA CPT" class="bg-white text-black border border-gray-200 w-full px-3 py-2 rounded-lg text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div *ngIf="tabActual === 'cuenta'" class="px-6 animate-fade-in space-y-8">
+        
+        <div>
+          <h3 class="font-black text-xl tracking-tight text-black mb-4">Seguridad</h3>
+          <div class="bg-gray-50 rounded-3xl border border-gray-200 shadow-sm p-5 space-y-4">
+            
+            <div class="relative">
+              <input [type]="mostrarPass ? 'text' : 'password'" [(ngModel)]="passwords.actual" placeholder="Contraseña Actual" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+            </div>
+            <div class="relative">
+              <input [type]="mostrarPass ? 'text' : 'password'" [(ngModel)]="passwords.nueva" placeholder="Nueva Contraseña" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+            </div>
+            <div class="relative">
+              <input [type]="mostrarPass ? 'text' : 'password'" [(ngModel)]="passwords.confirmar" placeholder="Confirmar Nueva Contraseña" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+            </div>
+            
+            <div class="flex justify-between items-center pt-2">
+              <button (click)="togglePass()" class="text-gray-500 text-[10px] font-bold uppercase flex items-center gap-1 hover:text-black transition-colors">
+                <ion-icon [name]="mostrarPass ? 'eye-off-outline' : 'eye-outline'"></ion-icon> 
+                {{ mostrarPass ? 'Ocultar' : 'Mostrar' }}
+              </button>
+
+              <button (click)="cambiarPassword()" class="bg-black text-white text-[10px] font-bold px-5 py-2.5 rounded-full hover:bg-gray-800 transition-colors shadow-sm">
+                ACTUALIZAR
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-black text-xl tracking-tight text-black mb-4">Gestión de Cuenta</h3>
+          
+          <div class="space-y-3">
+            <button (click)="cerrarSesion()" class="w-full bg-white text-gray-700 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 shadow-sm">
+               <ion-icon name="log-out-outline" class="text-lg"></ion-icon> Cerrar Sesión
+            </button>
+
+            <button (click)="confirmarEliminarCuenta()" class="w-full bg-red-50 text-red-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 border border-red-100 hover:bg-red-100 shadow-sm">
+               <ion-icon name="trash-outline" class="text-lg"></ion-icon> Eliminar Cuenta
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</ion-content>
+
+<ion-modal [isOpen]="mostrarModalAvatares" 
+           (didDismiss)="mostrarModalAvatares = false"
+           [initialBreakpoint]="0.6" 
+           [breakpoints]="[0, 0.6, 0.8]" 
+           handleBehavior="cycle"
+           class="avatar-modal">
+  <ng-template>
+    <ion-content style="--background: #ffffff;">
+      <div class="p-6 pt-8">
+        
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-black text-black tracking-tight">Cambia tu estilo</h2>
+          <p class="text-gray-500 text-sm font-medium mt-1">Selecciona tu nuevo avatar 3D</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-5 px-2 pb-10">
+          
+          <div *ngFor="let avatar of avataresDisponibles" 
+               (click)="seleccionarAvatar(avatar)"
+               class="relative cursor-pointer transition-transform active:scale-95">
+            
+            <div class="rounded-full p-1.5 transition-all duration-300 border-2"
+                 [ngClass]="coach.foto === avatar ? 'border-black shadow-md scale-105 bg-gray-50' : 'border-transparent bg-transparent opacity-70 hover:opacity-100'">
+              
+              <img [src]="avatar" class="w-full aspect-square rounded-full object-cover bg-gray-100 border border-gray-200 mix-blend-multiply">
+              
+            </div>
+
+            <div *ngIf="coach.foto === avatar" class="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 shadow-md animate-fade-in z-10 border-2 border-white">
+              <ion-icon name="checkmark-outline" class="text-white text-lg block font-bold"></ion-icon>
+            </div>
+            
+          </div>
+          
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

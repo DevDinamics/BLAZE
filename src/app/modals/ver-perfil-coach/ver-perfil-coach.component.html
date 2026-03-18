@@ -1,0 +1,91 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: #000;">
+    <div class="px-4 pt-4 flex justify-between items-center">
+      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Perfil del Coach</p>
+      <button (click)="cerrar()" class="h-8 w-8 rounded-full bg-[#111] flex items-center justify-center text-white border border-gray-800 hover:bg-gray-800 transition-colors">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content style="--background: #000;">
+  <div class="min-h-full bg-black pb-10 font-sans px-6">
+
+    <div class="flex flex-col items-center mt-6 mb-8 animate-fade-in-up">
+      <div class="relative h-32 w-32 mb-4">
+        <div class="absolute inset-0 bg-[#ffa500] blur-2xl opacity-20 rounded-full"></div>
+        <img [src]="coach?.foto || 'assets/avatar.png'" class="relative h-full w-full rounded-full object-cover border-4 border-black ring-2 ring-[#ffa500]">
+        
+        <div class="absolute bottom-1 right-1 bg-blue-500 text-white h-8 w-8 rounded-full flex items-center justify-center border-4 border-black z-10">
+          <ion-icon name="checkmark-circle" class="text-lg"></ion-icon>
+        </div>
+      </div>
+
+      <h1 class="text-2xl font-black text-white uppercase tracking-tight text-center">
+        {{ coach?.nombre }} {{ coach?.apellido }}
+      </h1>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="bg-[#ffa500]/10 text-[#ffa500] px-3 py-1 rounded text-[10px] font-black uppercase tracking-wider border border-[#ffa500]/20">
+          {{ coach?.titulo || 'Coach FitGo' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="mb-8 relative group animate-fade-in-up" style="animation-delay: 100ms;">
+      <div class="absolute -inset-0.5 bg-gradient-to-r from-[#ffa500] to-orange-700 rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
+      <div class="relative bg-[#111] rounded-xl border border-gray-800 p-5">
+        <ion-icon name="chatbox-ellipses" class="text-[#ffa500] text-xl mb-2 opacity-50"></ion-icon>
+        <p class="text-gray-300 text-sm leading-relaxed italic font-medium">
+          "{{ coach?.bio || 'Listo para llevarte al siguiente nivel.' }}"
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-4 animate-fade-in-up" style="animation-delay: 200ms;">
+      <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-1">Información Profesional</p>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-[#111] p-4 rounded-2xl border border-gray-800 flex flex-col justify-between h-24">
+          <div class="h-8 w-8 rounded-lg bg-gray-900 flex items-center justify-center text-[#ffa500]">
+            <ion-icon name="ribbon"></ion-icon>
+          </div>
+          <div>
+            <p class="text-[9px] text-gray-500 font-bold uppercase">Especialidad</p>
+            <p class="text-white font-bold text-xs uppercase">{{ coach?.especialidad || 'General' }}</p>
+          </div>
+        </div>
+
+        <div class="bg-[#111] p-4 rounded-2xl border border-gray-800 flex flex-col justify-between h-24">
+          <div class="h-8 w-8 rounded-lg bg-gray-900 flex items-center justify-center text-[#ffa500]">
+            <ion-icon name="time"></ion-icon>
+          </div>
+          <div>
+            <p class="text-[9px] text-gray-500 font-bold uppercase">Experiencia</p>
+            <p class="text-white font-bold text-xs uppercase">{{ coach?.experiencia || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-[#111] p-4 rounded-2xl border border-gray-800 flex items-center gap-4">
+        <div class="h-10 w-10 shrink-0 rounded-lg bg-gray-900 flex items-center justify-center text-[#ffa500] text-xl">
+          <ion-icon name="school"></ion-icon>
+        </div>
+        <div>
+          <p class="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Certificaciones</p>
+          <p class="text-white font-bold text-xs leading-tight">{{ coach?.certificaciones || 'Sin información pública' }}</p>
+        </div>
+      </div>
+    </div>
+    <!-- Botón para enviar mensaje
+     
+    <div class="mt-8 animate-fade-in-up" style="animation-delay: 300ms;">
+      <button class="w-full bg-[#ffa500] text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+        <ion-icon name="chatbubble-ellipses"></ion-icon>
+        Enviar Mensaje
+      </button>
+    </div>
+     -->
+
+  </div>
+</ion-content>

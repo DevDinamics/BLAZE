@@ -1,0 +1,30 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: #000;">
+    <ion-buttons slot="start">
+      <ion-button (click)="cancelar()" color="medium">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="text-white font-heading italic uppercase text-sm">Nueva Story</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" style="--background: #000;">
+  <div class="h-full flex flex-col bg-black">
+    
+    <div class="flex-1 relative overflow-hidden rounded-3xl mx-4 mt-4 border border-gray-800">
+      <img [src]="imagePath" class="h-full w-full object-cover">
+      
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+    </div>
+
+    <div class="p-6">
+      <button (click)="confirmarSubida()" 
+              class="w-full bg-[#ffa500] hover:bg-[#ffb700] text-black font-black py-4 rounded-xl text-lg uppercase shadow-[0_0_20px_rgba(255,165,0,0.4)] transition-all active:scale-95 flex items-center justify-center gap-2">
+        <ion-icon name="rocket" class="text-xl"></ion-icon>
+        PUBLICAR AHORA
+      </button>
+    </div>
+
+  </div>
+</ion-content>

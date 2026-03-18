@@ -1,0 +1,130 @@
+<ion-header class="ion-no-border absolute top-0 w-full z-50">
+  <div class="pt-safe bg-white/80 backdrop-blur-xl border-b border-gray-100 px-6 pb-3 flex justify-between items-center">
+    <div>
+      <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-0.5 leading-none mt-2">Métricas</p>
+      <h1 class="text-2xl font-black text-black tracking-tight leading-none">
+        TUS <span class="text-[#f57c00]">LOGROS</span>
+      </h1>
+    </div>
+    <div class="h-10 w-10 rounded-full border border-gray-200 p-0.5 bg-white shadow-sm mt-1">
+      <img [src]="perfil?.foto || 'https://ui-avatars.com/api/?name=' + (perfil?.nombre || 'User')" class="h-full w-full rounded-full object-cover mix-blend-multiply">
+    </div>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true" style="--background: #f9fafb;">
+  
+  <div class="px-5 pt-28 pb-32 bg-[#f9fafb] min-h-full font-sans">
+    
+    <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm relative overflow-hidden mb-8 group">
+      
+      <div class="absolute -right-4 -top-4 opacity-[0.03]">
+        <ion-icon name="trophy" class="text-9xl text-black"></ion-icon>
+      </div>
+
+      <button (click)="compartirLogro()" class="absolute top-4 right-4 h-10 w-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-black hover:text-white active:scale-90 transition-all z-20 shadow-sm">
+        <ion-icon name="share-social-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="flex items-center gap-4 relative z-10 mb-6 mt-1">
+        <div class="h-16 w-16 rounded-2xl bg-black flex items-center justify-center shadow-md shrink-0">
+          <p class="text-white font-black text-3xl">{{ nivelActual }}</p>
+        </div>
+        <div class="flex-1">
+          <h2 class="text-black font-black uppercase text-2xl tracking-tight leading-none mb-1.5">NIVEL {{ nivelActual }}</h2>
+          <p class="text-[#f57c00] font-bold text-[10px] uppercase tracking-widest flex items-center gap-1 bg-[#f57c00]/10 inline-flex px-2.5 py-1 rounded-md border border-[#f57c00]/20">
+            <ion-icon name="flame"></ion-icon> {{ perfil?.xpTotal || 0 }} XP TOTALES
+          </p>
+        </div>
+      </div>
+
+      <div class="relative z-10">
+        <div class="flex justify-between items-end text-[10px] font-bold mb-2 uppercase tracking-wider">
+          <span class="text-gray-400">Progreso Actual</span>
+          <span class="text-black">Faltan <span class="text-[#f57c00]">{{ xpParaSiguienteNivel - (perfil?.xpTotal || 0) }} XP</span></span>
+        </div>
+        
+        <div class="h-3 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200 shadow-inner">
+          <div class="h-full bg-[#f57c00] rounded-full transition-all duration-1000 ease-out relative"
+               [style.width]="porcentajeProgreso + '%'">
+            <div class="absolute inset-0 w-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h3 class="text-black text-sm font-black tracking-tight mb-3 pl-1 flex items-center gap-2">
+        <ion-icon name="calendar-outline" class="text-gray-400"></ion-icon> Tu Semana
+      </h3>
+      <div class="bg-white border border-gray-200 rounded-3xl p-5 flex justify-between items-center shadow-sm">
+        
+        <div *ngFor="let dia of semana" class="flex flex-col items-center gap-2">
+          <div class="h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all shadow-sm"
+               [ngClass]="dia.completado ? 'bg-[#f57c00] border-[#f57c00] text-white' : 'bg-gray-50 border-gray-100 text-gray-300'">
+            <ion-icon *ngIf="dia.completado" name="flame" class="text-lg"></ion-icon>
+            <span *ngIf="!dia.completado" class="text-xs font-bold">{{ dia.dia }}</span>
+          </div>
+          <span class="text-[10px] font-bold uppercase" [ngClass]="dia.completado ? 'text-black' : 'text-gray-400'">{{ dia.dia }}</span>
+        </div>
+
+      </div>
+    </div>
+
+    <h3 class="text-black text-sm font-black tracking-tight mb-3 pl-1 flex items-center gap-2 mt-2">
+      <ion-icon name="trending-up-outline" class="text-gray-400"></ion-icon> Estadísticas
+    </h3>
+    
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      
+      <div class="bg-white rounded-3xl p-5 border border-gray-200 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <div class="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100">
+            <ion-icon name="checkmark-circle-outline" class="text-xl"></ion-icon>
+          </div>
+          <span class="text-emerald-600 text-[10px] font-bold flex items-center gap-0.5 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+            <ion-icon name="arrow-up-outline"></ion-icon> {{ stats.tendenciaEntrenos }}
+          </span>
+        </div>
+        <p class="text-3xl font-black text-black">{{ stats.entrenosCompletados }}</p>
+        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Entrenos</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 border border-gray-200 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <div class="h-10 w-10 rounded-full bg-orange-50 flex items-center justify-center text-[#f57c00] border border-orange-100 z-10">
+            <ion-icon name="flame" class="text-xl"></ion-icon>
+          </div>
+          <div class="absolute -right-3 -bottom-3 opacity-5">
+            <ion-icon name="flame" class="text-7xl text-[#f57c00]"></ion-icon>
+          </div>
+        </div>
+        <p class="text-3xl font-black text-black relative z-10">{{ stats.rachaDias }} <span class="text-sm text-gray-400 font-bold">Días</span></p>
+        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 relative z-10">Racha Activa</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 border border-gray-200 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <div class="h-10 w-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500 border border-purple-100">
+            <ion-icon name="barbell-outline" class="text-xl"></ion-icon>
+          </div>
+          <span class="text-emerald-600 text-[10px] font-bold flex items-center gap-0.5 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+            <ion-icon name="arrow-up-outline"></ion-icon> {{ stats.tendenciaKilos }}
+          </span>
+        </div>
+        <p class="text-3xl font-black text-black">{{ (stats.kilosLevantados / 1000).toFixed(1) }}k</p>
+        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Kilos Totales</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 border border-gray-200 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div class="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mb-3 border border-emerald-100">
+          <ion-icon name="time-outline" class="text-xl"></ion-icon>
+        </div>
+        <p class="text-3xl font-black text-black">{{ stats.minutosEntrenados }} <span class="text-sm text-gray-400 font-bold">Min</span></p>
+        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Tiempo Total</p>
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>
