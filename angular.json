@@ -18,8 +18,10 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "www",
-            
+            "outputPath": {
+              "base": "www",
+              "browser": ""
+            },
             "index": "src/index.html",
             "polyfills": [
               "src/polyfills.ts"
@@ -27,10 +29,11 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
+               "src/_redirects",
               {
-                "glob": "**/*",
+               "glob": "**/*",
                 "input": "src/assets",
-                "output": "assets"
+               "output": "assets"
               }
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
