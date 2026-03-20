@@ -1,12 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// 👇 CAMBIO 
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone'; 
-// (Los servicios y controladores sí se quedan en @ionic/angular)
 import { NavController, ToastController, Platform } from '@ionic/angular';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+// 👇 CAMBIO 1: Importamos 'take' de RxJS
+import { filter, take } from 'rxjs/operators'; 
 import { AuthService } from 'src/app/services/auth';
+
+// 👇 CAMBIO 2: ¡Tus iconos! No los podemos olvidar aquí
+import { addIcons } from 'ionicons';
+import { logoGoogle, logoApple, mailOutline, lockClosedOutline, eyeOutline, arrowForwardOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +20,6 @@ import { AuthService } from 'src/app/services/auth';
 })
 export class AppComponent implements OnInit {
   
-  // Guardamos la ruta actual para saber dónde está el usuario
   rutaActual: string = '';
 
   constructor(
@@ -27,6 +29,8 @@ export class AppComponent implements OnInit {
     private toastCtrl: ToastController,
     private platform: Platform
   ) {
+    // Registramos los iconos globalmente para que no desaparezcan
+    addIcons({ logoGoogle, logoApple, mailOutline, lockClosedOutline, eyeOutline, arrowForwardOutline });
     this.rastrearRutaActual();
   }
 
@@ -38,7 +42,6 @@ export class AppComponent implements OnInit {
   // ==========================================
   // 📍 1. RASTREADOR DE RUTAS
   // ==========================================
-  // Mantiene actualizada la variable rutaActual cada vez que el usuario navega
   rastrearRutaActual() {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -53,26 +56,18 @@ export class AppComponent implements OnInit {
   iniciarVigilanteSeguridad() {
     this.authService.user$.subscribe(async (user) => {
       
-      // Definimos cuáles son las pantallas donde un usuario NO logueado puede estar
       const rutasPublicas = ['/login', '/registro'];
       const esRutaPublica = rutasPublicas.some(ruta => this.rutaActual.includes(ruta));
 
-      // 🚨 CASO A: NO HAY USUARIO, PERO ESTÁ EN UNA ZONA PRIVADA (Dashboard, etc.)
       if (!user && !esRutaPublica && this.rutaActual !== '') {
         console.warn('🔒 ALERTA: Sesión cerrada en otra pestaña o expirada.');
-        
-        // 1. Expulsión inmediata
         this.navCtrl.navigateRoot('/login');
-        
-        // 2. Notificación visual en la pestaña que fue expulsada
         this.mostrarAlertaExpulsion();
       }
 
-      // ✅ CASO B: HAY USUARIO, PERO ESTÁ EN EL LOGIN/REGISTRO
-      // (Previene que alguien logueado intente entrar al login escribiendo la URL)
       if (user && esRutaPublica) {
-        // Redirigimos silenciosamente a su dashboard correspondiente
-        this.redirigirPorRol(user.uid);
+        // 👇 CAMBIO 3: Quitamos el uid porque no lo usabas dentro de la función
+        this.redirigirPorRol(); 
       }
     });
   }
@@ -80,9 +75,9 @@ export class AppComponent implements OnInit {
   // ==========================================
   // 🚀 3. UTILIDADES DE REDIRECCIÓN Y ALERTAS
   // ==========================================
-  async redirigirPorRol(uid: string) {
-    // Si ya está logueado y abre /login en otra pestaña, lo mandamos a su panel
-    this.authService.perfilCompleto$.subscribe(perfil => {
+  async redirigirPorRol() {
+    // 👇 CAMBIO 4: Añadimos .pipe(take(1)) para evitar una fuga de memoria
+    this.authService.perfilCompleto$.pipe(take(1)).subscribe(perfil => {
       if (perfil) {
         if (perfil['rol'] === 'coach') {
           this.navCtrl.navigateRoot('/coach/dashboard');
