@@ -1,16 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, NavController, ToastController, Platform } from '@ionic/angular';
+// 👇 CAMBIO 
+import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone'; 
+// (Los servicios y controladores sí se quedan en @ionic/angular)
+import { NavController, ToastController, Platform } from '@ionic/angular';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AuthService } from 'src/app/services/auth'; // 👈 Asegúrate de que esta ruta sea correcta
+import { AuthService } from 'src/app/services/auth';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule],
+  imports: [IonApp, IonRouterOutlet, CommonModule],
 })
 export class AppComponent implements OnInit {
   
