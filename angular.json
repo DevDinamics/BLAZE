@@ -18,6 +18,8 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+            "prerender": false,
+           "ssr": false,
             "outputPath": "dist/app",
             "index": "src/index.html",
             "polyfills": [
