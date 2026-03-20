@@ -2,12 +2,18 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { IonicModule, ToastController, NavController } from '@ionic/angular';
+
+// 👇 IMPORTANTE: Componentes específicos para Standalone
+import { 
+  IonContent, IonIcon, IonSegment, IonSegmentButton, 
+  IonLabel, ToastController, NavController 
+} from '@ionic/angular/standalone'; 
+
 import { CoachService } from 'src/app/services/coach'; 
 import { AuthService } from 'src/app/services/auth';   
 import { addIcons } from 'ionicons';
 
-// 👇 1. ÍCONOS MINIMALISTAS (OUTLINE)
+// 👇 ÍCONOS
 import { 
   checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
   trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
@@ -24,11 +30,28 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, RouterModule]
+  // 👇 Cambiamos IonicModule por la lista de componentes usados
+  imports: [
+    CommonModule, FormsModule, RouterModule,
+    IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel
+  ]
 })
 export class CoachDashboardPage implements OnInit, OnDestroy {
 
   private firestore = inject(Firestore);
+
+  // 👇 VARIABLES DE ICONOS (El truco para que Netlify no los borre)
+  iconSettings = settingsOutline;
+  iconBarbell = barbellOutline;
+  iconClipboard = clipboardOutline;
+  iconRestaurant = restaurantOutline;
+  iconKey = keyOutline;
+  iconCheck = checkmarkCircleOutline;
+  iconTime = timeOutline;
+  iconClose = closeCircleOutline;
+  iconRefresh = refreshOutline;
+  iconTrophy = trophyOutline;
+  iconFlame = flameOutline;
 
   segmentoActual = 'pendientes';
   pendientes: any[] = [];
@@ -44,7 +67,7 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private navCtrl: NavController 
   ) {
-    // 👇 Registramos los nuevos íconos finos
+    // Registro preventivo
     addIcons({ 
       checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
       trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
@@ -74,7 +97,11 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
 
   cargarSolicitudesReales() {
     if (!this.uidCoach) return;
-    const q = query(collection(this.firestore, 'solicitudes_aprobacion'), where('coachId', '==', this.uidCoach), where('estado', '==', 'pendiente'), orderBy('fecha', 'desc'));
+    const q = query(collection(this.firestore, 'solicitudes_aprobacion'), 
+              where('coachId', '==', this.uidCoach), 
+              where('estado', '==', 'pendiente'), 
+              orderBy('fecha', 'desc'));
+              
     this.suscripcionSolicitudes = onSnapshot(q, (snapshot) => {
       this.pendientes = snapshot.docs.map(doc => {
         const data = doc.data();
