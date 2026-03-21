@@ -1,13 +1,22 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController, LoadingController } from '@ionic/angular'; 
+
+// 👇 1. Importaciones Standalone correctas
+import { 
+  IonHeader, IonToolbar, IonContent, IonIcon, IonFooter, 
+  IonModal, NavController, ToastController, LoadingController 
+} from '@ionic/angular/standalone'; 
+
 import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 import { addIcons } from 'ionicons';
+
+// 👇 2. Importación de Iconos
 import { 
-  timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, playCircleOutline, reloadOutline, 
-  playOutline, closeOutline, bulbOutline, flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
+  timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
+  playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
+  flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
   informationCircleOutline, trophyOutline, checkmarkCircle, close
 } from 'ionicons/icons';
 
@@ -16,11 +25,29 @@ import {
   templateUrl: './mi-rutina.page.html',
   styleUrls: ['./mi-rutina.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  // 👇 3. Agregamos los componentes de Ionic
+  imports: [
+    CommonModule, FormsModule, 
+    IonHeader, IonToolbar, IonContent, IonIcon, IonFooter, IonModal
+  ]
 })
 export class MiRutinaPage implements OnDestroy {
 
   public window = window;
+
+  // 👇 4. VARIABLES DE ICONOS (El escudo anti-crash)
+  iconInfo = informationCircleOutline;
+  iconTime = timeOutline;
+  iconFlame = flameOutline;
+  iconCheckCircle = checkmarkCircle;
+  iconRepeat = repeatOutline;
+  iconPlayCircle = playCircleOutline;
+  iconFlash = flashOutline;
+  iconCheck = checkmarkOutline;
+  iconReload = reloadOutline;
+  iconClose = closeOutline;
+  iconBulb = bulbOutline;
+  iconTrophy = trophyOutline;
 
   modalTecnicaAbierto = false;
   ejercicioSeleccionado: any = null;
@@ -28,7 +55,6 @@ export class MiRutinaPage implements OnDestroy {
   tiempoRestante = 0;
   intervaloDescanso: any = null;
   
-  // 👇 Cronómetro Global de la Sesión
   tiempoSesionSegundos = 0;
   intervaloSesion: any = null;
 
@@ -43,10 +69,11 @@ export class MiRutinaPage implements OnDestroy {
     private authService: AuthService,
     private studentService: StudentService
   ) {
-    // 💡 Asegúrate de incluir 'checkmarkCircle' (sin el outline) que usas en el HTML para cuando se completa el ejercicio
+    // Registro preventivo
     addIcons({ 
-      timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, playCircleOutline, reloadOutline, 
-      playOutline, closeOutline, bulbOutline, flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
+      timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
+      playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
+      flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
       informationCircleOutline, trophyOutline, checkmarkCircle, close
     });
   }
@@ -78,13 +105,12 @@ export class MiRutinaPage implements OnDestroy {
               ejercicios: datosSesion.ejercicios.map((e: any) => ({
                 ...e,
                 seriesHechas: 0,
-                peso: null, // Aquí el usuario anotará los kilos
+                peso: null,
                 completado: false,
                 nota: e.nota || '' 
               }))
             };
 
-            // 👇 INICIAMOS EL CRONÓMETRO GLOBAL
             this.iniciarCronometroSesion();
           }
         }
@@ -115,9 +141,6 @@ export class MiRutinaPage implements OnDestroy {
     if (this.intervaloSesion) clearInterval(this.intervaloSesion); 
   }
 
-  // ==========================================
-  // ⏱️ CRONÓMETRO DE LA SESIÓN
-  // ==========================================
   iniciarCronometroSesion() {
     this.tiempoSesionSegundos = 0;
     if (this.intervaloSesion) clearInterval(this.intervaloSesion);
@@ -133,9 +156,6 @@ export class MiRutinaPage implements OnDestroy {
     return `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
   }
 
-  // ==========================================
-  // 🏋️‍♂️ LÓGICA DE SETS Y DESCANSO
-  // ==========================================
   async registrarSet(index: number) {
     if (!this.sesionHoy) return;
     const ejercicio = this.sesionHoy.ejercicios[index];
@@ -199,44 +219,32 @@ export class MiRutinaPage implements OnDestroy {
     this.ejercicioSeleccionado = null;
   }
   
-  // ==========================================
-  // 🏁 FINALIZAR Y CALCULAR VOLUMEN
-  // ==========================================
   terminarRutina() { 
-    if (this.intervaloSesion) clearInterval(this.intervaloSesion); // Detenemos el reloj
+    if (this.intervaloSesion) clearInterval(this.intervaloSesion);
 
-    // 🧮 CALCULADORA DE VOLUMEN (KILOS MOVIDOS)
     let volumenTotal = 0;
 
     this.sesionHoy.ejercicios.forEach((ej: any) => {
-      // Solo sumamos si el usuario registró un peso
       if (ej.peso && ej.peso > 0) {
-        
-        // Extraemos el número de repeticiones (ej. "10-12" => sacamos el "10")
-        let repeticionesPromedio = 10; // Valor por defecto
-        
+        let repeticionesPromedio = 10;
         if (ej.reps) {
-           // Si el coach escribió "12", "10-12" o "al fallo", intentamos sacar el primer número
            const numerosEnReps = String(ej.reps).match(/\d+/);
            if (numerosEnReps) {
              repeticionesPromedio = parseInt(numerosEnReps[0]);
            }
         }
-
-        // Fórmula: Peso * Repeticiones * Series Hechas
         const volumenDelEjercicio = ej.peso * repeticionesPromedio * ej.seriesHechas;
         volumenTotal += volumenDelEjercicio;
       }
     });
 
-    // 🚀 ENVIAR DATOS A "MISIÓN CUMPLIDA"
     this.navCtrl.navigateRoot(['/entreno/resumen'], {
       state: { 
         datos: {
-          nombreRutina: this.sesionHoy.nombre, // 👈 Se llama nombreRutina en tu ResumenPage
+          nombreRutina: this.sesionHoy.nombre, 
           xpGanada: this.sesionHoy.xp,
-          totalKilos: volumenTotal, // 👈 Ahora sí enviamos los kilos reales
-          tiempo: this.obtenerTiempoFormateado() // 👈 Enviamos el cronómetro (ej. "45:30")
+          totalKilos: volumenTotal, 
+          tiempo: this.obtenerTiempoFormateado() 
         }
       }
     }); 

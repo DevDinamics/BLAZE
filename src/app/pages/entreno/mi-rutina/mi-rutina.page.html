@@ -28,7 +28,7 @@
   <div class="min-h-full bg-[#f9fafb] px-4 pb-48 pt-6 font-sans">
     
     <div *ngIf="sesionHoy && !sesionHoy.esDiaCorrecto" class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6 flex items-start gap-3 animate-fade-in shadow-sm">
-      <ion-icon name="information-circle-outline" class="text-blue-500 text-xl mt-0.5"></ion-icon>
+      <ion-icon [icon]="iconInfo" class="text-blue-500 text-xl mt-0.5"></ion-icon>
       <div class="flex-1">
         <p class="text-[11px] text-gray-600 font-medium leading-relaxed">
           <span class="text-blue-600 font-bold uppercase tracking-tighter">Nota de sesión:</span><br>
@@ -40,7 +40,7 @@
     <div class="flex gap-3 mb-8">
       <div class="flex-1 bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3">
         <div class="h-9 w-9 bg-gray-50 rounded-full flex items-center justify-center">
-          <ion-icon name="time-outline" class="text-gray-400 text-lg"></ion-icon>
+          <ion-icon [icon]="iconTime" class="text-gray-400 text-lg"></ion-icon>
         </div>
         <div>
           <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Duración</p>
@@ -49,7 +49,7 @@
       </div>
       <div class="flex-1 bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3">
         <div class="h-9 w-9 bg-orange-50 rounded-full flex items-center justify-center">
-          <ion-icon name="flame-outline" class="text-orange-500 text-lg"></ion-icon>
+          <ion-icon [icon]="iconFlame" class="text-orange-500 text-lg"></ion-icon>
         </div>
         <div>
           <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Recompensa</p>
@@ -69,7 +69,7 @@
                  class="h-full w-full rounded-2xl object-cover bg-gray-50 border border-gray-100" 
                  [ngClass]="{'opacity-40 grayscale': ejercicio.completado}">
             <div *ngIf="ejercicio.completado" class="absolute inset-0 flex items-center justify-center">
-              <ion-icon name="checkmark-circle" class="text-emerald-500 text-3xl bg-white rounded-full"></ion-icon>
+              <ion-icon [icon]="iconCheckCircle" class="text-emerald-500 text-3xl bg-white rounded-full"></ion-icon>
             </div>
           </div>
           
@@ -79,7 +79,7 @@
             </h3>
             
             <p class="text-emerald-600 text-[10px] font-bold uppercase mb-4 flex items-center gap-1.5" [ngClass]="{'text-emerald-300': ejercicio.completado}">
-              <ion-icon name="repeat-outline"></ion-icon> 
+              <ion-icon [icon]="iconRepeat"></ion-icon> 
               <span *ngIf="!ejercicio.completado">Serie {{ ejercicio.seriesHechas + 1 }} de {{ ejercicio.series }}</span>
               <span *ngIf="ejercicio.completado">¡Ejercicio Completado!</span>
               <span class="text-gray-300">|</span> 
@@ -89,14 +89,14 @@
             <div class="flex flex-wrap items-center gap-2">
               <button (click)="verTecnica(ejercicio)" 
                       class="flex items-center gap-1.5 bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase active:scale-95 transition-transform border border-gray-200">
-                <ion-icon name="play-circle-outline" class="text-gray-400 text-sm"></ion-icon>
+                <ion-icon [icon]="iconPlayCircle" class="text-gray-400 text-sm"></ion-icon>
                 <span>Técnica</span>
               </button>
 
               <div *ngIf="ejercicio.nota" 
                    [ngClass]="getNotaClass(ejercicio.nota)"
                    class="flex items-center gap-1 border px-2 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-tight">
-                <ion-icon name="flash-outline" class="text-[11px]"></ion-icon>
+                <ion-icon [icon]="iconFlash" class="text-[11px]"></ion-icon>
                 {{ ejercicio.nota }}
               </div>
             </div>
@@ -111,7 +111,7 @@
                       stroke-linecap="round" class="transition-all duration-500"></circle>
             </svg>
             <span *ngIf="!ejercicio.completado" class="absolute text-[11px] font-bold text-gray-900">{{ ejercicio.series - ejercicio.seriesHechas }}</span>
-            <ion-icon *ngIf="ejercicio.completado" name="checkmark-outline" class="absolute text-emerald-500 text-xl font-bold"></ion-icon>
+            <ion-icon *ngIf="ejercicio.completado" [icon]="iconCheck" class="absolute text-emerald-500 text-xl font-bold"></ion-icon>
           </div>
         </div>
 
@@ -124,7 +124,7 @@
           <div class="flex gap-2 mt-4">
              <button *ngIf="ejercicio.seriesHechas > 0 && !ejercicio.completado" (click)="undoSet(i)" 
                      class="h-12 w-12 rounded-2xl bg-white border border-gray-200 text-gray-400 flex items-center justify-center shadow-sm active:scale-90 transition-transform">
-               <ion-icon name="reload-outline" class="text-xl"></ion-icon>
+               <ion-icon [icon]="iconReload" class="text-xl"></ion-icon>
              </button>
              <button (click)="registrarSet(i)" [disabled]="ejercicio.completado"
                      class="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-widest border flex items-center gap-2 transition-all active:scale-95 shadow-sm"
@@ -169,7 +169,7 @@
             </div>
           </div>
           <button (click)="cerrarTecnica()" class="bg-gray-100 h-11 w-11 rounded-full flex items-center justify-center border border-gray-200 active:scale-90 transition-transform">
-            <ion-icon name="close-outline" class="text-2xl text-gray-600"></ion-icon>
+            <ion-icon [icon]="iconClose" class="text-2xl text-gray-600"></ion-icon>
           </button>
         </div>
 
@@ -182,7 +182,7 @@
           <div class="bg-gray-50 p-7 rounded-[32px] border border-gray-100 relative">
             <div class="flex items-center gap-2 mb-4">
                <div class="h-7 w-7 rounded-full bg-gray-900 flex items-center justify-center">
-                  <ion-icon name="bulb-outline" class="text-white text-sm"></ion-icon>
+                  <ion-icon [icon]="iconBulb" class="text-white text-sm"></ion-icon>
                </div>
                <p class="text-gray-900 text-[10px] font-bold uppercase tracking-widest">Tips del Entrenador</p>
             </div>
@@ -213,7 +213,7 @@
   <div class="p-6 bg-white border-t border-gray-100">
     <button (click)="terminarRutina()" [disabled]="!sesionHoy || sesionHoy.progreso < 1" 
             class="w-full bg-gray-900 text-white font-bold py-5 rounded-3xl text-sm uppercase tracking-widest shadow-xl shadow-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale disabled:shadow-none">
-      <ion-icon name="trophy-outline" class="text-lg"></ion-icon>
+      <ion-icon [icon]="iconTrophy" class="text-lg"></ion-icon>
       Finalizar Entrenamiento
     </button>
   </div>
