@@ -1,8 +1,9 @@
 import { Component, EnvironmentInjector, inject } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+
+// 👇 CAMBIO 1: Importamos explícitamente desde 'standalone' (ADIÓS IonicModule)
+import { IonTabs, IonTabBar, IonTabButton, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 
-// 👇 Importamos estrictamente las versiones delgadas (outline)
 import { 
   homeOutline, 
   barbellOutline, 
@@ -16,13 +17,20 @@ import {
   templateUrl: './tabs.page.html',
   styleUrls: ['./tabs.page.scss'],
   standalone: true,
-  imports: [IonicModule],
+  // 👇 CAMBIO 2: Registramos los componentes del menú aquí
+  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon],
 })
 export class TabsPage {
   public environmentInjector = inject(EnvironmentInjector);
 
+  // 👇 CAMBIO 3: Creamos las variables para vincularlas al HTML
+  iconHome = homeOutline;
+  iconBarbell = barbellOutline;
+  iconPerson = personOutline;
+  iconRestaurant = restaurantOutline;
+  iconStats = statsChartOutline;
+
   constructor() {
-    // Registramos los íconos minimalistas
     addIcons({ 
       homeOutline, 
       barbellOutline, 

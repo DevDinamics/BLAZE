@@ -6,23 +6,23 @@
     style="--background: #ffffff; --border: none; min-height: 60px; padding-bottom: env(safe-area-inset-bottom);">
 
     <ion-tab-button tab="dashboard" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon name="home-outline" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+      <ion-icon [icon]="iconHome" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
     </ion-tab-button>
 
     <ion-tab-button tab="nutricion" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon name="restaurant-outline" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+      <ion-icon [icon]="iconRestaurant" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
     </ion-tab-button>
 
     <ion-tab-button tab="mi-rutina" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon name="barbell-outline" class="text-gray-400 group-[.tab-selected]:text-black text-3xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+      <ion-icon [icon]="iconBarbell" class="text-gray-400 group-[.tab-selected]:text-black text-3xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
     </ion-tab-button>
 
     <ion-tab-button tab="progreso" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon name="stats-chart-outline" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+      <ion-icon [icon]="iconStats" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
     </ion-tab-button>
 
     <ion-tab-button tab="perfil" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon name="person-outline" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+      <ion-icon [icon]="iconPerson" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
     </ion-tab-button>
 
   </ion-tab-bar>
