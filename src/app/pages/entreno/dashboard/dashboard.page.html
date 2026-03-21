@@ -9,7 +9,7 @@
     
     <div class="flex items-center gap-3">
       <div class="flex items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
-        <ion-icon name="flame-outline" class="text-orange-500 text-sm"></ion-icon>
+        <ion-icon [icon]="iconFlame" class="text-orange-500 text-sm"></ion-icon>
         <p class="text-orange-600 font-bold text-xs">{{ perfil?.xpTotal || 0 }} XP</p>
       </div>
       
@@ -30,13 +30,13 @@
   <div *ngIf="!cargando && !perfil?.equipoId" class="h-full flex flex-col justify-center px-8 bg-white relative">
       <div class="text-center relative z-10">
         <div class="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-200 shadow-sm">
-          <ion-icon name="key-outline" class="text-3xl text-gray-800"></ion-icon>
+          <ion-icon [icon]="iconKey" class="text-3xl text-gray-800"></ion-icon>
         </div>
         <h1 class="text-2xl font-bold text-gray-900 mb-2">Únete a tu Coach</h1>
         <p class="text-gray-500 text-sm mb-8 font-medium">Ingresa el código que te proporcionaron.</p>
 
         <div class="bg-gray-50 p-2 rounded-2xl border border-gray-200 flex items-center mb-6 focus-within:border-gray-400 focus-within:bg-white transition-all shadow-sm">
-          <ion-icon name="ticket-outline" class="text-gray-400 text-xl ml-3"></ion-icon>
+          <ion-icon [icon]="iconTicket" class="text-gray-400 text-xl ml-3"></ion-icon>
           <input [(ngModel)]="codigoInput" type="text" placeholder="TEAM-XXXX" 
                  class="bg-transparent w-full p-3 text-gray-900 font-bold text-lg uppercase tracking-widest text-center outline-none placeholder-gray-400">
         </div>
@@ -71,7 +71,7 @@
               <img [src]="perfil?.foto || 'assets/avatar.png'" class="h-full w-full rounded-full object-cover opacity-80 group-hover:opacity-50 transition-opacity">
             </div>
             <div class="absolute inset-0 flex items-center justify-center">
-               <ion-icon name="add" class="text-gray-700 text-3xl font-bold"></ion-icon>
+               <ion-icon [icon]="iconAdd" class="text-gray-700 text-3xl font-bold"></ion-icon>
             </div>
           </div>
           <span class="text-[10px] text-gray-500 font-bold tracking-tight">Crear</span>
@@ -109,14 +109,14 @@
           <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">{{ coachActual.cargo || 'Coach Oficial' }}</p>
           <p class="text-gray-400 text-[11px] italic truncate mt-1">"{{ coachActual.bio || 'Listo para entrenar' }}"</p>
         </div>
-        <ion-icon name="chevron-forward" class="text-gray-400 text-xl"></ion-icon>
+        <ion-icon [icon]="iconChevron" class="text-gray-400 text-xl"></ion-icon>
       </button>
     </div>
 
     <div *ngIf="diasRestantes !== null && diasRestantes <= 5" 
          class="mb-6 p-4 rounded-2xl flex items-start gap-3 border shadow-sm"
          [ngClass]="diasRestantes <= 0 ? 'bg-red-50 border-red-100 text-red-600' : 'bg-orange-50 border-orange-100 text-orange-600'">
-      <ion-icon [name]="diasRestantes <= 0 ? 'alert-circle-outline' : 'hourglass-outline'" class="text-2xl mt-0.5"></ion-icon>
+      <ion-icon [icon]="diasRestantes <= 0 ? iconAlert : iconHourglass" class="text-2xl mt-0.5"></ion-icon>
       <div class="flex-1">
         <p class="font-bold text-xs uppercase tracking-widest mb-0.5">
           {{ diasRestantes <= 0 ? 'Plan Expirado' : 'Próximo a Vencer' }}
@@ -133,25 +133,25 @@
       <div class="relative z-10 flex justify-between items-center">
         <div>
           <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-gray-100 text-gray-600 text-[10px] font-bold uppercase mb-3">
-            <ion-icon name="calendar-outline" class="text-xs"></ion-icon> Rutina de Hoy
+            <ion-icon [icon]="iconCalendar" class="text-xs"></ion-icon> Rutina de Hoy
           </span>
           <h3 class="text-2xl font-bold text-gray-900 leading-none mb-2 tracking-tight">
             {{ rutinaActual.nombre }}
           </h3>
           <p class="text-gray-500 text-xs font-medium flex items-center gap-1.5">
-            <ion-icon name="time-outline" class="text-gray-400"></ion-icon> 
+            <ion-icon [icon]="iconTime" class="text-gray-400"></ion-icon> 
             {{ rutinaActual.semanas }} semanas • {{ rutinaActual.nivel || 'General' }}
           </p>
         </div>
         <div class="h-14 w-14 rounded-full bg-gray-900 flex items-center justify-center shadow-md active:scale-95 transition-transform shrink-0">
-          <ion-icon name="play" class="text-white text-2xl ml-1"></ion-icon>
+          <ion-icon [icon]="iconPlay" class="text-white text-2xl ml-1"></ion-icon>
         </div>
       </div>
     </div>
 
     <div *ngIf="!rutinaActual" class="mb-8 p-8 text-center bg-gray-50 border border-gray-200 border-dashed rounded-3xl">
       <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-        <ion-icon name="clipboard-outline" class="text-2xl text-gray-400"></ion-icon> 
+        <ion-icon [icon]="iconClipboard" class="text-2xl text-gray-400"></ion-icon> 
       </div>
       <p class="text-gray-900 font-bold text-sm">Sin rutina asignada</p>
       <p class="text-gray-500 text-xs mt-1">Espera a que tu coach te asigne tu plan de entrenamiento.</p>
@@ -160,7 +160,7 @@
     <div *ngIf="rankingTeam && rankingTeam.length > 0" class="mb-8">
       <div class="flex items-center justify-between mb-3 px-1">
         <h3 class="text-gray-900 font-bold text-sm tracking-tight flex items-center gap-1.5">
-          <ion-icon name="trophy-outline" class="text-gray-500"></ion-icon> Tabla de Líderes
+          <ion-icon [icon]="iconTrophy" class="text-gray-500"></ion-icon> Tabla de Líderes
         </h3>
       </div>
 
@@ -211,7 +211,7 @@
             <img [src]="notificacion.fotoCoach" class="h-full w-full rounded-full object-cover bg-gray-50">
           </div>
           <div class="absolute bottom-0 right-0 bg-emerald-500 text-white h-8 w-8 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-            <ion-icon name="checkmark-done" class="text-lg"></ion-icon>
+            <ion-icon [icon]="iconCheckmark" class="text-lg"></ion-icon>
           </div>
         </div>
   
@@ -225,7 +225,7 @@
   
         <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 w-full mb-8 z-10 flex items-center gap-4 text-left shadow-sm">
           <div class="h-12 w-12 rounded-full flex items-center justify-center bg-white text-gray-800 border border-gray-100 shadow-sm shrink-0">
-            <ion-icon [name]="notificacion.icono" class="text-xl"></ion-icon>
+            <ion-icon [icon]="notificacion.icono" class="text-xl"></ion-icon>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-[10px] text-gray-500 font-bold uppercase">{{ notificacion.titulo }}</p>

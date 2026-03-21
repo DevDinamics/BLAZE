@@ -2,13 +2,19 @@ import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router'; 
-import { IonicModule, ModalController, LoadingController, ToastController, NavController, AlertController } from '@ionic/angular';
+
+// 👇 1. Importaciones Standalone correctas
+import { 
+  IonHeader, IonContent, IonIcon, IonSpinner, IonModal, 
+  ModalController, LoadingController, ToastController, 
+  NavController, AlertController 
+} from '@ionic/angular/standalone';
+
 import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 import { Subscription } from 'rxjs'; 
-import { addIcons } from 'ionicons';
 
-// IMPORTS DE FIREBASE PARA EL RANKING
+// IMPORTS DE FIREBASE
 import { Firestore, collection, query, where, onSnapshot, orderBy } from '@angular/fire/firestore';
 
 // IMPORTS DE MODALES
@@ -19,13 +25,14 @@ import { VerPerfilCoachComponent } from 'src/app/modals/ver-perfil-coach/ver-per
 // CÁMARA
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
+// 👇 2. Importación de Iconos
 import { 
   flameOutline, barbellOutline, addCircleOutline, starOutline, playOutline, 
   timeOutline, listOutline, checkmarkCircleOutline, calendarOutline,
   flashOutline, checkmarkDoneOutline, keyOutline, ticketOutline, logOutOutline, 
   constructOutline, helpCircleOutline, trophyOutline, personOutline, 
   alertCircleOutline, hourglassOutline, apertureOutline, cameraOutline, 
-  addOutline, chevronForwardOutline, play 
+  addOutline, chevronForwardOutline, play, clipboardOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -33,11 +40,32 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, RouterModule, FormsModule] 
+  // 👇 3. Componentes de Ionic registrados aquí
+  imports: [
+    CommonModule, RouterModule, FormsModule, 
+    IonHeader, IonContent, IonIcon, IonSpinner, IonModal
+  ] 
 })
 export class EntrenoDashboardPage implements OnDestroy { 
 
   private firestore = inject(Firestore); 
+
+  // 👇 4. VARIABLES DE ICONOS (El escudo anti-crash para Netlify)
+  iconFlame = flameOutline;
+  iconKey = keyOutline;
+  iconTicket = ticketOutline;
+  iconAdd = addOutline;
+  iconChevron = chevronForwardOutline;
+  iconAlert = alertCircleOutline;
+  iconHourglass = hourglassOutline;
+  iconCalendar = calendarOutline;
+  iconTime = timeOutline;
+  iconPlay = play;
+  iconClipboard = clipboardOutline;
+  iconTrophy = trophyOutline;
+  iconCheckmark = checkmarkDoneOutline;
+  iconBarbell = barbellOutline;
+  iconConstruct = constructOutline;
 
   perfil: any = null;
   rutinaActual: any = null;
@@ -56,12 +84,13 @@ export class EntrenoDashboardPage implements OnDestroy {
   historias: any[] = [];
   rankingTeam: any[] = []; 
 
-  notificacion = {
+  // Inicializamos con un icono por defecto válido
+  notificacion: any = {
     tipo: 'rutina',
     titulo: 'Rutina Asignada',
     nombrePlan: '',
     mensaje: '',
-    icono: 'barbell',
+    icono: this.iconBarbell, 
     fotoCoach: ''
   };
 
@@ -73,16 +102,7 @@ export class EntrenoDashboardPage implements OnDestroy {
     private toastCtrl: ToastController,
     private navCtrl: NavController,
     private alertController: AlertController
-  ) {
-    addIcons({ 
-      flameOutline, barbellOutline, addCircleOutline, starOutline, playOutline, 
-      timeOutline, listOutline, checkmarkCircleOutline, calendarOutline,
-      flashOutline, checkmarkDoneOutline, keyOutline, ticketOutline, logOutOutline, 
-      constructOutline, helpCircleOutline, trophyOutline, personOutline, 
-      alertCircleOutline, hourglassOutline, apertureOutline, cameraOutline, 
-      addOutline, chevronForwardOutline, play
-    });
-  }
+  ) {}
 
   async ionViewWillEnter() {
     if (this.suscripcionAuth) { this.suscripcionAuth.unsubscribe(); }
@@ -118,24 +138,22 @@ export class EntrenoDashboardPage implements OnDestroy {
 
     this.suscripcionPerfil = this.studentService.escucharPerfil(uid, async (datosPerfil) => {
   
-  if (this.perfil?.equipoId && !datosPerfil?.equipoId) {
-    this.mostrarAlertaExpulsion();
-    this.limpiarDatosLocales();
-    this.cargando = false;
-    return; 
-  }
+      if (this.perfil?.equipoId && !datosPerfil?.equipoId) {
+        this.mostrarAlertaExpulsion();
+        this.limpiarDatosLocales();
+        this.cargando = false;
+        return; 
+      }
 
-  // 👇 LÓGICA ANT-MORADO: Detectamos si la foto es real o de ui-avatars
-  const tieneFotoReal = datosPerfil?.foto && !datosPerfil.foto.includes('ui-avatars.com');
+      const tieneFotoReal = datosPerfil?.foto && !datosPerfil.foto.includes('ui-avatars.com');
 
-  this.perfil = {
-    ...datosPerfil,
-    xpTotal: datosPerfil?.xpTotal || 0,
-    // Si tiene foto real en Firebase la usa, si no, usa tu oso local
-    foto: tieneFotoReal ? datosPerfil.foto : 'assets/avatar-h-1.png'
-  };
+      this.perfil = {
+        ...datosPerfil,
+        xpTotal: datosPerfil?.xpTotal || 0,
+        foto: tieneFotoReal ? datosPerfil.foto : 'assets/avatar-h-1.png'
+      };
 
-  try {
+      try {
         if (this.perfil?.equipoId) {
           const rutina: any = await this.studentService.obtenerRutinaActual(uid, this.perfil.equipoId);        
           const coach = await this.studentService.obtenerCoach(this.perfil.coachId);
@@ -266,7 +284,7 @@ export class EntrenoDashboardPage implements OnDestroy {
         const usuarioStory = {
           uid: this.perfil.uid,
           nombre: this.perfil.nombre,
-          foto: this.perfil.foto || 'assets/avatar-h-1.png', // <-- Prevención extra aquí
+          foto: this.perfil.foto || 'assets/avatar-h-1.png', 
           equipoId: this.perfil.equipoId
         };
         await this.studentService.subirHistoria(blob, usuarioStory);
@@ -315,12 +333,20 @@ export class EntrenoDashboardPage implements OnDestroy {
   lanzarNotificacion(rutina: any, coach: any, modo: 'nuevo' | 'editado') {
     const msj = modo === 'nuevo' ? `te acaba de asignar el plan` : `acaba de realizar AJUSTES en el plan`;
     const titulo = modo === 'nuevo' ? 'NUEVA MISIÓN' : 'PLAN ACTUALIZADO';
-    const icono = modo === 'nuevo' ? 'barbell' : 'construct'; 
     
-    // 👇 FOTO LOCAL SI EL COACH NO TIENE UNA
+    // 👇 Usamos la variable directa para el icono dinámico
+    const iconoDinamico = modo === 'nuevo' ? this.iconBarbell : this.iconConstruct; 
+    
     const foto = coach?.foto || 'assets/avatar-h-1.png';
 
-    this.notificacion = { tipo: 'rutina', titulo, nombrePlan: rutina.nombre, mensaje: msj, icono, fotoCoach: foto };
+    this.notificacion = { 
+      tipo: 'rutina', 
+      titulo, 
+      nombrePlan: rutina.nombre, 
+      mensaje: msj, 
+      icono: iconoDinamico, // <-- Asignado como objeto/variable
+      fotoCoach: foto 
+    };
     this.mostrarBienvenida = true;
   }
 
