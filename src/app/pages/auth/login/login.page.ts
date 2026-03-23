@@ -10,7 +10,7 @@ import {
   arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, alertCircleOutline 
 } from 'ionicons/icons';
 
-import { Auth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from '@angular/fire/auth';
 import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
 
 @Component({
@@ -31,6 +31,12 @@ export class LoginPage implements OnInit {
   cargando = false;
   cargandoGoogle = false;
 
+  // 🛡️ LISTA NEGRA: Dominios de correos temporales/falsos que no queremos
+  dominiosBloqueados = [
+    'yopmail.com', 'temp-mail.org', '10minutemail.com', 
+    'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
+  ];
+
   constructor(
     private auth: Auth,
     private firestore: Firestore,
@@ -43,17 +49,41 @@ export class LoginPage implements OnInit {
     });
   }
 
-  async ngOnInit() {
-    try {
-      await signOut(this.auth);
-    } catch (error) {
-      console.log('No había sesión activa previa.');
+  ngOnInit() {
+    // 🗑️ Eliminamos el signOut forzado de aquí. 
+    // Firebase maneja la sesión entre pestañas automáticamente con IndexedDB.
+    // Si el usuario ya tiene sesión activa, lo ideal sería redirigirlo.
+    const user = this.auth.currentUser;
+    if (user) {
+      this.redirigirPorRol(user.uid);
     }
   }
 
+  // 🛡️ FUNCIÓN BLINDADA: Valida formato y dominios
+  esEmailSeguro(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(email)) return false; // Falla si no tiene el formato algo@algo.com
+
+    const dominio = email.split('@')[1].toLowerCase();
+    
+    // Si el dominio está en la lista negra, lo rebotamos
+    if (this.dominiosBloqueados.includes(dominio)) {
+      return false;
+    }
+
+    return true;
+  }
+
   async login() {
+    // 1. Validar campos vacíos
     if (!this.credenciales.email || !this.credenciales.password) {
       this.mostrarMensaje('Por favor ingresa tu correo y contraseña.', 'warning');
+      return;
+    }
+
+    // 2. Pasar por el "Cadenero" de dominios
+    if (!this.esEmailSeguro(this.credenciales.email)) {
+      this.mostrarMensaje('Por favor usa un proveedor de correo válido.', 'warning');
       return;
     }
 
@@ -61,9 +91,7 @@ export class LoginPage implements OnInit {
 
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, this.credenciales.email, this.credenciales.password);
-      const user = userCredential.user;
-
-      await this.redirigirPorRol(user.uid);
+      await this.redirigirPorRol(userCredential.user.uid);
 
     } catch (error: any) {
       console.error(error);

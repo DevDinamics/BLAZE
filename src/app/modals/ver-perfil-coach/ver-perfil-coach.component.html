@@ -1,91 +1,79 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar style="--background: #000;">
-    <div class="px-4 pt-4 flex justify-between items-center">
-      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Perfil del Coach</p>
-      <button (click)="cerrar()" class="h-8 w-8 rounded-full bg-[#111] flex items-center justify-center text-white border border-gray-800 hover:bg-gray-800 transition-colors">
+<ion-content style="--background: #ffffff;">
+  <div class="max-w-md mx-auto min-h-screen flex flex-col relative font-sans text-gray-900 pt-safe pb-safe bg-white">
+    
+    <div class="flex justify-between items-center w-full px-4 py-3 absolute top-0 left-0 right-0 z-50 pt-safe bg-gradient-to-b from-white via-white/90 to-transparent">
+      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-heading">Perfil del Coach</p>
+      <button (click)="cerrar()" class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors shadow-sm">
         <ion-icon name="close"></ion-icon>
       </button>
     </div>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content style="--background: #000;">
-  <div class="min-h-full bg-black pb-10 font-sans px-6">
-
-    <div class="flex flex-col items-center mt-6 mb-8 animate-fade-in-up">
-      <div class="relative h-32 w-32 mb-4">
-        <div class="absolute inset-0 bg-[#ffa500] blur-2xl opacity-20 rounded-full"></div>
-        <img [src]="coach?.foto || 'assets/avatar.png'" class="relative h-full w-full rounded-full object-cover border-4 border-black ring-2 ring-[#ffa500]">
-        
-        <div class="absolute bottom-1 right-1 bg-blue-500 text-white h-8 w-8 rounded-full flex items-center justify-center border-4 border-black z-10">
-          <ion-icon name="checkmark-circle" class="text-lg"></ion-icon>
+    <div class="px-6 pt-24 pb-20">
+      
+      <div class="flex flex-col items-center mb-10 animate-fade-in-up">
+        <div class="relative h-32 w-32 mb-4">
+          <div class="absolute inset-0 bg-[#ffa500] blur-2xl opacity-10 rounded-full"></div>
+          <img [src]="coach?.foto || 'assets/avatar.png'" class="relative h-full w-full rounded-full object-cover shadow-xl border-4 border-white" alt="Coach Avatar">
+          
+          <div class="absolute bottom-1 right-1 bg-blue-500 text-white h-7 w-7 rounded-full flex items-center justify-center border-2 border-white z-10 shadow-md">
+            <ion-icon name="checkmark-circle" class="text-lg"></ion-icon>
+          </div>
         </div>
-      </div>
 
-      <h1 class="text-2xl font-black text-white uppercase tracking-tight text-center">
-        {{ coach?.nombre }} {{ coach?.apellido }}
-      </h1>
-      <div class="flex items-center gap-2 mt-1">
-        <span class="bg-[#ffa500]/10 text-[#ffa500] px-3 py-1 rounded text-[10px] font-black uppercase tracking-wider border border-[#ffa500]/20">
-          {{ coach?.titulo || 'Coach FitGo' }}
+        <h1 class="text-2xl font-heading font-black text-gray-900 uppercase tracking-tight text-center">
+          {{ coach?.nombre }} {{ coach?.apellido }}
+        </h1>
+        <span class="mt-2 bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm border border-orange-100">
+          {{ coach?.titulo || 'Coach Blaze' }}
         </span>
       </div>
-    </div>
 
-    <div class="mb-8 relative group animate-fade-in-up" style="animation-delay: 100ms;">
-      <div class="absolute -inset-0.5 bg-gradient-to-r from-[#ffa500] to-orange-700 rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
-      <div class="relative bg-[#111] rounded-xl border border-gray-800 p-5">
-        <ion-icon name="chatbox-ellipses" class="text-[#ffa500] text-xl mb-2 opacity-50"></ion-icon>
-        <p class="text-gray-300 text-sm leading-relaxed italic font-medium">
-          "{{ coach?.bio || 'Listo para llevarte al siguiente nivel.' }}"
+      <div class="mb-8 bg-gray-50 rounded-3xl p-6 relative overflow-hidden animate-fade-in-up border border-gray-100 shadow-sm" style="animation-delay: 100ms;">
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#ffa500] opacity-[0.08] blur-3xl rounded-full"></div>
+        <ion-icon name="chatbox-ellipses" class="text-[#ffa500] text-2xl mb-3 opacity-90"></ion-icon>
+        <p class="text-gray-600 text-sm leading-relaxed font-medium italic">
+          "{{ coach?.bio || 'Listo para llevarte al siguiente nivel y romper tus límites.' }}"
         </p>
       </div>
-    </div>
 
-    <div class="space-y-4 animate-fade-in-up" style="animation-delay: 200ms;">
-      <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-1">Información Profesional</p>
-      
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-[#111] p-4 rounded-2xl border border-gray-800 flex flex-col justify-between h-24">
-          <div class="h-8 w-8 rounded-lg bg-gray-900 flex items-center justify-center text-[#ffa500]">
-            <ion-icon name="ribbon"></ion-icon>
+      <div class="space-y-4 animate-fade-in-up" style="animation-delay: 200ms;">
+        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest pl-2 mb-2 font-heading">Información Profesional</p>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white p-5 rounded-3xl flex flex-col justify-between h-32 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="h-10 w-10 rounded-2xl bg-orange-50 flex items-center justify-center text-[#ffa500] mb-2 shadow-inner">
+              <ion-icon name="ribbon" class="text-xl"></ion-icon>
+            </div>
+            <div>
+              <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Especialidad</p>
+              <p class="text-gray-900 font-bold text-xs truncate font-heading uppercase">{{ coach?.especialidad || 'General' }}</p>
+            </div>
           </div>
-          <div>
-            <p class="text-[9px] text-gray-500 font-bold uppercase">Especialidad</p>
-            <p class="text-white font-bold text-xs uppercase">{{ coach?.especialidad || 'General' }}</p>
+
+          <div class="bg-white p-5 rounded-3xl flex flex-col justify-between h-32 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="h-10 w-10 rounded-2xl bg-orange-50 flex items-center justify-center text-[#ffa500] mb-2 shadow-inner">
+              <ion-icon name="time" class="text-xl"></ion-icon>
+            </div>
+            <div>
+              <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Experiencia</p>
+              <p class="text-gray-900 font-bold text-xs truncate font-heading uppercase">{{ coach?.experiencia || 'N/A' }}</p>
+            </div>
           </div>
         </div>
 
-        <div class="bg-[#111] p-4 rounded-2xl border border-gray-800 flex flex-col justify-between h-24">
-          <div class="h-8 w-8 rounded-lg bg-gray-900 flex items-center justify-center text-[#ffa500]">
-            <ion-icon name="time"></ion-icon>
+        <div class="bg-white p-5 rounded-3xl flex items-center gap-4 mt-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow mb-24 line-clamp-2">
+          <div class="h-12 w-12 shrink-0 rounded-2xl bg-orange-50 flex items-center justify-center text-[#ffa500]">
+            <ion-icon name="school" class="text-2xl"></ion-icon>
           </div>
-          <div>
-            <p class="text-[9px] text-gray-500 font-bold uppercase">Experiencia</p>
-            <p class="text-white font-bold text-xs uppercase">{{ coach?.experiencia || 'N/A' }}</p>
+          <div class="flex-1 overflow-hidden">
+            <p class="text-[9px] text-gray-400 font-bold uppercase mb-1 tracking-wide">Certificaciones</p>
+            <p class="text-gray-900 font-bold text-xs leading-tight line-clamp-2">
+              {{ coach?.certificaciones || 'Sin información pública' }}
+            </p>
           </div>
         </div>
       </div>
 
-      <div class="bg-[#111] p-4 rounded-2xl border border-gray-800 flex items-center gap-4">
-        <div class="h-10 w-10 shrink-0 rounded-lg bg-gray-900 flex items-center justify-center text-[#ffa500] text-xl">
-          <ion-icon name="school"></ion-icon>
-        </div>
-        <div>
-          <p class="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Certificaciones</p>
-          <p class="text-white font-bold text-xs leading-tight">{{ coach?.certificaciones || 'Sin información pública' }}</p>
-        </div>
-      </div>
     </div>
-    <!-- Botón para enviar mensaje
-     
-    <div class="mt-8 animate-fade-in-up" style="animation-delay: 300ms;">
-      <button class="w-full bg-[#ffa500] text-black font-black py-4 rounded-xl text-sm uppercase tracking-widest shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
-        <ion-icon name="chatbubble-ellipses"></ion-icon>
-        Enviar Mensaje
-      </button>
-    </div>
-     -->
-
   </div>
 </ion-content>

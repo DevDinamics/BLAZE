@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+// 👇 Importamos el Guardia de Seguridad que creaste
+import { authGuard } from './guards/auth-guard'; 
 
 export const routes: Routes = [
   {
@@ -10,6 +12,10 @@ export const routes: Routes = [
     redirectTo: 'login',
     pathMatch: 'full',
   },
+  
+  // ==========================================
+  // 🔓 ZONA PÚBLICA (SIN GUARDIA)
+  // ==========================================
   {
     path: 'login',
     loadComponent: () => import('./pages/auth/login/login.page').then( m => m.LoginPage)
@@ -28,57 +34,66 @@ export const routes: Routes = [
   },
 
   // ==========================================
-  // 👨‍🏫 ZONA DEL COACH
+  // 👨‍🏫 ZONA DEL COACH (PROTEGIDA)
   // ==========================================
   {
     path: 'coach/dashboard',
-    loadComponent: () => import('./pages/coach/dashboard/dashboard.page').then( m => m.CoachDashboardPage)
+    loadComponent: () => import('./pages/coach/dashboard/dashboard.page').then( m => m.CoachDashboardPage),
+    canActivate: [authGuard] // 🛡️ Guardia activado
   }, 
   {
-    path: 'ejercicios',
-    loadComponent: () => import('./pages/coach/ejercicios/ejercicios.page').then( m => m.EjerciciosPage)
-  },
-  {
     path: 'coach/ejercicios',
-    loadComponent: () => import('./pages/coach/ejercicios/ejercicios.page').then( m => m.EjerciciosPage)
+    loadComponent: () => import('./pages/coach/ejercicios/ejercicios.page').then( m => m.EjerciciosPage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/rutinas',
-    loadComponent: () => import('./pages/coach/rutinas/rutinas.page').then( m => m.RutinasPage)
+    loadComponent: () => import('./pages/coach/rutinas/rutinas.page').then( m => m.RutinasPage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/crear-rutina',
-    loadComponent: () => import('./pages/coach/crear-rutina/crear-rutina.page').then( m => m.CrearRutinaPage)
+    loadComponent: () => import('./pages/coach/crear-rutina/crear-rutina.page').then( m => m.CrearRutinaPage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/equipos',
-    loadComponent: () => import('./pages/coach/equipos/equipos.page').then( m => m.EquiposPage)
+    loadComponent: () => import('./pages/coach/equipos/equipos.page').then( m => m.EquiposPage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/dietas',
-    loadComponent: () => import('./pages/coach/dietas/dietas.page').then( m => m.DietasPage)
+    loadComponent: () => import('./pages/coach/dietas/dietas.page').then( m => m.DietasPage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/alumno-detalle',
-    loadComponent: () => import('./pages/coach/alumno-detalle/alumno-detalle.page').then( m => m.AlumnoDetallePage)
+    loadComponent: () => import('./pages/coach/alumno-detalle/alumno-detalle.page').then( m => m.AlumnoDetallePage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/crear-dieta',
-    loadComponent: () => import('./pages/coach/crear-dieta/crear-dieta.page').then( m => m.CrearDietaPage)
+    loadComponent: () => import('./pages/coach/crear-dieta/crear-dieta.page').then( m => m.CrearDietaPage),
+    canActivate: [authGuard]
   },
   {
     path: 'coach/perfil-coach',
-    loadComponent: () => import('./pages/coach/perfil-coach/perfil-coach.page').then( m => m.PerfilCoachPage)
+    loadComponent: () => import('./pages/coach/perfil-coach/perfil-coach.page').then( m => m.PerfilCoachPage),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'coach/mis-alumnos',
+    loadComponent: () => import('./pages/coach/mis-alumnos/mis-alumnos.page').then( m => m.MisAlumnosPage),
+    canActivate: [authGuard]
   },
 
   // ==========================================
-  // 🏃‍♂️ ZONA DEL ALUMNO (NUEVA ESTRUCTURA TABS)
+  // 🏃‍♂️ ZONA DEL ALUMNO (PROTEGIDA)
   // ==========================================
   {
     path: 'entreno',
-    // 1. Cargamos el contenedor (La barra inferior)
     loadComponent: () => import('./pages/entreno/tabs/tabs.page').then( m => m.TabsPage),
-    // 2. Metemos las páginas adentro de la barra
+    canActivate: [authGuard], // 🛡️ Protegemos la ruta padre. Automáticamente protege a todos los "children"
     children: [
       {
         path: 'dashboard',
@@ -101,56 +116,36 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/entreno/perfil/perfil.page').then( m => m.PerfilPage)
       },
       {
-        // Si alguien pone solo '/entreno', lo forzamos a ir al dashboard
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
       }
     ]
   },
-  // La página de resumen queda FUERA de los tabs para que abarque toda la pantalla al terminar
   {
     path: 'entreno/resumen',
-    loadComponent: () => import('./pages/entreno/resumen/resumen.page').then( m => m.ResumenPage)
+    loadComponent: () => import('./pages/entreno/resumen/resumen.page').then( m => m.ResumenPage),
+    canActivate: [authGuard]
   },
   {
     path: 'nuevo-entreno',
-    loadComponent: () => import('./pages/entreno/nuevo-entreno/nuevo-entreno.page').then( m => m.NuevoEntrenoPage)
+    loadComponent: () => import('./pages/entreno/nuevo-entreno/nuevo-entreno.page').then( m => m.NuevoEntrenoPage),
+    canActivate: [authGuard]
   },
 
   // ==========================================
-  // ⚙️ OTROS Y MODALES
+  // ⚙️ OTROS Y MODALES (PROTEGIDOS SI APLICAN)
   // ==========================================
   {
-    path: 'nutricion/dashboard',
-    loadComponent: () => import('./pages/nutricion/dashboard/dashboard.page').then( m => m.NutricionPage)
+    path: 'onboarding',
+    loadComponent: () => import('./pages/onboarding/onboarding.page').then( m => m.OnboardingPage),
+    canActivate: [authGuard] // 🛡️ Solo usuarios registrados pueden hacer el onboarding
   },
   {
     path: 'perfil/ajustes',
-    loadComponent: () => import('./pages/perfil/ajustes/ajustes.page').then( m => m.AjustesPage)
+    loadComponent: () => import('./pages/perfil/ajustes/ajustes.page').then( m => m.AjustesPage),
+    canActivate: [authGuard]
   },
-  {
-    path: 'modals/selector-ejercicios',
-    loadComponent: () => import('./modals/selector-ejercicios/selector-ejercicios.page').then( m => m.SelectorEjerciciosPage)
-  },
-  {
-    path: 'modals/upload-preview',
-    loadComponent: () => import('./modals/upload-preview/upload-preview.page').then( m => m.UploadPreviewPage)
-  },
-  {
-    path: 'modals/story-viewer',
-    loadComponent: () => import('./modals/story-viewer/story-viewer.page').then( m => m.StoryViewerPage)
-  },
-  {
-    path: 'progreso',
-    loadComponent: () => import('./pages/entreno/progreso/progreso.page').then( m => m.ProgresoPage)
-  },
-  {
-    path: 'onboarding',
-    loadComponent: () => import('./pages/onboarding/onboarding.page').then( m => m.OnboardingPage)
-  },
-  {
-    path: 'coach/mis-alumnos',
-    loadComponent: () => import('./pages/coach/mis-alumnos/mis-alumnos.page').then( m => m.MisAlumnosPage)
-  }
+  
+  // Las rutas duplicadas o innecesarias fueron limpiadas para mantener el código ordenado
 ];
