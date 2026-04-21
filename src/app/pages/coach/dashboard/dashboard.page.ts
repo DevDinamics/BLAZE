@@ -1,9 +1,8 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core'; 
+import { Component, OnInit, OnDestroy, inject, NgZone } from '@angular/core'; // 👇 1. Importamos NgZone
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
-// 👇 IMPORTANTE: Componentes específicos para Standalone
 import { 
   IonContent, IonIcon, IonSegment, IonSegmentButton, 
   IonLabel, ToastController, NavController 
@@ -13,7 +12,6 @@ import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';   
 import { addIcons } from 'ionicons';
 
-// 👇 ÍCONOS
 import { 
   checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
   trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
@@ -30,7 +28,6 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
-  // 👇 Cambiamos IonicModule por la lista de componentes usados
   imports: [
     CommonModule, FormsModule, RouterModule,
     IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel
@@ -39,8 +36,8 @@ import {
 export class CoachDashboardPage implements OnInit, OnDestroy {
 
   private firestore = inject(Firestore);
+  private ngZone = inject(NgZone); // 👇 2. Inyectamos NgZone para despertar a Angular
 
-  // 👇 VARIABLES DE ICONOS (El truco para que Netlify no los borre)
   iconSettings = settingsOutline;
   iconBarbell = barbellOutline;
   iconClipboard = clipboardOutline;
@@ -56,10 +53,17 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
   segmentoActual = 'pendientes';
   pendientes: any[] = [];
   ranking: any[] = []; 
+  
   suscripcionSolicitudes: any; 
   suscripcionRanking: any;
+  suscripcionPerfil: any;
+
   uidCoach: string | null = null;
+  coachFoto: string = ''; 
   intervaloTiempo: any; 
+
+  totalAlumnos: number = 0; 
+  tieneNuevosAlumnos: boolean = false; 
 
   constructor(
     private coachService: CoachService, 
@@ -67,7 +71,6 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private navCtrl: NavController 
   ) {
-    // Registro preventivo
     addIcons({ 
       checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
       trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
@@ -79,11 +82,14 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
     this.authService.user$.subscribe(user => {
       if (user) {
         this.uidCoach = user.uid;
+        this.cargarPerfilCoach();
         this.cargarSolicitudesReales();
         this.cargarRankingReal();
         
         this.intervaloTiempo = setInterval(() => {
-          this.actualizarTiemposEnVivo();
+          this.ngZone.run(() => { // 👇 Obligamos a actualizar los tiempos
+            this.actualizarTiemposEnVivo();
+          });
         }, 60000);
       }
     });
@@ -92,7 +98,21 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.suscripcionSolicitudes) this.suscripcionSolicitudes(); 
     if (this.suscripcionRanking) this.suscripcionRanking();
+    if (this.suscripcionPerfil) this.suscripcionPerfil();
     if (this.intervaloTiempo) clearInterval(this.intervaloTiempo);
+  }
+
+  cargarPerfilCoach() {
+    if (!this.uidCoach) return;
+    const coachRef = doc(this.firestore, 'usuarios', this.uidCoach);
+    this.suscripcionPerfil = onSnapshot(coachRef, (docSnap) => {
+      this.ngZone.run(() => { // 👇 NgZone aquí
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          this.coachFoto = data['foto'] || ''; 
+        }
+      });
+    });
   }
 
   cargarSolicitudesReales() {
@@ -103,20 +123,22 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
               orderBy('fecha', 'desc'));
               
     this.suscripcionSolicitudes = onSnapshot(q, (snapshot) => {
-      this.pendientes = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          usuario: data['nombreAlumno'] || 'Alumno',
-          actividad: data['nombreRutina'] || 'Entrenamiento Completado',
-          foto: data['fotoAlumno'] || 'https://i.pravatar.cc/150?u=' + doc.id,
-          fechaRaw: data['fecha'], 
-          fecha: this.calcularTiempoTranscurrido(data['fecha']), 
-          tipo: 'entreno',
-          xpReclamada: data['xpReclamada'] || 500, 
-          alumnoId: data['alumnoId'],
-          ...data
-        };
+      this.ngZone.run(() => { // 👇 NgZone aquí
+        this.pendientes = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            usuario: data['nombreAlumno'] || 'Alumno',
+            actividad: data['nombreRutina'] || 'Entrenamiento Completado',
+            foto: data['fotoAlumno'] || 'https://i.pravatar.cc/150?u=' + doc.id,
+            fechaRaw: data['fecha'], 
+            fecha: this.calcularTiempoTranscurrido(data['fecha']), 
+            tipo: 'entreno',
+            xpReclamada: data['xpReclamada'] || 500, 
+            alumnoId: data['alumnoId'],
+            ...data
+          };
+        });
       });
     });
   }
@@ -159,10 +181,28 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
 
   cargarRankingReal() {
     if (!this.uidCoach) return;
-    const q = query(collection(this.firestore, 'usuarios'), where('coachId', '==', this.uidCoach), where('rol', '==', 'alumno'), orderBy('xpTotal', 'desc'));
+    
+    // Quitamos el orderBy temporalmente por si el alumno nuevo no tiene xpTotal aún
+    const q = query(
+      collection(this.firestore, 'usuarios'), 
+      where('coachId', '==', this.uidCoach), 
+      where('rol', '==', 'alumno')
+    );
+    
     this.suscripcionRanking = onSnapshot(q, (snapshot) => {
-      let todos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      this.ranking = todos.filter((user: any) => user.xpTotal > 0);
+      this.ngZone.run(() => { 
+        this.totalAlumnos = snapshot.size; 
+        let todos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // La lógica del puntito
+        this.tieneNuevosAlumnos = todos.some((user: any) => user.vistoPorCoach === false);
+
+        // 🕵️‍♀️ EL RADAR: Abre tu consola y mira esto sin hacer clic en la tarjeta
+        console.log('--- RADAR DE ALUMNOS ---');
+        console.log('Total de alumnos:', this.totalAlumnos);
+        console.log('Datos de todos:', todos);
+        console.log('¿Debe prender el puntito?:', this.tieneNuevosAlumnos);
+      });
     });
   }
 

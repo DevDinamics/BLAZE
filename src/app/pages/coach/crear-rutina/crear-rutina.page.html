@@ -67,17 +67,33 @@
 
         <div *ngIf="!esModoPlantilla">
           <label class="text-xs font-bold text-gray-800 mb-2 block ml-1">Alumno Asignado</label>
-          <div class="bg-gray-50 rounded-xl border border-gray-200 transition-colors shadow-sm">
-            <ion-select [(ngModel)]="rutina.alumnoId" 
-                        (ionChange)="verificarAlumno()"
-                        mode="ios" 
-                        class="text-black font-bold text-sm px-4 py-3" 
-                        interface="popover" 
-                        placeholder="Selecciona un alumno...">
-              <ion-select-option *ngFor="let a of alumnos" [value]="a.uid">
-                {{ a.nombre }}
-              </ion-select-option>
-            </ion-select>
+          
+          <div class="relative p-4 rounded-2xl flex justify-between items-center transition-colors group overflow-hidden cursor-pointer"
+               [ngClass]="rutina.alumnoId ? 'bg-white border border-gray-200 shadow-sm' : 'bg-gray-50 border border-dashed border-gray-300 active:bg-gray-100 hover:border-gray-400'">
+            
+            <div class="flex items-center gap-3 relative z-10 pointer-events-none">
+              <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-200 overflow-hidden shrink-0">
+                <ion-icon *ngIf="!rutina.alumnoId" name="person-outline" class="text-gray-400 text-lg"></ion-icon>
+                <ng-container *ngIf="rutina.alumnoId">
+                  <ng-container *ngFor="let a of alumnos">
+                    <img *ngIf="a.uid === rutina.alumnoId" [src]="a.foto || 'https://ui-avatars.com/api/?name=' + a.nombre + '&background=f9fafb&color=f57c00&font-weight=bold'" class="w-full h-full object-cover">
+                  </ng-container>
+                </ng-container>
+              </div>
+              
+              <div class="flex flex-col">
+                <span *ngIf="!rutina.alumnoId" class="text-gray-600 font-bold text-sm tracking-tight">Asignar a un alumno...</span>
+                <ng-container *ngIf="rutina.alumnoId">
+                  <ng-container *ngFor="let a of alumnos">
+                    <span *ngIf="a.uid === rutina.alumnoId" class="text-black font-bold text-[15px] tracking-tight">{{ a.nombre }}</span>
+                  </ng-container>
+                  <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Toca para cambiar</span>
+                </ng-container>
+              </div>
+            </div>
+
+            <ion-icon name="chevron-down-outline" class="text-gray-400 relative z-10 pointer-events-none"></ion-icon>
+            <div class="absolute inset-0 w-full h-full z-20" (click)="abrirModalAlumnos()"></div>
           </div>
         </div>
 
@@ -212,6 +228,44 @@
                </div>
              </div>
              <ion-icon name="download-outline" class="text-gray-400 text-xl"></ion-icon>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+
+  <ion-modal [isOpen]="modalAlumnosAbierto" (didDismiss)="cerrarModalAlumnos()" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.85]">
+    <ng-template>
+      <div class="h-full bg-white px-5 pt-8">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-black font-black text-xl tracking-tight">Elegir Alumno</h2>
+            <p class="text-gray-500 text-xs font-medium mt-0.5">¿A quién le asignaremos este plan?</p>
+          </div>
+          <button (click)="cerrarModalAlumnos()" class="text-gray-400 bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center active:scale-90">
+            <ion-icon name="close-outline" class="text-xl"></ion-icon>
+          </button>
+        </div>
+
+        <div class="space-y-3 overflow-y-auto pb-10">
+          <div *ngIf="alumnos.length === 0" class="text-center text-gray-400 py-10 text-sm font-bold">No tienes alumnos registrados</div>
+          
+          <div *ngFor="let a of alumnos" (click)="seleccionarAlumno(a)" 
+               class="bg-white p-4 rounded-2xl border active:bg-gray-50 flex items-center gap-4 cursor-pointer shadow-sm transition-colors"
+               [ngClass]="rutina.alumnoId === a.uid ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'">
+             
+             <div class="h-12 w-12 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0 border border-gray-200 shadow-sm">
+               <img [src]="a.foto || 'https://ui-avatars.com/api/?name=' + a.nombre + '&background=f9fafb&color=f57c00&font-weight=bold'" class="w-full h-full object-cover">
+             </div>
+             
+             <div class="flex-1">
+               <h3 class="font-bold text-base leading-tight" [ngClass]="rutina.alumnoId === a.uid ? 'text-black' : 'text-gray-800'">{{ a.nombre }}</h3>
+               <span *ngIf="rutina.alumnoId === a.uid" class="text-[#f57c00] text-[10px] font-black uppercase tracking-widest">Seleccionado</span>
+             </div>
+
+             <div *ngIf="rutina.alumnoId === a.uid" class="h-6 w-6 rounded-full bg-black flex items-center justify-center">
+                <ion-icon name="checkmark-outline" class="text-white text-sm"></ion-icon>
+             </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
-// 👇 Importamos el Guardia de Seguridad que creaste
+
+// 👇 Importamos a todo tu equipo de seguridad (Tus 3 Guardias)
 import { authGuard } from './guards/auth-guard'; 
+import { publicGuard } from './guards/public.guard';
+import { onboardingGuard } from './guards/onboarding.guard';
 
 export const routes: Routes = [
   {
@@ -14,23 +17,27 @@ export const routes: Routes = [
   },
   
   // ==========================================
-  // 🔓 ZONA PÚBLICA (SIN GUARDIA)
+  // 🔓 ZONA PÚBLICA (PROTEGIDA POR EL GUARDIA PÚBLICO)
   // ==========================================
   {
     path: 'login',
-    loadComponent: () => import('./pages/auth/login/login.page').then( m => m.LoginPage)
+    loadComponent: () => import('./pages/auth/login/login.page').then( m => m.LoginPage),
+    canActivate: [publicGuard] // 🛡️ Evita que alguien logueado regrese aquí
   },
   {
     path: 'registro',
-    loadComponent: () => import('./pages/auth/registro/registro.page').then( m => m.RegistroPage)
+    loadComponent: () => import('./pages/auth/registro/registro.page').then( m => m.RegistroPage),
+    canActivate: [publicGuard] // 🛡️ Evita que alguien logueado regrese aquí
   },
   {
     path: 'auth/registro',
-    loadComponent: () => import('./pages/auth/registro/registro.page').then( m => m.RegistroPage)
+    loadComponent: () => import('./pages/auth/registro/registro.page').then( m => m.RegistroPage),
+    canActivate: [publicGuard] // 🛡️ Evita que alguien logueado regrese aquí
   },
   {
     path: 'login/unirse-equipo',
     loadComponent: () => import('./pages/login/unirse-equipo/unirse-equipo.page').then( m => m.UnirseEquipoPage)
+    // (A esta la dejamos sin guardia público porque el alumno necesita estar logueado para unirse)
   },
 
   // ==========================================
@@ -39,7 +46,7 @@ export const routes: Routes = [
   {
     path: 'coach/dashboard',
     loadComponent: () => import('./pages/coach/dashboard/dashboard.page').then( m => m.CoachDashboardPage),
-    canActivate: [authGuard] // 🛡️ Guardia activado
+    canActivate: [authGuard] // 🛡️ Guardia VIP activado
   }, 
   {
     path: 'coach/ejercicios',
@@ -93,7 +100,7 @@ export const routes: Routes = [
   {
     path: 'entreno',
     loadComponent: () => import('./pages/entreno/tabs/tabs.page').then( m => m.TabsPage),
-    canActivate: [authGuard], // 🛡️ Protegemos la ruta padre. Automáticamente protege a todos los "children"
+    canActivate: [authGuard], // 🛡️ Protegemos la ruta padre
     children: [
       {
         path: 'dashboard',
@@ -139,13 +146,11 @@ export const routes: Routes = [
   {
     path: 'onboarding',
     loadComponent: () => import('./pages/onboarding/onboarding.page').then( m => m.OnboardingPage),
-    canActivate: [authGuard] // 🛡️ Solo usuarios registrados pueden hacer el onboarding
+    canActivate: [onboardingGuard] // 🛡️ El guardia inteligente: solo deja pasar si NO tienes rol
   },
   {
     path: 'perfil/ajustes',
     loadComponent: () => import('./pages/perfil/ajustes/ajustes.page').then( m => m.AjustesPage),
     canActivate: [authGuard]
   },
-  
-  // Las rutas duplicadas o innecesarias fueron limpiadas para mantener el código ordenado
 ];

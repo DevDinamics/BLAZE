@@ -1,17 +1,18 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router'; // 👈 IMPORTANTE PARA ENVIAR DATOS EN LA NAVEGACIÓN
+import { Router } from '@angular/router'; 
 import { IonicModule, NavController, LoadingController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 
 import { 
   arrowBackOutline, searchOutline, personOutline, scaleOutline, bodyOutline, 
   fitnessOutline, closeOutline, barbellOutline, restaurantOutline, starOutline,
-  mailOutline, calendarOutline, flagOutline // 👈 Añadí flagOutline para el objetivo
+  mailOutline, calendarOutline, flagOutline 
 } from 'ionicons/icons';
 
-import { Firestore, collection, query, where, getDocs } from '@angular/fire/firestore';
+// 👇 1. Agregamos writeBatch y doc a los imports de Firestore
+import { Firestore, collection, query, where, getDocs, writeBatch, doc } from '@angular/fire/firestore';
 import { AuthService } from 'src/app/services/auth';
 import { Subscription } from 'rxjs';
 
@@ -25,7 +26,7 @@ import { Subscription } from 'rxjs';
 export class MisAlumnosPage implements OnInit, OnDestroy {
 
   private firestore = inject(Firestore);
-  private router = inject(Router); // 👈 Inyectamos el Router
+  private router = inject(Router); 
   
   cargando = true;
   suscripcionAuth: Subscription | null = null;
@@ -79,26 +80,61 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
       this.todosLosAlumnos = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
-          uid: doc.id, // Guardamos el UID real de Firebase
+          uid: doc.id, 
           nombre: data['nombre'] || 'Sin Nombre',
           apellido: data['apellido'] || '',
           email: data['email'] || '',
           foto: data['foto'] || 'assets/icon/avatar-h-1.png', 
           peso: data['peso'] || 0,
           altura: data['altura'] || 0,
-          // 👇 Jalamos el objetivo y la experiencia reales
           objetivo: data['objetivo'] || 'No definido',
           experiencia: data['experiencia'] || 'Principiante',
-          fechaRegistro: data['fechaRegistro']?.toDate() || new Date()
+          fechaRegistro: data['fechaRegistro']?.toDate() || new Date(),
+          // 👇 2. Leemos el estado del puntito para saber si tenemos que limpiarlo
+          vistoPorCoach: data['vistoPorCoach'] !== undefined ? data['vistoPorCoach'] : true 
         };
       });
 
       this.alumnosFiltrados = [...this.todosLosAlumnos];
 
+      // 👇 3. ¡Ejecutamos la limpieza! Si hay nuevos, los marcamos como vistos.
+      await this.marcarAlumnosComoVistos();
+
     } catch (error) {
       console.error('Error al cargar alumnos:', error);
     } finally {
       this.cargando = false;
+    }
+  }
+
+  // ==========================================
+  // 🧹 FUNCIÓN DE LIMPIEZA DE NOTIFICACIONES
+  // ==========================================
+  async marcarAlumnosComoVistos() {
+    if (!this.coachId || this.todosLosAlumnos.length === 0) return;
+
+    // Abrimos un "paquete" de actualizaciones (Batch)
+    const batch = writeBatch(this.firestore);
+    let requiereActualizacion = false;
+
+    // Revisamos uno por uno a tus alumnos
+    this.todosLosAlumnos.forEach(alumno => {
+      // Si encontramos a alguien con el foquito encendido (false)
+      if (alumno.vistoPorCoach === false) {
+        const alumnoRef = doc(this.firestore, 'usuarios', alumno.uid);
+        batch.update(alumnoRef, { vistoPorCoach: true }); // Lo apagamos
+        requiereActualizacion = true;
+      }
+    });
+
+    // Si encontramos al menos a uno, mandamos el paquete a Firebase
+    if (requiereActualizacion) {
+      try {
+        await batch.commit();
+        console.log('Se apagaron los foquitos de nuevos alumnos.');
+      } catch (error) {
+        console.error('Error al limpiar las notificaciones:', error);
+      }
     }
   }
 
@@ -131,7 +167,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
   irACrearRutina() {
     const alumnoId = this.alumnoSeleccionado?.uid;
     this.cerrarExpediente();
-    // Le pasamos el ID del alumno a la página de Crear Rutina
     this.router.navigate(['/coach/crear-rutina'], { 
       queryParams: { preselectAlumno: alumnoId } 
     });
@@ -140,7 +175,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
   irACrearDieta() {
     const alumnoId = this.alumnoSeleccionado?.uid;
     this.cerrarExpediente();
-    // Le pasamos el ID del alumno a la página de Crear Dieta
     this.router.navigate(['/coach/crear-dieta'], { 
       queryParams: { preselectAlumno: alumnoId } 
     });

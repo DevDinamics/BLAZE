@@ -45,40 +45,40 @@
         <p class="text-sm text-gray-500 mt-1 max-w-[220px] text-center font-medium leading-relaxed">Crea un plan y asígnalo a tus alumnos.</p>
       </div>
 
-      <div *ngFor="let item of rutinasActivas" class="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
-        
-        <button (click)="abrirOpciones(item)" class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur text-gray-600 hover:bg-gray-100 transition-colors z-20 active:scale-90 shadow-sm border border-gray-200">
-          <ion-icon name="ellipsis-vertical"></ion-icon>
+      <div *ngFor="let item of rutinasActivas" class="bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 relative border border-gray-100 mb-5 group cursor-pointer" (click)="abrirOpciones(item)">
+
+        <button (click)="abrirOpciones(item); $event.stopPropagation()" class="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-gray-700 hover:bg-white transition-colors z-20 active:scale-90 shadow-sm">
+          <ion-icon name="ellipsis-vertical" class="text-lg"></ion-icon>
         </button>
 
-        <div class="h-32 w-full relative bg-gray-100 flex items-center justify-center overflow-hidden">
-          <img [src]="item.imagen || 'https://ionicframework.com/docs/img/demos/thumbnail.svg'" class="w-full h-full object-cover opacity-90 mix-blend-multiply">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+        <div class="h-40 w-full relative bg-[#2a2d34] flex items-center justify-center overflow-hidden">
+          <img [src]="item.imagen || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1000&auto=format&fit=crop'" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 ease-out">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
           
-          <div class="absolute bottom-3 left-4 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg border border-white/20 shadow-sm">
-            <span class="text-[10px] font-black text-black uppercase tracking-widest">{{ item.nivel || 'General' }}</span>
+          <div class="absolute bottom-4 left-5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-sm">
+            <span class="text-[10px] font-black text-black uppercase tracking-widest">{{ item.nivel || 'Avanzado' }}</span>
           </div>
         </div>
 
-        <div class="p-5">
-          <h3 class="text-xl font-black text-black uppercase tracking-tight leading-tight mb-2 truncate">
+        <div class="p-5 pt-4">
+          <h3 class="text-[22px] font-black text-black uppercase tracking-tight leading-none mb-3 truncate pr-4">
             {{ item.nombre }}
           </h3>
           
           <div class="flex items-center gap-2 mb-4">
-            <div class="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
-              <ion-icon name="person-outline" class="text-gray-500 text-[10px]"></ion-icon>
+            <div class="h-6 w-6 rounded-full bg-gray-100 overflow-hidden shadow-sm border border-gray-200">
+              <img [src]="item.fotoAlumno || 'https://ui-avatars.com/api/?name=' + (item.nombreAlumno || 'A') + '&background=f9fafb&color=f57c00&font-weight=bold'" class="w-full h-full object-cover">
             </div>
-            <p class="text-[#f57c00] text-xs font-bold uppercase truncate">
+            <p class="text-[#f57c00] text-xs font-bold uppercase truncate tracking-wide">
               {{ item.nombreAlumno || 'Sin Asignar' }}
             </p>
           </div>
           
           <div class="flex gap-2">
-            <span class="bg-gray-50 text-gray-600 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg border border-gray-200">
+            <span class="bg-white text-gray-600 text-[11px] font-bold uppercase tracking-wide px-3.5 py-1.5 rounded-xl border border-gray-200 shadow-sm">
               {{ item.semanas }} Semanas
             </span> 
-            <span class="bg-gray-50 text-gray-600 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-lg border border-gray-200">
+            <span class="bg-white text-gray-600 text-[11px] font-bold uppercase tracking-wide px-3.5 py-1.5 rounded-xl border border-gray-200 shadow-sm">
               {{ item.totalEjercicios || 0 }} Ejer.
             </span>
           </div>

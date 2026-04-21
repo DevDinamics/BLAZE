@@ -4,12 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
+
+// 👇 1. Importamos las herramientas de Firebase para poder buscar la foto
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+
 import { addIcons } from 'ionicons';
 import { 
   add, timeOutline, layersOutline, chevronForward, barbell, arrowBack, copy, 
   person, trash, create, close, search, documentTextOutline, folderOpenOutline, 
   personOutline, copyOutline, ellipsisVertical,
-  // 👇 Añadimos estos para el nuevo menú de opciones
   createOutline, trashOutline 
 } from 'ionicons/icons'; 
 
@@ -27,11 +30,11 @@ export class RutinasPage {
   misPlantillas: any[] = [];
   cargando = true;
 
-  // 👇 Variables para controlar nuestro propio menú de opciones
   mostrarModalOpciones = false;
   rutinaSeleccionada: any = null;
 
   constructor(
+    private firestore: Firestore, // 👇 2. Inyectamos Firestore aquí
     private coachService: CoachService, 
     private authService: AuthService,
     private navCtrl: NavController,
@@ -60,6 +63,27 @@ export class RutinasPage {
           if (todas && Array.isArray(todas)) {
             this.misPlantillas = todas.filter((r: any) => r.esPlantilla === true);
             this.rutinasActivas = todas.filter((r: any) => !r.esPlantilla);
+
+            // ==========================================
+            // 👇 3. MAGIA PARA TRAER LOS AVATARES
+            // ==========================================
+            for (let rutina of this.rutinasActivas) {
+              if (rutina.alumnoId) { 
+                try {
+                  const alumnoRef = doc(this.firestore, `usuarios/${rutina.alumnoId}`);
+                  const alumnoSnap = await getDoc(alumnoRef);
+                  
+                  if (alumnoSnap.exists()) {
+                    // Guardamos la foto real en la rutina para que el HTML la lea
+                    rutina.fotoAlumno = alumnoSnap.data()['foto'];
+                  }
+                } catch (e) {
+                  console.error('Error buscando foto del alumno:', e);
+                }
+              }
+            }
+            // ==========================================
+
           } else {
             this.misPlantillas = [];
             this.rutinasActivas = [];
@@ -85,19 +109,16 @@ export class RutinasPage {
     }
   }
 
-  // 👇 1. Abrimos nuestro menú personalizado
   abrirOpciones(rutina: any) {
     this.rutinaSeleccionada = rutina;
     this.mostrarModalOpciones = true;
   }
 
-  // 👇 2. Cerramos el menú
   cerrarOpciones() {
     this.mostrarModalOpciones = false;
-    setTimeout(() => this.rutinaSeleccionada = null, 300); // Limpiamos después de la animación
+    setTimeout(() => this.rutinaSeleccionada = null, 300); 
   }
 
-  // 👇 3. Acción: Editar
   editarRutina() {
     const id = this.rutinaSeleccionada?.id;
     this.cerrarOpciones();
@@ -106,12 +127,10 @@ export class RutinasPage {
     }
   }
 
-  // 👇 4. Acción: Borrar
   iniciarBorrado() {
     const rutina = this.rutinaSeleccionada;
     this.cerrarOpciones();
     if (rutina) {
-      // Un pequeño retraso para que el modal se cierre antes de abrir la alerta
       setTimeout(() => {
         this.confirmarBorrar(rutina);
       }, 350);

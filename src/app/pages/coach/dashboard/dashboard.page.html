@@ -11,8 +11,8 @@
         </div>
         
         <div routerLink="/coach/perfil-coach" class="relative group cursor-pointer">
-          <div class="h-12 w-12 rounded-full border-2 border-white p-0.5 hover:scale-105 transition-transform active:scale-95 bg-gray-50 shadow-md">
-            <img src="https://i.pravatar.cc/150?u=coach" class="h-full w-full rounded-full object-cover">
+          <div class="h-12 w-12 rounded-full border-2 border-white p-0.5 hover:scale-105 transition-transform active:scale-95 bg-gray-50 shadow-md overflow-hidden">
+            <img [src]="coachFoto || 'https://ui-avatars.com/api/?name=Coach&background=F3F4F6&color=9CA3AF'" class="h-full w-full rounded-full object-cover">
           </div>
           <div class="absolute -bottom-1 -right-1 bg-white text-gray-700 h-6 w-6 rounded-full flex items-center justify-center border border-gray-100 shadow-sm z-10">
             <ion-icon [icon]="iconSettings" class="text-[12px]"></ion-icon>
@@ -21,10 +21,13 @@
       </div>
 
       <div class="grid grid-cols-3 gap-3">
-        <div routerLink="/coach/mis-alumnos" class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform hover:shadow-md">
-          <p class="text-3xl font-black text-black">1</p>
-          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Alumnos</p>
-        </div>
+        <div routerLink="/coach/mis-alumnos" class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform hover:shadow-md relative overflow-hidden">
+  
+  <div *ngIf="tieneNuevosAlumnos" class="absolute top-3 right-3 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse shadow-sm z-10"></div>
+  
+  <p class="text-3xl font-black text-black">{{ totalAlumnos }}</p>
+  <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Alumnos</p>
+</div>
         <div class="bg-orange-50 rounded-2xl p-4 border border-orange-100 text-center relative overflow-hidden">
           <div *ngIf="pendientes.length > 0" class="absolute top-2 right-2 h-1.5 w-1.5 bg-[#ffa500] rounded-full animate-pulse"></div>
           <p class="text-2xl font-rajdhani font-black text-[#ffa500]">{{ pendientes.length }}</p>

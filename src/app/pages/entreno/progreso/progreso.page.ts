@@ -1,16 +1,19 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
+import { IonicModule, NavController, ToastController, LoadingController } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth';
 import { Firestore, doc, onSnapshot } from '@angular/fire/firestore';
 import { Share } from '@capacitor/share'; 
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { addIcons } from 'ionicons';
+import html2canvas from 'html2canvas';
 
-// 👇 Íconos limpios para el modo claro
+// 👇 Íconos actualizados para la estética Apple
 import { 
   flame, barbellOutline, trophyOutline, trendingUpOutline, calendarOutline, timeOutline, 
-  checkmarkCircleOutline, medalOutline, shareSocialOutline, arrowUpOutline 
+  checkmarkCircleOutline, medalOutline, shareSocialOutline, arrowUpOutline, trophy,
+  shareOutline, arrowForwardOutline, chevronForward, time, checkmarkSharp
 } from 'ionicons/icons';
 
 @Component({
@@ -54,10 +57,14 @@ export class ProgresoPage implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private navCtrl: NavController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private loadingCtrl: LoadingController
   ) {
-    // Registramos los íconos
-    addIcons({ flame, barbellOutline, trophyOutline, trendingUpOutline, calendarOutline, timeOutline, checkmarkCircleOutline, medalOutline, shareSocialOutline, arrowUpOutline });
+    addIcons({ 
+      flame, barbellOutline, trophyOutline, trendingUpOutline, calendarOutline, timeOutline, 
+      checkmarkCircleOutline, medalOutline, shareSocialOutline, arrowUpOutline, trophy,
+      shareOutline, arrowForwardOutline, chevronForward, time, checkmarkSharp
+    });
   }
 
   ngOnInit() {
@@ -83,24 +90,52 @@ export class ProgresoPage implements OnInit, OnDestroy {
   }
 
   async compartirLogro() {
+    const loading = await this.loadingCtrl.create({
+      message: 'Creando obra de arte...',
+      spinner: 'crescent',
+      mode: 'ios'
+    });
+    await loading.present();
+
     try {
-      const xp = this.perfil?.xpTotal || 0;
-      await Share.share({
-        title: '¡Mi progreso en Blaze!',
-        text: `🔥 ¡Acabo de alcanzar el Nivel ${this.nivelActual} con ${xp} XP en mi entrenamiento! ¿Puedes superarme?`,
-        url: 'https://blazefit.app', 
-        dialogTitle: 'Comparte tu Nivel'
-      });
+      const element = document.getElementById('shareImageNode');
+      
+      if (element) {
+        // Capturamos el Canvas (la magia de Instagram)
+        const canvas = await html2canvas(element, {
+          scale: 2.5, // Super alta resolución
+          useCORS: true, 
+          backgroundColor: '#ffffff' // 👇 Ajustado a blanco para el modo claro
+        });
+
+        const base64Data = canvas.toDataURL('image/jpeg', 0.95);
+        const fileName = `blaze_logros_${new Date().getTime()}.jpeg`;
+        
+        // Lo guardamos en el caché del celular
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        await loading.dismiss();
+
+        // Lanzamos la acción nativa de compartir
+        await Share.share({
+          title: 'Mis logros en Blaze',
+          text: `🔥 Soy Nivel ${this.nivelActual} con una racha de ${this.stats.rachaDias} días. ¡Únete a Blaze y entrena conmigo!`,
+          url: savedFile.uri, 
+          dialogTitle: 'Presume tus ganancias'
+        });
+
+      } else {
+        throw new Error('No se encontró el nodo HTML');
+      }
+
     } catch (error) {
-      const toast = await this.toastCtrl.create({
-        message: '¡Nivel copiado al portapapeles!',
-        duration: 2000,
-        color: 'success',
-        icon: 'checkmark-circle-outline',
-        mode: 'ios',
-        position: 'top'
-      });
-      toast.present();
+      console.error('Error al compartir', error);
+      await loading.dismiss();
+      this.mostrarToast('No se pudo generar la imagen.', 'danger');
     }
   }
 
@@ -123,7 +158,14 @@ export class ProgresoPage implements OnInit, OnDestroy {
     this.nivelActual = nivel;
     this.xpEnNivelActual = xpTotal - xpBaseDeNivel;
     const xpNecesaria = xpMetaDeNivel - xpBaseDeNivel;
-    this.porcentajeProgreso = Math.min((this.xpEnNivelActual / xpNecesaria) * 100, 100);
+    
+    // Aseguramos que el SVG dasharray sea exacto (0 a 100)
+    this.porcentajeProgreso = Math.round(Math.min((this.xpEnNivelActual / xpNecesaria) * 100, 100));
     this.xpParaSiguienteNivel = xpMetaDeNivel;
+  }
+
+  async mostrarToast(m: string, c: string) {
+    const t = await this.toastCtrl.create({ message: m, duration: 2000, color: c, mode: 'ios' });
+    t.present();
   }
 }

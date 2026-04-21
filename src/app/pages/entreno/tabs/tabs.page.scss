@@ -1,0 +1,32 @@
+/* ======================================================
+   DISEÑO 3: APPLE PREMIUM TABS (Círculo Negro Activo)
+   ====================================================== */
+
+/* Limpiamos estilos nativos de Ionic para evitar interferencias */
+ion-tab-bar {
+  contain: none; /* Permite que las sombras e íconos sobresalgan si es necesario */
+}
+
+/* Efecto de "presionar" para botones inactivos */
+ion-tab-button:not(.tab-selected):active .tab-btn-content {
+  transform: scale(0.92);
+}
+
+/* 1. EL CÍRCULO SE VUELVE NEGRO AL SELECCIONAR */
+ion-tab-button.tab-selected .tab-btn-content {
+  @apply bg-black;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra elegante Apple */
+  transform: translateY(-2px); /* Lo levanta un milímetro */
+}
+
+/* 2. EL ÍCONO SE VUELVE BLANCO AL SELECCIONAR */
+ion-tab-button.tab-selected ion-icon {
+  @apply text-white;
+  transform: scale(1.05); /* El ícono respira dentro del círculo negro */
+}
+
+/* 3. TOQUE EXTRA PARA EL BOTÓN CENTRAL (MI RUTINA) */
+ion-tab-button[tab="mi-rutina"].tab-selected .tab-btn-content {
+  @apply border-black;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); /* Sombra más fuerte porque es más grande */
+}

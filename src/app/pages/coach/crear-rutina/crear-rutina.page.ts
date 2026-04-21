@@ -11,7 +11,9 @@ import {
   arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
   folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
   list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-  personOutline
+  personOutline, 
+  // 👇 Añadimos estos dos íconos para el nuevo modal
+  chevronDownOutline, checkmarkOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -51,7 +53,11 @@ export class CrearRutinaPage implements OnInit {
   rutinasActivasDelCoach: any[] = []; 
   misPlantillas: any[] = [];
   plantillasFiltradas: any[] = [];
+  
   modalPlantillasAbierto = false;
+  // 👇 Variable que controla si nuestro nuevo modal está abierto
+  modalAlumnosAbierto = false; 
+  
   textoBusqueda = '';
 
   constructor(
@@ -64,34 +70,35 @@ export class CrearRutinaPage implements OnInit {
     private alertCtrl: AlertController, 
     private route: ActivatedRoute 
   ) {
-    // Registramos los íconos limpios (Outlines)
+    // Registramos los íconos
     addIcons({ 
       arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
       folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
       list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-      personOutline
+      personOutline, chevronDownOutline, checkmarkOutline // 👇 Registrados aquí también
     });
   }
 
   async ngOnInit() {
 
     this.route.queryParams.subscribe(params => {
-  if (params['preselectAlumno']) {
-    this.rutina.alumnoId = params['preselectAlumno'];
-  }
-});
-  this.authService.user$.subscribe(async user => {
-    if (user) {
-      this.uidCoach = user.uid; 
-      
-      const todosAlumnos = await this.coachService.obtenerMisAlumnos(this.uidCoach);
-      
-      this.alumnos = todosAlumnos.filter((a: any) => 
-        a.uid !== this.uidCoach && 
-        a.nombre && 
-        a.nombre.toLowerCase() !== 'admin' && 
-        !a.nombre.toLowerCase().includes('administrador')
-      );
+      if (params['preselectAlumno']) {
+        this.rutina.alumnoId = params['preselectAlumno'];
+      }
+    });
+
+    this.authService.user$.subscribe(async user => {
+      if (user) {
+        this.uidCoach = user.uid; 
+        
+        const todosAlumnos = await this.coachService.obtenerMisAlumnos(this.uidCoach);
+        
+        this.alumnos = todosAlumnos.filter((a: any) => 
+          a.uid !== this.uidCoach && 
+          a.nombre && 
+          a.nombre.toLowerCase() !== 'admin' && 
+          !a.nombre.toLowerCase().includes('administrador')
+        );
 
         const todasRutinas: any = await this.coachService.obtenerMisRutinas(this.uidCoach); 
         this.rutinasActivasDelCoach = todasRutinas.filter((r: any) => r.active === true && !r.esPlantilla);
@@ -220,6 +227,25 @@ export class CrearRutinaPage implements OnInit {
     if (p.semanas) this.rutina.semanas = p.semanas;
     if (p.nivel) this.rutina.nivel = p.nivel;
     this.cerrarModalPlantillas();
+  }
+
+  // 👇 Funciones para manejar el nuevo Modal de Alumnos
+  abrirModalAlumnos() { 
+    this.modalAlumnosAbierto = true; 
+  }
+  
+  cerrarModalAlumnos() { 
+    this.modalAlumnosAbierto = false; 
+  }
+  
+  seleccionarAlumno(alumno: any) {
+    this.rutina.alumnoId = alumno.uid;
+    this.cerrarModalAlumnos();
+    
+    // El setTimeout le da tiempo al modal de bajar antes de lanzar la alerta si ya tiene rutina
+    setTimeout(() => {
+      this.verificarAlumno();
+    }, 300);
   }
 
   regresar() { this.navCtrl.back(); }

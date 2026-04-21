@@ -2,27 +2,37 @@
 
   <ion-tab-bar 
     slot="bottom" 
-    class="border-t border-gray-200"
-    style="--background: #ffffff; --border: none; min-height: 60px; padding-bottom: env(safe-area-inset-bottom);">
+    class="border-t border-gray-100/50 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.08)]"
+    style="--background: #ffffff; --border: none; min-height: 75px; padding-bottom: calc(env(safe-area-inset-bottom) + 5px); padding-top: 5px;">
 
-    <ion-tab-button tab="dashboard" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon [icon]="iconHome" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+    <ion-tab-button tab="dashboard" class="bg-white relative overflow-visible" style="--background: transparent; --background-focused: transparent; --background-hover: transparent;">
+      <div class="flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] tab-btn-content relative z-10">
+        <ion-icon [icon]="iconHome" class="text-gray-400 text-[22px] transition-all duration-300 z-20 relative"></ion-icon>
+      </div>
     </ion-tab-button>
 
-    <ion-tab-button tab="nutricion" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon [icon]="iconRestaurant" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+    <ion-tab-button tab="nutricion" class="bg-white relative overflow-visible" style="--background: transparent; --background-focused: transparent; --background-hover: transparent;">
+      <div class="flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] tab-btn-content relative z-10">
+        <ion-icon [icon]="iconRestaurant" class="text-gray-400 text-[22px] transition-all duration-300 z-20 relative"></ion-icon>
+      </div>
     </ion-tab-button>
 
-    <ion-tab-button tab="mi-rutina" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon [icon]="iconBarbell" class="text-gray-400 group-[.tab-selected]:text-black text-3xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+    <ion-tab-button tab="mi-rutina" class="bg-white relative overflow-visible" style="--background: transparent; --background-focused: transparent; --background-hover: transparent;">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] tab-btn-content relative z-10 shadow-sm border border-gray-50 bg-white">
+        <ion-icon [icon]="iconBarbell" class="text-gray-400 text-[26px] transition-all duration-300 z-20 relative"></ion-icon>
+      </div>
     </ion-tab-button>
 
-    <ion-tab-button tab="progreso" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon [icon]="iconStats" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+    <ion-tab-button tab="progreso" class="bg-white relative overflow-visible" style="--background: transparent; --background-focused: transparent; --background-hover: transparent;">
+      <div class="flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] tab-btn-content relative z-10">
+        <ion-icon [icon]="iconStats" class="text-gray-400 text-[22px] transition-all duration-300 z-20 relative"></ion-icon>
+      </div>
     </ion-tab-button>
 
-    <ion-tab-button tab="perfil" class="bg-white group" style="--background: #ffffff;">
-      <ion-icon [icon]="iconPerson" class="text-gray-400 group-[.tab-selected]:text-black text-2xl transition-all duration-300 group-[.tab-selected]:scale-110"></ion-icon>
+    <ion-tab-button tab="perfil" class="bg-white relative overflow-visible" style="--background: transparent; --background-focused: transparent; --background-hover: transparent;">
+      <div class="flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] tab-btn-content relative z-10">
+        <ion-icon [icon]="iconPerson" class="text-gray-400 text-[22px] transition-all duration-300 z-20 relative"></ion-icon>
+      </div>
     </ion-tab-button>
 
   </ion-tab-bar>
