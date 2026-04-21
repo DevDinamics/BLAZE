@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router'; 
 
-// 👇 1. Importaciones Standalone correctas
 import { 
   IonHeader, IonContent, IonIcon, IonSpinner, IonModal, 
   ModalController, LoadingController, ToastController, 
@@ -14,25 +13,23 @@ import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 import { Subscription } from 'rxjs'; 
 
-// IMPORTS DE FIREBASE
 import { Firestore, collection, query, where, onSnapshot, orderBy } from '@angular/fire/firestore';
-
-// IMPORTS DE MODALES
 import { UploadPreviewPage } from 'src/app/modals/upload-preview/upload-preview.page';
 import { StoryViewerPage } from 'src/app/modals/story-viewer/story-viewer.page';
 import { VerPerfilCoachComponent } from 'src/app/modals/ver-perfil-coach/ver-perfil-coach.component';
-
-// CÁMARA
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
-// 👇 2. Importación de Iconos
+// 👇 Importamos addIcons para registrar los iconos de la tarjeta de compañero
+import { addIcons } from 'ionicons';
+
 import { 
   flameOutline, barbellOutline, addCircleOutline, starOutline, playOutline, 
   timeOutline, listOutline, checkmarkCircleOutline, calendarOutline,
   flashOutline, checkmarkDoneOutline, keyOutline, ticketOutline, logOutOutline, 
   constructOutline, helpCircleOutline, trophyOutline, personOutline, 
   alertCircleOutline, hourglassOutline, apertureOutline, cameraOutline, 
-  addOutline, chevronForwardOutline, play, clipboardOutline
+  addOutline, chevronForwardOutline, play, clipboardOutline, moonOutline, sparklesOutline,
+  close, personAdd // Nuevos iconos para el modal del team
 } from 'ionicons/icons';
 
 @Component({
@@ -40,7 +37,6 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
-  // 👇 3. Componentes de Ionic registrados aquí
   imports: [
     CommonModule, RouterModule, FormsModule, 
     IonHeader, IonContent, IonIcon, IonSpinner, IonModal
@@ -50,7 +46,6 @@ export class EntrenoDashboardPage implements OnDestroy {
 
   private firestore = inject(Firestore); 
 
-  // 👇 4. VARIABLES DE ICONOS (El escudo anti-crash para Netlify)
   iconFlame = flameOutline;
   iconKey = keyOutline;
   iconTicket = ticketOutline;
@@ -66,6 +61,8 @@ export class EntrenoDashboardPage implements OnDestroy {
   iconCheckmark = checkmarkDoneOutline;
   iconBarbell = barbellOutline;
   iconConstruct = constructOutline;
+  iconMoon = moonOutline;
+  iconSparkles = sparklesOutline; 
 
   perfil: any = null;
   rutinaActual: any = null;
@@ -84,7 +81,22 @@ export class EntrenoDashboardPage implements OnDestroy {
   historias: any[] = [];
   rankingTeam: any[] = []; 
 
-  // Inicializamos con un icono por defecto válido
+  // 👇 Variables para el Diseño Dinámico y Selector de Días
+  fechaActualFormateada: string = '';
+  sesionHoyTexto: string = '';
+  esDiaDeDescanso: boolean = false;
+  fraseMotivacional: string = '';
+  diaSeleccionadoIndex: number = 0;
+  diaActualCalendario: number = 0; 
+  
+  frasesDescanso = [
+    "Los músculos crecen cuando descansas, no cuando entrenas.",
+    "Recarga energías hoy para romper tus límites mañana.",
+    "El descanso es la preparación para tu próxima victoria.",
+    "Escucha a tu cuerpo. Hoy toca recuperar.",
+    "La recuperación es el arma secreta de los campeones."
+  ];
+
   notificacion: any = {
     tipo: 'rutina',
     titulo: 'Rutina Asignada',
@@ -94,6 +106,10 @@ export class EntrenoDashboardPage implements OnDestroy {
     fotoCoach: ''
   };
 
+  // 👇 Variables para el Perfil de Compañeros
+  modalCompaneroAbierto = false;
+  companeroSeleccionado: any = null;
+
   constructor(
     private authService: AuthService,
     private studentService: StudentService,
@@ -102,7 +118,10 @@ export class EntrenoDashboardPage implements OnDestroy {
     private toastCtrl: ToastController,
     private navCtrl: NavController,
     private alertController: AlertController
-  ) {}
+  ) {
+    // Registramos los íconos del modal de compañeros para que funcionen con name="..."
+    addIcons({ close, 'person-add': personAdd });
+  }
 
   async ionViewWillEnter() {
     if (this.suscripcionAuth) { this.suscripcionAuth.unsubscribe(); }
@@ -165,6 +184,9 @@ export class EntrenoDashboardPage implements OnDestroy {
             this.calcularVencimiento(rutina);
           }
 
+          // Ejecutamos la lógica de fechas y selector dinámico
+          this.configurarFechaYRutina();
+
           this.cargarHistorias(this.perfil.equipoId);
           
           if (this.perfil.coachId) {
@@ -180,6 +202,43 @@ export class EntrenoDashboardPage implements OnDestroy {
         this.cargando = false; 
       }
     });
+  }
+
+  // 👇 LÓGICA MATEMÁTICA PARA EL CALENDARIO Y SELECCIÓN
+  configurarFechaYRutina() {
+    const opciones: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+    this.fechaActualFormateada = new Date().toLocaleDateString('es-ES', opciones).replace(',', '');
+
+    if (this.rutinaActual && this.rutinaActual.sesiones) {
+      let diaSemana = new Date().getDay(); 
+      diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; // Lunes = 0, Domingo = 6
+
+      this.diaActualCalendario = diaSemana;
+      const totalSesiones = this.rutinaActual.sesiones.length;
+
+      // Autoseleccionar el día según el calendario
+      if (diaSemana >= totalSesiones) {
+        this.seleccionarDia(-1); 
+      } else {
+        this.seleccionarDia(diaSemana); 
+      }
+    } else {
+      this.esDiaDeDescanso = false;
+      this.sesionHoyTexto = 'Rutina Activa';
+    }
+  }
+
+  // Cambia los datos de la tarjeta cuando tocan un día distinto
+  seleccionarDia(index: number) {
+    this.diaSeleccionadoIndex = index;
+    
+    if (index === -1) {
+      this.esDiaDeDescanso = true;
+      this.fraseMotivacional = this.frasesDescanso[Math.floor(Math.random() * this.frasesDescanso.length)];
+    } else {
+      this.esDiaDeDescanso = false;
+      this.sesionHoyTexto = this.rutinaActual.sesiones[index]?.nombre || `Día ${index + 1}`;
+    }
   }
 
   cargarRankingDelTeam(coachId: string) {
@@ -229,6 +288,20 @@ export class EntrenoDashboardPage implements OnDestroy {
     await modal.present();
   }
 
+  // 👇 NUEVOS MÉTODOS PARA EL PERFIL DEL COMPAÑERO
+  verPerfilCompanero(user: any) {
+    this.companeroSeleccionado = user;
+    this.modalCompaneroAbierto = true;
+  }
+
+  cerrarPerfilCompanero() {
+    this.modalCompaneroAbierto = false;
+    // Le damos 300ms a la animación para que cierre suave antes de borrar los datos
+    setTimeout(() => {
+      this.companeroSeleccionado = null;
+    }, 300);
+  }
+
   limpiarDatosLocales() {
     this.rutinaActual = null;
     this.coachActual = null;
@@ -268,7 +341,6 @@ export class EntrenoDashboardPage implements OnDestroy {
       if (role === 'confirm' && data.confirm) {
         await this.procesarSubidaFirebase(image);
       }
-
     } catch (error) {
       console.log('Cancelado o Error en cámara:', error);
     }
@@ -334,7 +406,6 @@ export class EntrenoDashboardPage implements OnDestroy {
     const msj = modo === 'nuevo' ? `te acaba de asignar el plan` : `acaba de realizar AJUSTES en el plan`;
     const titulo = modo === 'nuevo' ? 'NUEVA MISIÓN' : 'PLAN ACTUALIZADO';
     
-    // 👇 Usamos la variable directa para el icono dinámico
     const iconoDinamico = modo === 'nuevo' ? this.iconBarbell : this.iconConstruct; 
     
     const foto = coach?.foto || 'assets/avatar-h-1.png';
@@ -344,7 +415,7 @@ export class EntrenoDashboardPage implements OnDestroy {
       titulo, 
       nombrePlan: rutina.nombre, 
       mensaje: msj, 
-      icono: iconoDinamico, // <-- Asignado como objeto/variable
+      icono: iconoDinamico,
       fotoCoach: foto 
     };
     this.mostrarBienvenida = true;
@@ -353,8 +424,20 @@ export class EntrenoDashboardPage implements OnDestroy {
   cerrarBienvenida() { this.mostrarBienvenida = false; }
 
   irAEntrenar() {
-    this.cerrarBienvenida();
-    this.navCtrl.navigateForward('/entreno/mi-rutina');
+    if (this.diaSeleccionadoIndex === -1) return; 
+
+    if (this.mostrarBienvenida) {
+      this.cerrarBienvenida();
+      setTimeout(() => {
+        this.navCtrl.navigateForward(['/entreno/mi-rutina'], { 
+          queryParams: { dia: this.diaSeleccionadoIndex } 
+        });
+      }, 350); 
+    } else {
+      this.navCtrl.navigateForward(['/entreno/mi-rutina'], { 
+        queryParams: { dia: this.diaSeleccionadoIndex } 
+      });
+    }
   }
 
   async unirse() {

@@ -7,18 +7,17 @@
       <div class="text-center mb-10"> 
         
         <div class="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 px-4 py-2 rounded-full mb-6 shadow-sm animate-fade-in-up">
-   <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">En asociación con</span>
-   
-   <img src="assets/fitgo-logo.png" alt="Partner Gym" class="h-6 w-auto object-contain brightness(0)">
-</div>
+           <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">En colaboración con</span>
+           <img src="assets/fitgo-logo.png" alt="Partner Gym" class="h-6 w-auto object-contain brightness(0)">
+        </div>
 
         <div class="mx-auto mb-6 relative group cursor-pointer">
-           <img src="assets/logo_blaze.png" alt="Logo Blaze"
+           <img src="assets/logo-bn.png" alt="Logo Blaze"
                 class="h-16 w-auto mx-auto object-contain brightness(0) scale-125 hover:scale-150 transition-transform duration-300 animate-fade-in-up">
         </div>
 
         <h2 class="text-4xl font-black tracking-tighter text-gray-900 leading-none">
-          BLAZE<span class="text-emerald-500">.</span>
+          BLAZE<span></span>
         </h2>
         <p class="text-gray-500 text-sm font-medium mt-2">Acceso exclusivo a socios</p>
       </div>
@@ -44,7 +43,7 @@
         </div>
 
         <div class="flex items-center justify-end text-sm pt-1">
-          <button class="font-bold text-gray-400 hover:text-gray-900 transition-colors text-xs active:scale-95">
+          <button (click)="abrirModalRecuperar()" class="font-bold text-gray-400 hover:text-gray-900 transition-colors text-xs active:scale-95">
             ¿Olvidaste tu contraseña?
           </button>
         </div>
@@ -101,3 +100,56 @@
 
   </div>
 </ion-content>
+
+<ion-modal [isOpen]="modalRecuperarAbierto" class="custom-alert-modal" (didDismiss)="modalRecuperarAbierto = false">
+  <ng-template>
+    <div class="flex items-center justify-center h-full px-4">
+      <div class="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl text-center border border-gray-100">
+        
+        <div class="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+          <ion-icon name="key-outline" class="text-gray-900 text-3xl"></ion-icon>
+        </div>
+        
+        <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">Recuperar acceso</h3>
+        <p class="text-gray-500 text-sm font-medium mb-6 leading-relaxed">
+          Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+        </p>
+
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 flex items-center gap-3 mb-6 focus-within:border-black transition-all text-left">
+          <ion-icon name="mail-outline" class="text-gray-400 text-lg"></ion-icon>
+          <input [(ngModel)]="emailRecuperacion" type="email" placeholder="tu@correo.com" 
+                 class="bg-transparent w-full text-gray-900 font-bold text-sm outline-none placeholder-gray-400">
+        </div>
+        
+        <div class="flex flex-col gap-3">
+          <button (click)="enviarCorreoRecuperacion()" [disabled]="enviandoCorreo" 
+                  class="w-full bg-black text-white font-bold py-4 rounded-xl text-sm shadow-md hover:bg-gray-800 transition-colors active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
+            <ion-spinner *ngIf="enviandoCorreo" name="crescent" color="light" class="h-5 w-5"></ion-spinner>
+            <span *ngIf="!enviandoCorreo">Enviar enlace</span>
+          </button>
+          <button (click)="modalRecuperarAbierto = false" 
+                  class="w-full bg-transparent text-gray-500 font-bold py-3 rounded-xl text-sm hover:text-gray-900 transition-colors active:scale-95">
+            Cancelar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </ng-template>
+</ion-modal>
+
+<style>
+  /* 👇 Estilo crítico para que flote bonito y no ocupe toda la pantalla */
+  ion-modal.custom-alert-modal {
+    --width: 90%;
+    --max-width: 400px;
+    --height: auto;
+    --border-radius: 2rem;
+    --box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --background: transparent;
+  }
+  ion-modal.custom-alert-modal::part(content) {
+    background: transparent;
+    box-shadow: none;
+  }
+</style>

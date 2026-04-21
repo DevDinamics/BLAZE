@@ -6,7 +6,9 @@ import { AuthService } from 'src/app/services/auth';
 import { RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
 
-// 👇 TODOS LOS ÍCONOS AHORA SON OUTLINE PARA EL MODO LIGHT PREMIUM
+// 👇 1. Importamos Auth y sendEmailVerification de Firebase
+import { Auth, sendEmailVerification } from '@angular/fire/auth';
+
 import { 
   personOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
   arrowForwardOutline, arrowBackOutline, checkmarkCircleOutline, alertCircleOutline
@@ -30,12 +32,18 @@ export class RegistroPage implements OnInit {
   mostrarPassword = false;
   cargando = false;
 
+  // 🛡️ PRIMER ESCUDO: Dominios basura bloqueados
+  dominiosBloqueados = [
+    'yopmail.com', 'temp-mail.org', '10minutemail.com', 
+    'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
+  ];
+
   constructor(
     private authService: AuthService,
+    private auth: Auth, // 👈 2. Inyectamos Firebase Auth directamente aquí
     private navCtrl: NavController,
     private toastCtrl: ToastController
   ) {
-    // 👇 REGISTRAMOS LOS NUEVOS ÍCONOS OUTLINE
     addIcons({ 
       personOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
       arrowForwardOutline, arrowBackOutline, checkmarkCircleOutline, alertCircleOutline
@@ -44,10 +52,26 @@ export class RegistroPage implements OnInit {
 
   ngOnInit() {}
 
+  // 🛡️ Validador de correo y dominio
+  esEmailSeguro(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(email)) return false;
+
+    const dominio = email.split('@')[1].toLowerCase();
+    if (this.dominiosBloqueados.includes(dominio)) {
+      return false;
+    }
+    return true;
+  }
+
   async registrar() {
-    // 1. Validaciones básicas (mantenemos la lógica intacta)
     if (!this.usuario.nombre || !this.usuario.email || !this.usuario.password) {
       this.mostrarMensaje('Por favor completa todos los campos', 'warning');
+      return;
+    }
+
+    if (!this.esEmailSeguro(this.usuario.email)) {
+      this.mostrarMensaje('Por favor usa un correo electrónico válido', 'warning');
       return;
     }
 
@@ -59,7 +83,6 @@ export class RegistroPage implements OnInit {
     this.cargando = true;
 
     try {
-      // 2. Enviamos los datos al servicio (Mantenemos el fallback de 'alumno' para la BD)
       await this.authService.registrar(
         this.usuario.email, 
         this.usuario.password, 
@@ -68,10 +91,19 @@ export class RegistroPage implements OnInit {
         '' 
       );
 
-      this.mostrarMensaje('¡Cuenta creada! Prepárate para lo que viene 🔥', 'success');
+      // 👇 SEGUNDO ESCUDO: LA MAGIA DE LA VERIFICACIÓN
+      const user = this.auth.currentUser;
+      if (user) {
+        await sendEmailVerification(user); // Dispara el correo de Firebase
+      }
+
+      // 🔒 Cerramos su sesión de inmediato para que no se salten la seguridad
+      this.authService.logout();
+
+      this.mostrarMensaje('¡Cuenta creada! Revisa tu correo para verificar tu acceso. 📩', 'success');
       
-      // 3. Redirección OBLIGATORIA al Onboarding (Flujo Pro)
-      this.navCtrl.navigateRoot('/onboarding');
+      // 🚀 Los mandamos a Login en lugar de Onboarding
+      this.navCtrl.navigateRoot('/login');
 
     } catch (error: any) {
       this.cargando = false;
@@ -86,21 +118,18 @@ export class RegistroPage implements OnInit {
     }
   }
 
-  // Toast minimalista estilo iOS
   async mostrarMensaje(mensaje: string, color: 'success' | 'warning' | 'danger') {
     const toast = await this.toastCtrl.create({
       message: mensaje,
-      duration: 3500,
-      position: 'top', // Arriba, debajo de la isla
+      duration: 4000, // Le damos más tiempo para que lean lo del correo
+      position: 'top', 
       mode: 'ios',
-      // Aplicamos nuestra clase base + una clase dinámica para el color del ícono
       cssClass: `apple-pill-toast toast-${color}`, 
-      icon: color === 'success' ? 'checkmark-circle' : 'alert-circle'
+      icon: color === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'
     });
     toast.present();
   }
 
-  // Función para regresar sutilmente si lo necesitan
   regresar() {
     this.navCtrl.back();
   }

@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+// 👇 1. Importamos el NavController
+import { IonicModule, NavController } from '@ionic/angular'; 
 import { addIcons } from 'ionicons';
-import { searchOutline, notificationsOutline } from 'ionicons/icons';
+// 👇 2. Agregamos arrowBack a la lista de íconos
+import { searchOutline, notificationsOutline, arrowBack } from 'ionicons/icons';
 import { EjerciciosService, Ejercicio } from 'src/app/services/ejercicios';
 
 @Component({
@@ -18,18 +20,20 @@ export class EjerciciosPage implements OnInit {
   todosLosEjercicios: Ejercicio[] = [];
   ejerciciosFiltrados: Ejercicio[] = [];
   
-  // 👇 1. Categorías (Músculos)
   categorias = ['Todos', 'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Abdomen'];
   categoriaSeleccionada = 'Todos';
 
-  // 👇 2. Dificultades (Segunda fila de filtros)
   dificultades = ['Todas', 'Principiante', 'Intermedio', 'Avanzado'];
   dificultadSeleccionada = 'Todas';
 
   busqueda = '';
 
-  constructor(private ejerciciosService: EjerciciosService) {
-    addIcons({ searchOutline, notificationsOutline });
+  constructor(
+    private ejerciciosService: EjerciciosService,
+    private navCtrl: NavController // 👇 3. Inyectamos el NavController aquí
+  ) {
+    // 👇 4. Registramos el nuevo ícono
+    addIcons({ searchOutline, notificationsOutline, arrowBack });
   }
 
   ngOnInit() {
@@ -54,17 +58,17 @@ export class EjerciciosPage implements OnInit {
 
   aplicarFiltros() {
     this.ejerciciosFiltrados = this.todosLosEjercicios.filter(e => {
-      // Filtro 1: Categoría (Músculo)
       const coincideCategoria = this.categoriaSeleccionada === 'Todos' || e.musculo === this.categoriaSeleccionada;
-      
-      // Filtro 2: Dificultad (Si tu modelo no tiene dificultad, esto lo ignora y no rompe la app)
       const coincideDificultad = this.dificultadSeleccionada === 'Todas' || e.dificultad === this.dificultadSeleccionada || !e.dificultad;
-      
-      // Filtro 3: Buscador
       const coincideBusqueda = e.nombre.toLowerCase().includes(this.busqueda);
       
       return coincideCategoria && coincideDificultad && coincideBusqueda;
     });
+  }
+
+  // 👇 5. La función mágica para regresar con estilo
+  regresar() {
+    this.navCtrl.back();
   }
 
 }

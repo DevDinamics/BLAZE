@@ -157,9 +157,12 @@
             </button>
 
             <div class="flex items-center gap-3 mb-4 pr-8">
-              <div class="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                <img [src]="ej.imagen" *ngIf="ej.imagen" class="object-cover w-full h-full mix-blend-multiply">
-                <ion-icon name="barbell-outline" *ngIf="!ej.imagen" class="text-gray-400"></ion-icon>
+              <div class="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0 p-1">
+                <img [src]="ej.imagen" 
+                     *ngIf="ej.imagen" 
+                     (error)="$event.target.src='assets/logo-bn.png'"
+                     class="object-contain w-full h-full mix-blend-multiply">
+                <ion-icon name="barbell-outline" *ngIf="!ej.imagen" class="text-gray-400 text-xl"></ion-icon>
               </div>
               <div>
                 <h4 class="text-black font-bold text-sm leading-tight mb-1 line-clamp-1">{{ ej.nombre }}</h4>

@@ -7,10 +7,11 @@ import { addIcons } from 'ionicons';
 
 import { 
   mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
-  arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, alertCircleOutline 
+  arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, 
+  alertCircleOutline, keyOutline 
 } from 'ionicons/icons';
 
-import { Auth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from '@angular/fire/auth';
 import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
 
 @Component({
@@ -31,6 +32,11 @@ export class LoginPage implements OnInit {
   cargando = false;
   cargandoGoogle = false;
 
+  // 👇 Variables para el Modal de Recuperación
+  modalRecuperarAbierto = false;
+  emailRecuperacion = '';
+  enviandoCorreo = false;
+
   // 🛡️ LISTA NEGRA: Dominios de correos temporales/falsos que no queremos
   dominiosBloqueados = [
     'yopmail.com', 'temp-mail.org', '10minutemail.com', 
@@ -45,43 +51,84 @@ export class LoginPage implements OnInit {
   ) {
     addIcons({ 
       mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
-      arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, alertCircleOutline 
+      arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, 
+      alertCircleOutline, keyOutline 
     });
   }
 
   ngOnInit() {
-    // 🗑️ Eliminamos el signOut forzado de aquí. 
-    // Firebase maneja la sesión entre pestañas automáticamente con IndexedDB.
-    // Si el usuario ya tiene sesión activa, lo ideal sería redirigirlo.
     const user = this.auth.currentUser;
     if (user) {
-      this.redirigirPorRol(user.uid);
+      // 🛡️ Escudo extra: Si por caché la app recuerda a un usuario de correo/contraseña que no ha verificado, lo saca.
+      const esLoginPorCorreo = user.providerData.some(p => p.providerId === 'password');
+      
+      if (esLoginPorCorreo && !user.emailVerified) {
+        this.auth.signOut();
+      } else {
+        this.redirigirPorRol(user.uid);
+      }
     }
   }
 
-  // 🛡️ FUNCIÓN BLINDADA: Valida formato y dominios
   esEmailSeguro(email: string): boolean {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(email)) return false; // Falla si no tiene el formato algo@algo.com
+    if (!regex.test(email)) return false;
 
     const dominio = email.split('@')[1].toLowerCase();
-    
-    // Si el dominio está en la lista negra, lo rebotamos
     if (this.dominiosBloqueados.includes(dominio)) {
       return false;
     }
-
     return true;
   }
 
+  // ==========================================
+  // 👇 LÓGICA DE RECUPERACIÓN DE CONTRASEÑA
+  // ==========================================
+
+  abrirModalRecuperar() {
+    if (this.credenciales.email) {
+      this.emailRecuperacion = this.credenciales.email;
+    } else {
+      this.emailRecuperacion = '';
+    }
+    this.modalRecuperarAbierto = true;
+  }
+
+  async enviarCorreoRecuperacion() {
+    if (!this.emailRecuperacion || !this.esEmailSeguro(this.emailRecuperacion)) {
+      this.mostrarMensaje('Ingresa un correo electrónico válido.', 'warning');
+      return;
+    }
+
+    this.enviandoCorreo = true;
+
+    try {
+      await sendPasswordResetEmail(this.auth, this.emailRecuperacion);
+      this.mostrarMensaje('¡Enlace enviado! Revisa tu bandeja de entrada o spam.', 'success');
+      this.modalRecuperarAbierto = false;
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+         this.mostrarMensaje('No encontramos una cuenta con este correo.', 'danger');
+      } else {
+         this.mostrarMensaje('Si el correo existe, recibirás un enlace en breve.', 'success');
+         this.modalRecuperarAbierto = false;
+      }
+    } finally {
+      this.enviandoCorreo = false;
+    }
+  }
+
+  // ==========================================
+  // LOGIN NORMAL Y GOOGLE
+  // ==========================================
+
   async login() {
-    // 1. Validar campos vacíos
     if (!this.credenciales.email || !this.credenciales.password) {
       this.mostrarMensaje('Por favor ingresa tu correo y contraseña.', 'warning');
       return;
     }
 
-    // 2. Pasar por el "Cadenero" de dominios
     if (!this.esEmailSeguro(this.credenciales.email)) {
       this.mostrarMensaje('Por favor usa un proveedor de correo válido.', 'warning');
       return;
@@ -91,6 +138,18 @@ export class LoginPage implements OnInit {
 
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, this.credenciales.email, this.credenciales.password);
+
+      // ==========================================
+      // 👇 EL CADENERO DEL LOGIN (VERIFICACIÓN)
+      // ==========================================
+      if (!userCredential.user.emailVerified) {
+        this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos para poder ingresar.', 'warning');
+        await this.auth.signOut(); // Los volvemos a sacar a patadas
+        this.cargando = false;
+        return; // Detenemos la ejecución aquí
+      }
+
+      // Si pasa el cadenero, es que su correo es 100% real
       await this.redirigirPorRol(userCredential.user.uid);
 
     } catch (error: any) {

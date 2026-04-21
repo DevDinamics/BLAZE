@@ -50,8 +50,11 @@
         <ion-icon name="checkmark-outline" class="text-white text-sm font-bold" *ngIf="esSeleccionado(item.id)"></ion-icon>
       </div>
 
-      <div class="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-         <img [src]="item.imagen" *ngIf="item.imagen" class="h-full w-full object-contain mix-blend-multiply">
+      <div class="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0 p-1">
+         <img [src]="item.imagen" 
+              *ngIf="item.imagen" 
+              (error)="$event.target.src='assets/logo-bn.png'"
+              class="h-full w-full object-contain mix-blend-multiply transition-opacity duration-300">
          <ion-icon name="barbell-outline" *ngIf="!item.imagen" class="text-gray-400 text-xl"></ion-icon>
       </div>
       

@@ -4,6 +4,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth-guard'; 
 import { publicGuard } from './guards/public.guard';
 import { onboardingGuard } from './guards/onboarding.guard';
+import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 
 export const routes: Routes = [
   {
@@ -120,7 +121,8 @@ export const routes: Routes = [
       },
       {
         path: 'perfil',
-        loadComponent: () => import('./pages/entreno/perfil/perfil.page').then( m => m.PerfilPage)
+        loadComponent: () => import('./pages/entreno/perfil/perfil.page').then( m => m.PerfilPage),
+        canDeactivate: [unsavedChangesGuard] // 🛡️ AQUI PONEMOS EL ESCUDO CONTRA CAMBIOS SIN GUARDAR
       },
       {
         path: '',

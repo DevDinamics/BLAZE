@@ -1,19 +1,20 @@
 <ion-header *ngIf="perfil?.equipoId" class="ion-no-border absolute top-0 w-full z-50">
-  <div class="pt-safe bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 pb-3 flex justify-between items-center transition-all">
+  <div class="pt-safe bg-white/90 backdrop-blur-xl border-b border-gray-100 px-5 pb-3 flex justify-between items-center transition-all">
     
-    <div>
-      <h1 class="font-bold text-2xl text-gray-900 tracking-tight">
+    <div class="flex items-center gap-2">
+      <ion-icon name="flame" class="text-[#f57c00] text-2xl"></ion-icon>
+      <h1 class="font-black text-2xl text-gray-900 tracking-tighter">
         BLAZE
       </h1>
     </div>
     
     <div class="flex items-center gap-3">
-      <div class="flex items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
-        <ion-icon [icon]="iconFlame" class="text-orange-500 text-sm"></ion-icon>
-        <p class="text-orange-600 font-bold text-xs">{{ perfil?.xpTotal || 0 }} XP</p>
+      <div class="flex items-center gap-1 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
+        <ion-icon [icon]="iconTrophy" class="text-yellow-500 text-sm"></ion-icon>
+        <p class="text-gray-800 font-bold text-xs">{{ perfil?.xpTotal || 0 }}</p>
       </div>
       
-      <div routerLink="/entreno/perfil" class="h-9 w-9 rounded-full overflow-hidden cursor-pointer active:scale-95 transition-transform border border-gray-200 shadow-sm">
+      <div routerLink="/entreno/perfil" class="h-9 w-9 rounded-full overflow-hidden cursor-pointer active:scale-95 transition-transform border border-gray-200 shadow-sm bg-gray-100">
         <img [src]="perfil?.foto || 'https://ui-avatars.com/api/?name=' + (perfil?.nombre || 'User')" class="h-full w-full object-cover">
       </div>
     </div>
@@ -21,10 +22,10 @@
   </div>
 </ion-header>
 
-<ion-content [fullscreen]="true" style="--background: #f9fafb;">
+<ion-content [fullscreen]="true" style="--background: #ffffff;">
   
-  <div *ngIf="cargando" class="h-full flex items-center justify-center bg-[#f9fafb]">
-    <ion-spinner color="medium"></ion-spinner>
+  <div *ngIf="cargando" class="h-full flex items-center justify-center bg-white">
+    <ion-spinner color="dark"></ion-spinner>
   </div>
 
   <div *ngIf="!cargando && !perfil?.equipoId" class="h-full flex flex-col justify-center px-8 bg-white relative">
@@ -32,89 +33,143 @@
         <div class="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-200 shadow-sm">
           <ion-icon [icon]="iconKey" class="text-3xl text-gray-800"></ion-icon>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">Únete a tu Coach</h1>
-        <p class="text-gray-500 text-sm mb-8 font-medium">Ingresa el código que te proporcionaron.</p>
+        <h1 class="text-2xl font-black text-gray-900 mb-2 tracking-tight">Únete a tu Team</h1>
+        <p class="text-gray-500 text-sm mb-8 font-medium">Ingresa el código de tu coach.</p>
 
-        <div class="bg-gray-50 p-2 rounded-2xl border border-gray-200 flex items-center mb-6 focus-within:border-gray-400 focus-within:bg-white transition-all shadow-sm">
+        <div class="bg-gray-50 p-2 rounded-2xl border border-gray-200 flex items-center mb-6 focus-within:border-black transition-all shadow-sm">
           <ion-icon [icon]="iconTicket" class="text-gray-400 text-xl ml-3"></ion-icon>
           <input [(ngModel)]="codigoInput" type="text" placeholder="TEAM-XXXX" 
                  class="bg-transparent w-full p-3 text-gray-900 font-bold text-lg uppercase tracking-widest text-center outline-none placeholder-gray-400">
         </div>
 
-        <button (click)="unirse()" class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl text-sm shadow-md active:scale-95 transition-transform hover:bg-black">
+        <button (click)="unirse()" class="w-full bg-black text-white font-bold py-4 rounded-full text-sm shadow-md active:scale-95 transition-transform">
           Desbloquear Acceso
         </button>
         <p class="text-xs text-red-500 font-bold mt-6 cursor-pointer hover:underline" (click)="logout()">Cerrar Sesión</p>
       </div>
   </div>
 
-  <div *ngIf="!cargando && perfil?.equipoId" class="px-5 pb-40 pt-28 bg-[#f9fafb] min-h-full font-sans">
+  <div *ngIf="!cargando && perfil?.equipoId" class="px-5 pb-40 pt-28 bg-white min-h-full font-sans">
 
-    <div class="mb-6">
-      <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-0.5">Performance Hub</p>
-      <h2 class="text-3xl font-bold text-gray-900 tracking-tight leading-none">
+    <div class="mb-8">
+      <p class="text-gray-400 text-[11px] font-black uppercase tracking-widest mb-1">{{ fechaActualFormateada }}</p>
+      <h2 class="text-3xl font-black text-gray-900 tracking-tight leading-none">
         Hola, {{ perfil?.nombre?.split(' ')[0] }} 👋
       </h2>
     </div>
 
     <div class="mb-8">
-      <div class="flex items-center justify-between mb-3 px-1">
-        <h3 class="text-gray-900 font-bold text-sm flex items-center gap-1.5 tracking-tight">
-          Historias del Team
-        </h3>
-      </div>
+      <h3 class="text-gray-900 font-black text-lg tracking-tight mb-4 px-1">
+        Comunidad
+      </h3>
 
-      <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x px-1">
-        <div (click)="subirStory()" class="flex flex-col items-center gap-1.5 min-w-[72px] snap-start group cursor-pointer relative">
-          <div class="relative h-[72px] w-[72px]">
-            <div class="h-full w-full rounded-full p-[3px] border-2 border-dashed border-gray-300 group-hover:border-gray-500 transition-colors bg-white">
-              <img [src]="perfil?.foto || 'assets/avatar.png'" class="h-full w-full rounded-full object-cover opacity-80 group-hover:opacity-50 transition-opacity">
-            </div>
-            <div class="absolute inset-0 flex items-center justify-center">
-               <ion-icon [icon]="iconAdd" class="text-gray-700 text-3xl font-bold"></ion-icon>
-            </div>
-          </div>
-          <span class="text-[10px] text-gray-500 font-bold tracking-tight">Crear</span>
+      <div class="bg-gray-50 border border-gray-200 rounded-[2rem] p-5 relative overflow-hidden shadow-sm flex items-center gap-4">
+        <div class="absolute -right-4 -top-4 h-24 w-24 bg-blue-100 rounded-full blur-2xl opacity-60"></div>
+        
+        <div class="h-12 w-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 shrink-0 relative z-10">
+          <ion-icon [icon]="iconSparkles" class="text-2xl text-blue-500"></ion-icon>
         </div>
-
-        <div *ngFor="let grupo of historias" 
-             (click)="verHistoria(grupo)"
-             class="flex flex-col items-center gap-1.5 min-w-[72px] snap-start cursor-pointer group">
-          <div class="relative h-[72px] w-[72px]">
-            <div class="absolute inset-0 rounded-full p-[2.5px] bg-gradient-to-tr from-orange-400 to-pink-500"></div>
-            <div class="absolute inset-[2.5px] rounded-full bg-white border-2 border-white overflow-hidden active:scale-90 transition-transform duration-200">
-              <img [src]="grupo.avatar || 'assets/avatar.png'" class="h-full w-full object-cover">
-            </div>
+        
+        <div class="relative z-10 flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <h4 class="text-gray-900 font-black text-[15px] tracking-tight">Historias del Team</h4>
+            <span class="bg-black text-white text-[8px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest">Próximamente</span>
           </div>
-          <span class="text-[10px] font-bold tracking-tight truncate w-[70px] text-center text-gray-700">
-            {{ grupo.usuario?.split(' ')[0] }}
-          </span>
-        </div>
-
-        <div *ngIf="historias.length === 0" class="flex flex-col items-center justify-center min-w-[72px] opacity-40">
-          <p class="text-[9px] text-gray-500 font-bold text-center leading-tight">Sin<br>historias</p>
+          <p class="text-gray-500 text-xs font-medium leading-relaxed pr-2">
+            Muy pronto podrás compartir tus logros y motivarte con tus amigos.
+          </p>
         </div>
       </div>
     </div>
 
-    <div *ngIf="coachActual" class="mb-6">
-      <h3 class="text-gray-900 font-bold text-sm tracking-tight mb-3 px-1">Tu Entrenador</h3>
+    <h3 class="text-gray-900 font-black text-lg tracking-tight mb-3 px-1">Tus sesiones</h3>
+
+    <div class="mb-4" *ngIf="rutinaActual && rutinaActual.sesiones">
+      <div class="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-2">
+        <button *ngFor="let sesion of rutinaActual.sesiones; let i = index"
+                (click)="seleccionarDia(i)"
+                class="px-4 py-2 rounded-full text-[11px] font-bold whitespace-nowrap transition-all active:scale-95 border"
+                [ngClass]="diaSeleccionadoIndex === i ? 'bg-black text-white border-black shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">
+          Día {{ i + 1 }}
+        </button>
+        <button (click)="seleccionarDia(-1)"
+                class="px-4 py-2 rounded-full text-[11px] font-bold whitespace-nowrap transition-all active:scale-95 border"
+                [ngClass]="diaSeleccionadoIndex === -1 ? 'bg-blue-50 text-blue-600 border-blue-200 shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">
+          <ion-icon name="moon" class="mr-1"></ion-icon> Descanso
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="!rutinaActual" class="mb-10 p-8 text-center bg-gray-50 border border-gray-200 rounded-[2rem]">
+      <div class="h-14 w-14 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+        <ion-icon [icon]="iconClipboard" class="text-3xl text-gray-400"></ion-icon> 
+      </div>
+      <p class="text-gray-900 font-black text-lg tracking-tight mb-1">Sin plan activo</p>
+      <p class="text-gray-500 text-sm font-medium">Espera a que tu coach te asigne tu entrenamiento.</p>
+    </div>
+
+    <div *ngIf="rutinaActual && esDiaDeDescanso" class="mb-10 bg-gray-50 border border-gray-200 rounded-[2rem] p-6 shadow-sm animate-fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="h-10 w-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100">
+          <ion-icon [icon]="iconMoon" class="text-xl text-blue-500"></ion-icon>
+        </div>
+        <div>
+          <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Recuperación</p>
+          <h3 class="text-xl font-black text-gray-900 tracking-tight">Toca descanso</h3>
+        </div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-gray-100">
+        <p class="text-gray-600 font-medium text-sm italic">"{{ fraseMotivacional }}"</p>
+      </div>
+    </div>
+
+    <div *ngIf="rutinaActual && !esDiaDeDescanso" (click)="irAEntrenar()" class="mb-10 bg-black rounded-[2rem] p-6 cursor-pointer shadow-xl shadow-black/10 transition-transform active:scale-[0.98] relative overflow-hidden group animate-fade-in">
+      <div class="absolute -right-10 -top-10 h-40 w-40 bg-[#f57c00] rounded-full opacity-20 blur-3xl group-hover:opacity-30 transition-opacity"></div>
+      
+      <div class="relative z-10">
+        <p class="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-1">
+          {{ diaSeleccionadoIndex === diaActualCalendario ? 'HOY TOCA' : 'SESIÓN SELECCIONADA' }}
+        </p>
+        
+        <h3 class="text-4xl font-black text-white leading-none mb-6 tracking-tight truncate">
+          {{ sesionHoyTexto }}
+        </h3>
+        
+        <div class="flex items-center justify-between">
+           <div>
+             <p class="text-gray-400 text-xs font-bold">{{ rutinaActual.nombre }}</p>
+             <div class="flex items-center gap-2 mt-1">
+               <span class="bg-gray-800 text-gray-300 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">{{ rutinaActual.nivel || 'General' }}</span>
+               <span class="text-gray-500 text-xs">• {{ rutinaActual.semanas }} Semanas</span>
+             </div>
+           </div>
+
+           <button class="bg-white text-black h-12 px-6 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-gray-100 transition-colors">
+             <ion-icon [icon]="iconPlay" class="text-lg"></ion-icon> Iniciar
+           </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="coachActual" class="mb-10">
+      <h3 class="text-gray-900 font-black text-lg tracking-tight mb-4 px-1">Tu Coach</h3>
       <button (click)="verPerfilCoach()" 
-              class="w-full bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors active:scale-95 shadow-sm text-left">
-        <div class="h-14 w-14 rounded-full border border-gray-200 p-0.5 shrink-0 bg-white">
+              class="w-full bg-white border border-gray-200 rounded-[1.5rem] p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors active:scale-95 shadow-sm text-left">
+        <div class="h-14 w-14 rounded-full border border-gray-200 p-0.5 shrink-0 bg-gray-50">
           <img [src]="coachActual.foto || 'assets/icon/favicon.png'" class="w-full h-full object-cover rounded-full">
         </div>
         <div class="flex-1">
           <h4 class="text-gray-900 font-bold text-base leading-tight">{{ coachActual.nombre }}</h4>
           <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">{{ coachActual.cargo || 'Coach Oficial' }}</p>
-          <p class="text-gray-400 text-[11px] italic truncate mt-1">"{{ coachActual.bio || 'Listo para entrenar' }}"</p>
         </div>
-        <ion-icon [icon]="iconChevron" class="text-gray-400 text-xl"></ion-icon>
+        <div class="bg-gray-50 h-8 w-8 rounded-full flex items-center justify-center border border-gray-200">
+           <ion-icon [icon]="iconChevron" class="text-gray-600"></ion-icon>
+        </div>
       </button>
     </div>
 
     <div *ngIf="diasRestantes !== null && diasRestantes <= 5" 
-         class="mb-6 p-4 rounded-2xl flex items-start gap-3 border shadow-sm"
+         class="mb-10 p-4 rounded-[1.5rem] flex items-start gap-3 border shadow-sm"
          [ngClass]="diasRestantes <= 0 ? 'bg-red-50 border-red-100 text-red-600' : 'bg-orange-50 border-orange-100 text-orange-600'">
       <ion-icon [icon]="diasRestantes <= 0 ? iconAlert : iconHourglass" class="text-2xl mt-0.5"></ion-icon>
       <div class="flex-1">
@@ -127,47 +182,18 @@
       </div>
     </div>
 
-    <div *ngIf="rutinaActual" (click)="irAEntrenar()" class="mb-8 bg-white border border-gray-100 rounded-3xl p-6 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] shadow-sm relative overflow-hidden">
-      <div class="absolute -right-6 -top-6 h-32 w-32 bg-gray-50 rounded-full blur-2xl"></div>
-      
-      <div class="relative z-10 flex justify-between items-center">
-        <div>
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-gray-100 text-gray-600 text-[10px] font-bold uppercase mb-3">
-            <ion-icon [icon]="iconCalendar" class="text-xs"></ion-icon> Rutina de Hoy
-          </span>
-          <h3 class="text-2xl font-bold text-gray-900 leading-none mb-2 tracking-tight">
-            {{ rutinaActual.nombre }}
-          </h3>
-          <p class="text-gray-500 text-xs font-medium flex items-center gap-1.5">
-            <ion-icon [icon]="iconTime" class="text-gray-400"></ion-icon> 
-            {{ rutinaActual.semanas }} semanas • {{ rutinaActual.nivel || 'General' }}
-          </p>
-        </div>
-        <div class="h-14 w-14 rounded-full bg-gray-900 flex items-center justify-center shadow-md active:scale-95 transition-transform shrink-0">
-          <ion-icon [icon]="iconPlay" class="text-white text-2xl ml-1"></ion-icon>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="!rutinaActual" class="mb-8 p-8 text-center bg-gray-50 border border-gray-200 border-dashed rounded-3xl">
-      <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-        <ion-icon [icon]="iconClipboard" class="text-2xl text-gray-400"></ion-icon> 
-      </div>
-      <p class="text-gray-900 font-bold text-sm">Sin rutina asignada</p>
-      <p class="text-gray-500 text-xs mt-1">Espera a que tu coach te asigne tu plan de entrenamiento.</p>
-    </div>
-
     <div *ngIf="rankingTeam && rankingTeam.length > 0" class="mb-8">
-      <div class="flex items-center justify-between mb-3 px-1">
-        <h3 class="text-gray-900 font-bold text-sm tracking-tight flex items-center gap-1.5">
-          <ion-icon [icon]="iconTrophy" class="text-gray-500"></ion-icon> Tabla de Líderes
+      <div class="flex items-center justify-between mb-4 px-1">
+        <h3 class="text-gray-900 font-black text-lg tracking-tight">
+          Clasificación
         </h3>
       </div>
 
-      <div class="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+      <div class="bg-white border border-gray-200 rounded-[1.5rem] overflow-hidden shadow-sm">
         <div *ngFor="let user of rankingTeam; let i = index" 
-             class="flex items-center gap-4 p-4 border-b border-gray-50 last:border-0 relative transition-colors"
-             [ngClass]="user.uid === perfil?.uid ? 'bg-orange-50/30' : 'hover:bg-gray-50'">
+             (click)="verPerfilCompanero(user)"
+             class="flex items-center gap-4 p-4 border-b border-gray-100 last:border-0 relative transition-colors cursor-pointer active:scale-95"
+             [ngClass]="user.uid === perfil?.uid ? 'bg-orange-50/50' : 'hover:bg-gray-50'">
 
           <div class="w-6 flex justify-center items-center shrink-0">
             <div *ngIf="i === 0" class="h-6 w-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold text-xs">1</div>
@@ -177,7 +203,7 @@
           </div>
 
           <div class="relative h-11 w-11 shrink-0">
-            <img [src]="user.foto || 'https://ui-avatars.com/api/?name=' + user.nombre" class="h-full w-full rounded-full object-cover border border-gray-100">
+            <img [src]="user.foto || 'https://ui-avatars.com/api/?name=' + user.nombre" class="h-full w-full rounded-full object-cover border border-gray-200 bg-gray-50">
             <div *ngIf="user.uid === perfil?.uid" class="absolute -bottom-1 -right-1 bg-green-500 h-3.5 w-3.5 rounded-full border-2 border-white"></div>
           </div>
 
@@ -185,20 +211,65 @@
             <h4 class="text-gray-900 font-bold text-sm truncate" [ngClass]="{'text-orange-600': user.uid === perfil?.uid}">
               {{ user.nombre }}
             </h4>
-            <p class="text-[10px] text-gray-500 font-bold mt-0.5 flex items-center gap-1">
+            <p class="text-[10px] text-gray-500 font-bold mt-0.5">
                Nivel {{ user.nivel || 1 }}
             </p>
           </div>
 
           <div class="text-right shrink-0">
-             <p class="font-bold text-base leading-none" [ngClass]="{'text-yellow-600': i === 0, 'text-gray-600': i === 1, 'text-orange-600': i === 2, 'text-gray-900': i > 2}">
+             <p class="font-black text-base leading-none" [ngClass]="{'text-yellow-600': i === 0, 'text-gray-600': i === 1, 'text-orange-600': i === 2, 'text-gray-900': i > 2}">
                {{ user.xpTotal }}
              </p>
-             <p class="text-[9px] text-gray-400 font-bold uppercase mt-0.5">XP</p>
+             <p class="text-[9px] text-gray-400 font-bold uppercase mt-0.5 tracking-wider">XP</p>
           </div>
         </div>
       </div>
     </div>
+
+
+<ion-modal [isOpen]="modalCompaneroAbierto" (didDismiss)="cerrarPerfilCompanero()" [initialBreakpoint]="0.6" [breakpoints]="[0, 0.6, 0.9]">
+    <ng-template>
+      <div class="h-full bg-white px-6 pt-8 text-center relative overflow-y-auto">
+        
+        <button (click)="cerrarPerfilCompanero()" class="absolute top-6 right-6 bg-gray-100 h-9 w-9 rounded-full flex items-center justify-center text-gray-500 active:scale-90 transition-transform">
+          <ion-icon name="close" class="text-xl"></ion-icon>
+        </button>
+
+        <div class="h-28 w-28 mx-auto rounded-full p-1.5 bg-white border border-gray-200 shadow-md mb-4 relative">
+          <img [src]="companeroSeleccionado?.foto || 'https://ui-avatars.com/api/?name=' + companeroSeleccionado?.nombre" class="h-full w-full rounded-full object-cover bg-gray-50">
+          <div *ngIf="companeroSeleccionado?.uid === perfil?.uid" class="absolute bottom-0 right-0 bg-green-500 h-6 w-6 rounded-full border-2 border-white"></div>
+        </div>
+
+        <h2 class="text-2xl font-black text-gray-900 tracking-tight mb-1">{{ companeroSeleccionado?.nombre }}</h2>
+        <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mb-6">
+          Atleta {{ companeroSeleccionado?.experiencia || 'General' }}
+        </p>
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Nivel Actual</p>
+             <p class="text-2xl font-black text-gray-900">{{ companeroSeleccionado?.nivel || 1 }}</p>
+          </div>
+          <div class="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+             <p class="text-[10px] text-orange-400 font-bold uppercase tracking-wider mb-1">XP Total</p>
+             <p class="text-2xl font-black text-orange-600">{{ companeroSeleccionado?.xpTotal || 0 }}</p>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-5 rounded-[1.5rem] border border-gray-100 mb-8 relative">
+          <p class="text-gray-600 text-sm font-medium italic">
+            "{{ companeroSeleccionado?.bio || 'Entrenando duro para alcanzar mi mejor versión con Blaze.' }}"
+          </p>
+        </div>
+
+        <button disabled class="w-full bg-black text-white font-bold py-4 rounded-full text-sm shadow-md transition-transform flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+          <ion-icon name="person-add" class="text-lg"></ion-icon>
+          Añadir Amigo
+          <span class="bg-white/20 text-white text-[8px] px-2 py-0.5 rounded uppercase tracking-widest ml-1">Próximamente</span>
+        </button>
+
+      </div>
+    </ng-template>
+  </ion-modal>
 
   </div>
 
@@ -207,15 +278,15 @@
       <div class="h-full bg-white flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
         
         <div class="relative mb-6 z-10">
-          <div class="h-28 w-28 rounded-full p-1 bg-white border border-gray-200 shadow-lg">
+          <div class="h-32 w-32 rounded-full p-1.5 bg-white border border-gray-200 shadow-xl">
             <img [src]="notificacion.fotoCoach" class="h-full w-full rounded-full object-cover bg-gray-50">
           </div>
-          <div class="absolute bottom-0 right-0 bg-emerald-500 text-white h-8 w-8 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-            <ion-icon [icon]="iconCheckmark" class="text-lg"></ion-icon>
+          <div class="absolute bottom-1 right-1 bg-emerald-500 text-white h-9 w-9 rounded-full flex items-center justify-center border-[3px] border-white shadow-md">
+            <ion-icon [icon]="iconCheckmark" class="text-xl"></ion-icon>
           </div>
         </div>
   
-        <h2 class="text-2xl font-bold text-gray-900 mb-2 z-10 tracking-tight">
+        <h2 class="text-3xl font-black text-gray-900 mb-2 z-10 tracking-tight">
           ¡Hola, {{ perfil?.nombre?.split(' ')[0] }}!
         </h2>
         
@@ -223,20 +294,20 @@
           El Coach <strong class="text-gray-900">{{ coachActual?.nombre }}</strong> {{ notificacion.mensaje }}
         </p>
   
-        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 w-full mb-8 z-10 flex items-center gap-4 text-left shadow-sm">
+        <div class="bg-gray-50 border border-gray-200 rounded-[1.5rem] p-5 w-full mb-8 z-10 flex items-center gap-4 text-left shadow-sm">
           <div class="h-12 w-12 rounded-full flex items-center justify-center bg-white text-gray-800 border border-gray-100 shadow-sm shrink-0">
             <ion-icon [icon]="notificacion.icono" class="text-xl"></ion-icon>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-gray-500 font-bold uppercase">{{ notificacion.titulo }}</p>
-            <p class="text-gray-900 font-bold text-sm truncate">{{ notificacion.nombrePlan }}</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ notificacion.titulo }}</p>
+            <p class="text-gray-900 font-black text-sm truncate">{{ notificacion.nombrePlan }}</p>
           </div>
         </div>
   
-        <button (click)="irAEntrenar()" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl text-sm shadow-md transition-all active:scale-95 z-10 flex items-center justify-center gap-2">
+        <button (click)="irAEntrenar()" class="relative z-20 w-full bg-black text-white font-bold py-4 rounded-full text-sm shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
           Ver mi Rutina
         </button>
-        <button (click)="cerrarBienvenida()" class="mt-4 text-gray-500 font-bold text-xs hover:text-gray-900 transition-colors">
+        <button (click)="cerrarBienvenida()" class="relative z-20 mt-4 p-3 text-gray-400 font-bold text-xs hover:text-gray-900 transition-colors active:scale-95 cursor-pointer">
           Cerrar
         </button>
 
@@ -245,3 +316,8 @@
   </ion-modal>
 
 </ion-content>
+
+<style>
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>

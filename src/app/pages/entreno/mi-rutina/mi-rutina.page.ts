@@ -1,8 +1,9 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+// 👇 1. Importamos ActivatedRoute para leer la URL
+import { ActivatedRoute } from '@angular/router';
 
-// 👇 1. Importaciones Standalone correctas
 import { 
   IonHeader, IonToolbar, IonContent, IonIcon, IonFooter, 
   IonModal, NavController, ToastController, LoadingController 
@@ -12,7 +13,6 @@ import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 import { addIcons } from 'ionicons';
 
-// 👇 2. Importación de Iconos
 import { 
   timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
   playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
@@ -25,7 +25,6 @@ import {
   templateUrl: './mi-rutina.page.html',
   styleUrls: ['./mi-rutina.page.scss'],
   standalone: true,
-  // 👇 3. Agregamos los componentes de Ionic
   imports: [
     CommonModule, FormsModule, 
     IonHeader, IonToolbar, IonContent, IonIcon, IonFooter, IonModal
@@ -35,7 +34,6 @@ export class MiRutinaPage implements OnDestroy {
 
   public window = window;
 
-  // 👇 4. VARIABLES DE ICONOS (El escudo anti-crash)
   iconInfo = informationCircleOutline;
   iconTime = timeOutline;
   iconFlame = flameOutline;
@@ -67,9 +65,9 @@ export class MiRutinaPage implements OnDestroy {
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController,
     private authService: AuthService,
-    private studentService: StudentService
+    private studentService: StudentService,
+    private route: ActivatedRoute // 👇 2. Lo inyectamos en el constructor
   ) {
-    // Registro preventivo
     addIcons({ 
       timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
       playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
@@ -89,39 +87,53 @@ export class MiRutinaPage implements OnDestroy {
           if (rutinaRaw && rutinaRaw.sesiones) {
             this.cicloCompleto = rutinaRaw;
             
-            const indiceSesion = rutinaRaw.indiceSesionActual || 0; 
-            const datosSesion = rutinaRaw.sesiones[indiceSesion];
-            const hoy = this.obtenerDiaActual();
-            const esDiaCorrecto = rutinaRaw.diasSugeridos ? rutinaRaw.diasSugeridos.includes(hoy) : true;
+            // 👇 3. ATRAPAMOS EL PARÁMETRO DE LA URL
+            let indiceSesionAEntrenar = 0;
+            
+            this.route.queryParams.subscribe(params => {
+              if (params['dia'] !== undefined) {
+                // Si el dashboard mandó un día, lo convertimos a número y lo usamos
+                indiceSesionAEntrenar = parseInt(params['dia'], 10);
+              } else {
+                // Si entraron directo, calculamos qué día de la semana es (Lunes=0)
+                let diaSemana = new Date().getDay(); 
+                diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; 
+                // Evitamos un desbordamiento si el coach puso solo 3 días y hoy es el día 6
+                indiceSesionAEntrenar = diaSemana >= rutinaRaw.sesiones.length ? 0 : diaSemana; 
+              }
+              
+              // 👇 4. CARGAMOS LA SESIÓN QUE CORRESPONDE
+              const datosSesion = rutinaRaw.sesiones[indiceSesionAEntrenar];
+              
+              // Pequeña lógica para el mensaje de "Hoy no es el día habitual"
+              let diaReal = new Date().getDay();
+              diaReal = diaReal === 0 ? 6 : diaReal - 1;
+              const esDiaCorrecto = indiceSesionAEntrenar === diaReal;
 
-            const duracionEstimada = datosSesion.ejercicios.length * 5;
+              const duracionEstimada = datosSesion.ejercicios.length * 5;
 
-            this.sesionHoy = {
-              ...datosSesion,
-              progreso: 0,
-              esDiaCorrecto: esDiaCorrecto,
-              xp: 500, 
-              duracion: duracionEstimada, 
-              ejercicios: datosSesion.ejercicios.map((e: any) => ({
-                ...e,
-                seriesHechas: 0,
-                peso: null,
-                completado: false,
-                nota: e.nota || '' 
-              }))
-            };
+              this.sesionHoy = {
+                ...datosSesion,
+                progreso: 0,
+                esDiaCorrecto: esDiaCorrecto,
+                xp: 500, 
+                duracion: duracionEstimada, 
+                ejercicios: datosSesion.ejercicios.map((e: any) => ({
+                  ...e,
+                  seriesHechas: 0,
+                  peso: null,
+                  completado: false,
+                  nota: e.nota || '' 
+                }))
+              };
 
-            this.iniciarCronometroSesion();
+              this.iniciarCronometroSesion();
+            });
           }
         }
         this.cargando = false;
       }
     });
-  }
-
-  obtenerDiaActual() {
-    const dias = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
-    return dias[new Date().getDay()];
   }
 
   getNotaClass(nota: string) {

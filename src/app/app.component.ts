@@ -90,7 +90,7 @@ export class AppComponent implements OnInit {
 
   async mostrarAlertaExpulsion() {
     const toast = await this.toastCtrl.create({
-      message: 'Tu sesión fue cerrada por seguridad 🔒',
+      message: 'Tu sesión fue cerrada por seguridad',
       duration: 3500,
       color: 'dark',
       position: 'top',

@@ -9,7 +9,8 @@ import {
   checkmarkCircle, qrCodeOutline, happyOutline, calendarOutline, 
   mailOutline, giftOutline, personOutline, starOutline, 
   scaleOutline, bodyOutline, fitnessOutline, informationCircleOutline,
-  flame, barbellOutline, cameraOutline, logOutOutline, checkmarkOutline
+  flame, barbellOutline, cameraOutline, logOutOutline, checkmarkOutline,
+  chevronDownOutline, warning, checkmark // Nuevos íconos
 } from 'ionicons/icons';
 
 @Component({
@@ -29,7 +30,8 @@ export class PerfilPage implements OnInit {
   usuario: any = {
     nombre: '',
     apellido: '', 
-    avatar: 'assets/icon/avatar-h-1.png', // Por defecto
+    bio: '', 
+    avatar: 'assets/icon/avatar-h-1.png', 
     miembroDesde: '',
     peso: 0,
     altura: 0,
@@ -39,10 +41,8 @@ export class PerfilPage implements OnInit {
     experiencia: 'Principiante'
   };
 
-  // 👇 1. Variables para el Modal de Avatares del Alumno
   mostrarModalAvatares = false;
   
-  // 👇 2. Lista de Avatares (Usa las rutas de tus assets)
   avataresDisponibles = [
     'assets/avatar-coach/avatar-hombre-1.png',
     'assets/avatar-coach/avatar-hombre-2.png',
@@ -51,6 +51,34 @@ export class PerfilPage implements OnInit {
     'assets/avatar-coach/avatar-mujer-2.png',
     'assets/avatar-coach/avatar-mujer-3.png'
   ];
+
+  // ==========================================
+  // 👇 1. VARIABLES DEL SELECTOR PREMIUM
+  // ==========================================
+  modalMenuAbierto = false;
+  menuTitulo = '';
+  menuCampoTarget = ''; // Para saber si estamos editando 'objetivo' o 'experiencia'
+  menuOpciones: any[] = [];
+
+  opcionesObjetivo = [
+    { label: 'Perder peso', value: 'Perder peso' },
+    { label: 'Aumentar músculo', value: 'Aumentar músculo' },
+    { label: 'Recomposición (Mantener)', value: 'Recomposición' },
+    { label: 'Mejorar Rendimiento', value: 'Rendimiento' }
+  ];
+
+  opcionesExperiencia = [
+    { label: 'Principiante', value: 'Principiante' },
+    { label: 'Intermedio', value: 'Intermedio' },
+    { label: 'Avanzado', value: 'Avanzado' }
+  ];
+
+  // ==========================================
+  // 👇 2. VARIABLES DE LA ALERTA PROTECTORA
+  // ==========================================
+  modalAlertaAbierto = false;
+  accionPendiente: 'logout' | 'navegacion' | 'none' = 'none';
+  resolveSalida: ((value: boolean) => void) | null = null; // 👈 Guarda la "llave" de la navegación
 
   constructor(
     private navCtrl: NavController,
@@ -63,7 +91,8 @@ export class PerfilPage implements OnInit {
       checkmarkCircle, qrCodeOutline, happyOutline, calendarOutline, 
       mailOutline, giftOutline, personOutline, starOutline, 
       scaleOutline, bodyOutline, fitnessOutline, informationCircleOutline, 
-      flame, barbellOutline, cameraOutline, logOutOutline, checkmarkOutline
+      flame, barbellOutline, cameraOutline, logOutOutline, checkmarkOutline,
+      'chevron-down-outline': chevronDownOutline, warning, checkmark
     });
   }
 
@@ -83,7 +112,7 @@ export class PerfilPage implements OnInit {
         this.usuario = {
           nombre: datos.nombre || 'Atleta',
           apellido: datos.apellido || 'Blaze', 
-          // Tomamos la foto de Firebase si existe, si no, una por defecto
+          bio: datos.bio || '', 
           avatar: datos.foto || 'assets/icon/avatar-h-1.png', 
           miembroDesde: datos.fechaRegistro ? this.formatearFecha(datos.fechaRegistro) : 'Ene 2026',
           peso: datos.peso || 0,
@@ -101,17 +130,31 @@ export class PerfilPage implements OnInit {
     }
   }
 
-  // 👇 3. Lógica para abrir el modal (solo se puede si están en modo edición)
-  abrirModalFoto() {
-    if(this.editando) {
-      this.mostrarModalAvatares = true;
-    }
+  // ==========================================
+  // MÉTODOS DEL SELECTOR PREMIUM
+  // ==========================================
+  abrirMenuOpciones(campo: string, titulo: string, opciones: any[]) {
+    this.menuCampoTarget = campo;
+    this.menuTitulo = titulo;
+    this.menuOpciones = opciones;
+    this.modalMenuAbierto = true;
   }
 
-  // 👇 4. Seleccionar Avatar
+  seleccionarOpcion(valor: string) {
+    this.usuario[this.menuCampoTarget] = valor;
+    this.modalMenuAbierto = false;
+  }
+
+  // ==========================================
+  // MÉTODOS GENERALES
+  // ==========================================
+  abrirModalFoto() {
+    if(this.editando) this.mostrarModalAvatares = true;
+  }
+
   seleccionarAvatar(avatar: string) {
-    this.usuario.avatar = avatar; // Actualiza la vista previa
-    this.mostrarModalAvatares = false; // Cierra el modal
+    this.usuario.avatar = avatar; 
+    this.mostrarModalAvatares = false; 
   }
 
   alternarEdicion() {
@@ -129,11 +172,14 @@ export class PerfilPage implements OnInit {
 
     try {
       const datosActualizar = {
+        nombre: this.usuario.nombre,
+        apellido: this.usuario.apellido,
         peso: Number(this.usuario.peso),
         altura: Number(this.usuario.altura),
         foto: this.usuario.avatar,
-        objetivo: this.usuario.objetivo,       // 👈 Guardamos en Firebase
-        experiencia: this.usuario.experiencia // Guardamos el nuevo avatar en la BD
+        bio: this.usuario.bio, 
+        objetivo: this.usuario.objetivo,       
+        experiencia: this.usuario.experiencia 
       };
 
       await this.studentService.actualizarPerfil(this.uidUsuario, datosActualizar);
@@ -152,7 +198,66 @@ export class PerfilPage implements OnInit {
     return date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
   }
 
-  logout() {
+  // ==========================================
+  // 👇 EL ESCUDO PROTECTOR PARA BOTONES Y TABS
+  // ==========================================
+
+  // Este es el método que Angular y el Guard van a ejecutar al intentar cambiar de Tab
+  async ionViewCanLeave(): Promise<boolean> {
+    if (this.editando) {
+      this.accionPendiente = 'navegacion';
+      this.modalAlertaAbierto = true; // Abre nuestro Modal bonito
+      
+      // Congelamos la navegación hasta que el usuario decida en el Modal
+      return new Promise((resolve) => {
+        this.resolveSalida = resolve; 
+      });
+    }
+    return true; // Si no está editando, sale normal al instante
+  }
+
+  intentarCerrarSesion() {
+    if (this.editando) {
+      this.accionPendiente = 'logout';
+      this.modalAlertaAbierto = true;
+    } else {
+      this.ejecutarLogout();
+    }
+  }
+
+  // Cuando el usuario le da a "Descartar cambios y Salir"
+  confirmarSalida() {
+    this.modalAlertaAbierto = false;
+    this.editando = false;
+    
+    setTimeout(() => {
+      if (this.accionPendiente === 'logout') {
+        this.ejecutarLogout();
+      } else if (this.accionPendiente === 'navegacion' && this.resolveSalida) {
+        this.resolveSalida(true); // Da luz verde a Angular para cambiar de Tab
+      }
+      this.limpiarEstadoAlerta();
+    }, 300);
+  }
+
+  // Cuando el usuario le da a "Seguir editando" (Cancelar)
+  cancelarSalida() {
+    this.modalAlertaAbierto = false;
+    
+    setTimeout(() => {
+      if (this.accionPendiente === 'navegacion' && this.resolveSalida) {
+        this.resolveSalida(false); // Bloquea el cambio de Tab, se queda en Perfil
+      }
+      this.limpiarEstadoAlerta();
+    }, 300);
+  }
+
+  limpiarEstadoAlerta() {
+    this.accionPendiente = 'none';
+    this.resolveSalida = null;
+  }
+
+  ejecutarLogout() {
     this.authService.logout();
     this.navCtrl.navigateRoot('/login');
   }

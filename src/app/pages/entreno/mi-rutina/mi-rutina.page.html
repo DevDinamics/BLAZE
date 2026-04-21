@@ -7,7 +7,6 @@
           {{ sesionHoy?.nombre || 'Cargando...' }}
         </h1>
       </div>
-      
     </div>
   </ion-toolbar>
 </ion-header>
@@ -65,9 +64,15 @@
         
         <div class="flex gap-4 p-5">
           <div class="relative h-20 w-20 shrink-0">
-            <img [src]="ejercicio.imagen || 'assets/img/gym-placeholder.jpg'" 
-                 class="h-full w-full rounded-2xl object-cover bg-gray-50 border border-gray-100" 
+            <div class="h-full w-full rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden p-1.5"
                  [ngClass]="{'opacity-40 grayscale': ejercicio.completado}">
+              <img [src]="ejercicio.imagen" 
+                   *ngIf="ejercicio.imagen"
+                   (error)="$event.target.src='assets/logo-bn.png'"
+                   class="h-full w-full object-contain mix-blend-multiply">
+              <ion-icon name="barbell-outline" *ngIf="!ejercicio.imagen" class="text-gray-400 text-3xl w-full h-full flex items-center justify-center"></ion-icon>
+            </div>
+            
             <div *ngIf="ejercicio.completado" class="absolute inset-0 flex items-center justify-center">
               <ion-icon [icon]="iconCheckCircle" class="text-emerald-500 text-3xl bg-white rounded-full"></ion-icon>
             </div>
@@ -139,17 +144,16 @@
 
   <div *ngIf="descansoActivo" class="fixed bottom-32 left-4 right-4 bg-white/95 backdrop-blur-xl border border-gray-200 p-5 rounded-[32px] shadow-2xl z-50 flex items-center justify-between animate-fade-in-up">
     <div class="flex items-center gap-4">
-      
       <div class="h-14 w-14 rounded-full border-[3px] border-emerald-500 flex items-center justify-center bg-emerald-50/50 shadow-inner shrink-0">
         <span class="text-2xl font-mono font-black text-gray-900">{{ tiempoRestante }}</span>
       </div>
-
       <div>
         <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Recuperación</p>
         <p class="text-gray-900 text-xs font-semibold">Prepárate para el siguiente set</p>
       </div>
     </div>
-    <div class="flex gap-2 shrink-0"> <button (click)="sumarTiempo(10)" class="h-11 w-11 rounded-full bg-gray-50 text-gray-600 font-bold text-[10px] border border-gray-100 active:scale-90 transition-transform">+10</button>
+    <div class="flex gap-2 shrink-0"> 
+      <button (click)="sumarTiempo(10)" class="h-11 w-11 rounded-full bg-gray-50 text-gray-600 font-bold text-[10px] border border-gray-100 active:scale-90 transition-transform">+10</button>
       <button (click)="saltarDescanso()" class="h-11 px-6 rounded-full bg-gray-900 text-white font-bold text-[10px] uppercase tracking-wider active:scale-95 transition-transform">Saltar</button>
     </div>
   </div>
@@ -174,9 +178,13 @@
         </div>
 
         <div class="space-y-8 pb-10">
-          <div class="aspect-video w-full bg-gray-100 rounded-[40px] border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm relative">
-            <img [src]="ejercicioSeleccionado?.imagen || 'assets/img/gym-placeholder.jpg'" class="object-cover w-full h-full">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+          <div class="aspect-video w-full bg-white p-4 rounded-[40px] border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm relative">
+            <img [src]="ejercicioSeleccionado?.imagen" 
+                 *ngIf="ejercicioSeleccionado?.imagen"
+                 (error)="$event.target.src='assets/logo-bn.png'"
+                 class="object-contain w-full h-full mix-blend-multiply">
+            <ion-icon name="barbell-outline" *ngIf="!ejercicioSeleccionado?.imagen" class="text-gray-200 text-7xl"></ion-icon>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none"></div>
           </div>
 
           <div class="bg-gray-50 p-7 rounded-[32px] border border-gray-100 relative">

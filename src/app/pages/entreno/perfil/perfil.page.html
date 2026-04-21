@@ -56,8 +56,16 @@
 
         <div class="space-y-6">
           <div class="border-b border-gray-100 pb-5">
-            <p class="text-sm font-bold text-black mb-1">Biografía</p>
-            <p class="text-gray-400 text-sm">No has agregado una biografía aún</p>
+            <p class="text-sm font-bold text-black mb-2">Biografía</p>
+            <div *ngIf="!editando">
+              <p class="text-gray-500 text-sm font-medium italic" [ngClass]="{'text-gray-400': !usuario.bio}">
+                "{{ usuario.bio || 'Aún no has agregado una biografía.' }}"
+              </p>
+            </div>
+            <div *ngIf="editando">
+              <textarea [(ngModel)]="usuario.bio" rows="3" placeholder="Escribe algo sobre ti y tus metas..." 
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm resize-none"></textarea>
+            </div>
           </div>
 
           <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
@@ -88,8 +96,8 @@
               <p class="text-sm font-bold text-black">Nombre</p>
               <p *ngIf="!editando" class="text-gray-500 text-sm">{{ usuario.nombre }} {{ usuario.apellido }}</p>
               <div *ngIf="editando" class="flex gap-2 mt-2">
-                 <input [(ngModel)]="usuario.nombre" placeholder="Nombre" class="bg-gray-50 border border-gray-200 w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
-                 <input [(ngModel)]="usuario.apellido" placeholder="Apellido" class="bg-gray-50 border border-gray-200 w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
+                 <input [(ngModel)]="usuario.nombre" placeholder="Nombre" class="bg-white border border-gray-200 w-full px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
+                 <input [(ngModel)]="usuario.apellido" placeholder="Apellido" class="bg-white border border-gray-200 w-full px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
               </div>
             </div>
           </div>
@@ -98,7 +106,6 @@
 
       <div>
         <h3 class="font-black text-xl tracking-tight text-black mb-6">Información Física</h3>
-        
         <div class="bg-gray-50 rounded-3xl border border-gray-200 shadow-sm p-2 mb-8">
           
           <div class="flex items-center p-4 border-b border-gray-200/60">
@@ -111,7 +118,7 @@
                 <span class="text-gray-500 text-sm font-medium">{{ usuario.peso }} kg</span>
               </div>
               <div *ngIf="editando">
-                <input type="number" [(ngModel)]="usuario.peso" class="bg-white text-black border border-gray-200 w-24 px-3 py-1.5 rounded-lg text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
+                <input type="number" [(ngModel)]="usuario.peso" class="bg-white text-black border border-gray-200 w-24 px-3 py-2 rounded-lg text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
               </div>
             </div>
           </div>
@@ -126,7 +133,7 @@
                 <span class="text-gray-500 text-sm font-medium">{{ usuario.altura }} m</span>
               </div>
               <div *ngIf="editando">
-                <input type="number" [(ngModel)]="usuario.altura" class="bg-white text-black border border-gray-200 w-24 px-3 py-1.5 rounded-lg text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
+                <input type="number" [(ngModel)]="usuario.altura" class="bg-white text-black border border-gray-200 w-24 px-3 py-2 rounded-lg text-sm font-bold outline-none focus:border-black transition-colors shadow-sm">
               </div>
             </div>
           </div>
@@ -144,7 +151,7 @@
 
         </div>
 
-        <button (click)="logout()" class="w-full bg-white text-gray-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 hover:text-black">
+        <button (click)="intentarCerrarSesion()" class="w-full bg-white text-gray-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 hover:text-black">
            <ion-icon name="log-out-outline" class="text-lg"></ion-icon> Cerrar Sesión
         </button>
 
@@ -165,12 +172,11 @@
           </div>
           
           <div *ngIf="editando" class="mt-2">
-            <select [(ngModel)]="usuario.objetivo" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
-              <option value="Perder peso">Perder peso</option>
-              <option value="Aumentar músculo">Aumentar músculo</option>
-              <option value="Recomposición">Recomposición (Mantener)</option>
-              <option value="Rendimiento">Mejorar Rendimiento</option>
-            </select>
+            <div (click)="abrirMenuOpciones('objetivo', 'Elige tu Objetivo', opcionesObjetivo)"
+                 class="relative w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-bold shadow-sm flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer hover:border-black">
+              <span class="text-black">{{ usuario.objetivo || 'Selecciona un objetivo' }}</span>
+              <ion-icon name="chevron-down-outline" class="text-gray-400 text-lg"></ion-icon>
+            </div>
           </div>
         </div>
 
@@ -178,15 +184,15 @@
           <p class="text-sm font-bold text-black mb-1">Nivel de experiencia</p>
           
           <div *ngIf="!editando">
-            <p class="text-gray-500 text-sm font-medium">{{ usuario.experiencia }}</p>
+            <p class="text-gray-500 text-sm font-medium mt-1">{{ usuario.experiencia }}</p>
           </div>
 
           <div *ngIf="editando" class="mt-2">
-            <select [(ngModel)]="usuario.experiencia" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-black transition-colors shadow-sm">
-              <option value="Principiante">Principiante</option>
-              <option value="Intermedio">Intermedio</option>
-              <option value="Avanzado">Avanzado</option>
-            </select>
+            <div (click)="abrirMenuOpciones('experiencia', 'Nivel de Experiencia', opcionesExperiencia)"
+                 class="relative w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-bold shadow-sm flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer hover:border-black">
+              <span class="text-black">{{ usuario.experiencia || 'Selecciona tu nivel' }}</span>
+              <ion-icon name="chevron-down-outline" class="text-gray-400 text-lg"></ion-icon>
+            </div>
           </div>
         </div>
 
@@ -203,7 +209,6 @@
 
       <div class="mt-10">
         <h3 class="font-bold text-red-600 text-sm mb-2 uppercase tracking-wide">Zona de Peligro</h3>
-        
         <div class="bg-red-50 border border-red-100 rounded-3xl p-6 text-center shadow-sm">
           <p class="text-red-700 text-sm font-black mb-2 tracking-tight">Eliminar cuenta permanentemente</p>
           <p class="text-red-600/70 text-xs mb-5 font-medium leading-relaxed">Una vez eliminada, no podrás recuperar tu cuenta ni tus datos registrados.</p>
@@ -215,90 +220,119 @@
     </div>
 
     <div *ngIf="tabActual === 'actividad'" class="px-6 animate-fade-in">
+       <h3 class="font-black text-xl tracking-tight text-black mb-4">Estadísticas de Racha</h3>
       
-      <h3 class="font-black text-xl tracking-tight text-black mb-4">Estadísticas de Racha</h3>
-      
-      <div class="grid grid-cols-2 gap-4 mb-10">
-        <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
-          <div class="h-12 w-12 rounded-full bg-orange-50 flex items-center justify-center mb-3 border border-orange-100">
-             <ion-icon name="flame" class="text-[#f57c00] text-2xl"></ion-icon>
-          </div>
-          <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Racha Actual</p>
-          <p class="font-black text-3xl text-black tracking-tight">{{ usuario.rachaActual }} <span class="text-sm font-bold text-gray-400">días</span></p>
-        </div>
-        
-        <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
-          <div class="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center mb-3 border border-gray-100">
-             <ion-icon name="barbell-outline" class="text-black text-2xl"></ion-icon>
-          </div>
-          <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Entrenos</p>
-          <p class="font-black text-3xl text-black tracking-tight">{{ usuario.totalEntrenos }} <span class="text-sm font-bold text-gray-400">total</span></p>
-        </div>
-      </div>
-
-      <h3 class="font-black text-xl tracking-tight text-black mb-1">Actividad Anual</h3>
-      <p class="text-gray-500 text-sm font-medium mb-4">Resumen de tus entrenamientos</p>
-
-      <div class="bg-gray-50 rounded-3xl border border-gray-200 p-5 overflow-x-auto shadow-sm">
-        <div class="flex gap-1.5 min-w-max pb-2">
-          <div *ngFor="let col of [1,2,3,4,5,6,7,8,9,10,11,12]" class="flex flex-col gap-1.5">
-            <div *ngFor="let cell of [1,2,3,4,5,6,7]" class="h-4 w-4 rounded-[4px] bg-gray-200 border border-gray-300/50"></div>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 mt-4 text-xs font-bold text-gray-400">
-          <span>Menos</span>
-          <div class="flex gap-1.5">
-            <div class="h-3 w-3 rounded-[3px] bg-gray-200"></div>
-            <div class="h-3 w-3 rounded-[3px] bg-[#f57c00]/30"></div>
-            <div class="h-3 w-3 rounded-[3px] bg-[#f57c00]/70"></div>
-            <div class="h-3 w-3 rounded-[3px] bg-[#f57c00]"></div>
-          </div>
-          <span>Más</span>
-        </div>
-      </div>
-
+       <div class="grid grid-cols-2 gap-4 mb-10">
+         <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
+           <div class="h-12 w-12 rounded-full bg-orange-50 flex items-center justify-center mb-3 border border-orange-100">
+              <ion-icon name="flame" class="text-[#f57c00] text-2xl"></ion-icon>
+           </div>
+           <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Racha Actual</p>
+           <p class="font-black text-3xl text-black tracking-tight">{{ usuario.rachaActual }} <span class="text-sm font-bold text-gray-400">días</span></p>
+         </div>
+         
+         <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
+           <div class="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center mb-3 border border-gray-100">
+              <ion-icon name="barbell-outline" class="text-black text-2xl"></ion-icon>
+           </div>
+           <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Entrenos</p>
+           <p class="font-black text-3xl text-black tracking-tight">{{ usuario.totalEntrenos }} <span class="text-sm font-bold text-gray-400">total</span></p>
+         </div>
+       </div>
     </div>
 
   </div>
 </ion-content>
 
-<ion-modal [isOpen]="mostrarModalAvatares" 
-           (didDismiss)="mostrarModalAvatares = false"
-           [initialBreakpoint]="0.6" 
-           [breakpoints]="[0, 0.6, 0.8]" 
-           handleBehavior="cycle"
-           class="avatar-modal">
+<ion-modal [isOpen]="mostrarModalAvatares" (didDismiss)="mostrarModalAvatares = false" [initialBreakpoint]="0.6" [breakpoints]="[0, 0.6, 0.8]" class="avatar-modal">
   <ng-template>
     <ion-content style="--background: #ffffff;">
       <div class="p-6 pt-8">
-        
         <div class="text-center mb-8">
           <h2 class="text-2xl font-black text-black tracking-tight">Cambia tu estilo</h2>
           <p class="text-gray-500 text-sm font-medium mt-1">Selecciona tu nuevo avatar 3D</p>
         </div>
-
         <div class="grid grid-cols-3 gap-5 px-2 pb-10">
-          
-          <div *ngFor="let avatar of avataresDisponibles" 
-               (click)="seleccionarAvatar(avatar)"
-               class="relative cursor-pointer transition-transform active:scale-95">
-            
-            <div class="rounded-full p-1.5 transition-all duration-300 border-2"
-                 [ngClass]="usuario.avatar === avatar ? 'border-black shadow-md scale-105 bg-gray-50' : 'border-transparent bg-transparent opacity-70 hover:opacity-100'">
-              
+          <div *ngFor="let avatar of avataresDisponibles" (click)="seleccionarAvatar(avatar)" class="relative cursor-pointer transition-transform active:scale-95">
+            <div class="rounded-full p-1.5 transition-all duration-300 border-2" [ngClass]="usuario.avatar === avatar ? 'border-black shadow-md scale-105 bg-gray-50' : 'border-transparent bg-transparent opacity-70 hover:opacity-100'">
               <img [src]="avatar" class="w-full aspect-square rounded-full object-cover bg-gray-100 border border-gray-200 mix-blend-multiply">
-              
             </div>
-
             <div *ngIf="usuario.avatar === avatar" class="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 shadow-md animate-fade-in z-10 border-2 border-white">
               <ion-icon name="checkmark-outline" class="text-white text-lg block font-bold"></ion-icon>
             </div>
-            
           </div>
-          
         </div>
-
       </div>
     </ion-content>
   </ng-template>
 </ion-modal>
+
+<ion-modal [isOpen]="modalMenuAbierto" (didDismiss)="modalMenuAbierto = false" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.75]">
+  <ng-template>
+    <div class="h-full bg-white px-6 pt-8 pb-10 overflow-y-auto">
+      <h3 class="text-2xl font-black text-gray-900 mb-6 tracking-tight">{{ menuTitulo }}</h3>
+      
+      <div class="space-y-3">
+        <button *ngFor="let opt of menuOpciones"
+                (click)="seleccionarOpcion(opt.value)"
+                class="w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98]"
+                [ngClass]="usuario[menuCampoTarget] === opt.value ? 'bg-gray-50 border-black shadow-sm' : 'bg-white border-gray-200 hover:border-gray-300'">
+          
+          <span class="font-bold text-sm" [ngClass]="usuario[menuCampoTarget] === opt.value ? 'text-black' : 'text-gray-600'">
+            {{ opt.label }}
+          </span>
+          
+          <div *ngIf="usuario[menuCampoTarget] === opt.value" class="h-6 w-6 bg-black rounded-full flex items-center justify-center animate-fade-in">
+             <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
+          </div>
+
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="modalAlertaAbierto" class="custom-alert-modal" (didDismiss)="modalAlertaAbierto = false">
+  <ng-template>
+    <div class="flex items-center justify-center h-full px-4">
+      <div class="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl text-center border border-gray-100">
+        
+        <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+          <ion-icon name="warning" class="text-red-500 text-3xl"></ion-icon>
+        </div>
+        
+        <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">Cambios sin guardar</h3>
+        <p class="text-gray-500 text-sm font-medium mb-8 leading-relaxed">
+          Si continúas, perderás todas las modificaciones que hiciste en tu perfil. ¿Estás seguro?
+        </p>
+        
+        <div class="flex flex-col gap-3">
+          <button (click)="confirmarSalida()" class="w-full bg-[#d32f2f] text-white font-bold py-4 rounded-xl text-sm shadow-md hover:bg-red-800 transition-colors active:scale-95">
+            Descartar cambios y Salir
+          </button>
+          
+          <button (click)="cancelarSalida()" class="w-full bg-gray-100 text-gray-800 font-bold py-4 rounded-xl text-sm hover:bg-gray-200 transition-colors active:scale-95">
+            Seguir editando
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </ng-template>
+</ion-modal>
+
+<style>
+  /* 👇 Estilo crítico para que el Modal de Alerta se vea como Dialogo Flotante y no pantalla completa */
+  ion-modal.custom-alert-modal {
+    --width: 90%;
+    --max-width: 400px;
+    --height: auto;
+    --border-radius: 2rem;
+    --box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --background: transparent;
+  }
+  ion-modal.custom-alert-modal::part(content) {
+    background: transparent;
+    box-shadow: none;
+  }
+</style>

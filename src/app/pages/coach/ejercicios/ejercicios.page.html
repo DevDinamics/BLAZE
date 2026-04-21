@@ -1,10 +1,18 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: #ffffff;">
+    <div class="px-5 pt-4 pb-2">
+      <button (click)="regresar()" class="h-10 w-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-black active:scale-95 transition-transform hover:bg-gray-100 shadow-sm">
+        <ion-icon name="arrow-back" class="text-xl"></ion-icon>
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
 <ion-content [fullscreen]="true" style="--background: #ffffff;">
   <div class="min-h-full bg-white font-sans pb-10">
 
-    
-
     <div class="px-6 mt-2 mb-6">
-      <h1 class="text-[28px] font-black tracking-tight text-black mb-1">Ejercicios</h1>
+      <h1 class="text-[32px] font-black tracking-tight text-black mb-1">Ejercicios</h1>
       <p class="text-gray-500 text-sm font-medium">{{ ejerciciosFiltrados.length }} ejercicios disponibles</p>
     </div>
 
@@ -20,7 +28,7 @@
       <button *ngFor="let cat of categorias"
               (click)="filtrarPorCategoria(cat)"
               class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap active:scale-95"
-              [ngClass]="categoriaSeleccionada === cat ? 'bg-black text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'">
+              [ngClass]="categoriaSeleccionada === cat ? 'bg-black text-white shadow-md' : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'">
         {{ cat }}
       </button>
     </div>
@@ -29,36 +37,38 @@
       <button *ngFor="let dif of dificultades"
               (click)="filtrarPorDificultad(dif)"
               class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap active:scale-95"
-              [ngClass]="dificultadSeleccionada === dif ? 'bg-black text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'">
+              [ngClass]="dificultadSeleccionada === dif ? 'bg-black text-white shadow-md' : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'">
         {{ dif }}
       </button>
     </div>
 
     <div class="grid grid-cols-2 gap-4 px-6">
-      
       <div *ngFor="let item of ejerciciosFiltrados" 
-           class="flex flex-col bg-gray-50 rounded-2xl p-4 cursor-pointer active:scale-95 transition-transform">
+           class="flex flex-col bg-gray-50 border border-gray-100 rounded-3xl p-4 cursor-pointer active:scale-95 transition-transform shadow-sm hover:shadow-md">
         
-        <div class="w-full aspect-square relative mb-3 flex items-center justify-center">
-          <img [src]="item.imagen" class="w-full h-full object-contain mix-blend-multiply">
+        <div class="w-full aspect-square relative mb-3 flex items-center justify-center overflow-hidden rounded-xl bg-white border border-gray-100">
+          <img [src]="item.imagen" 
+               (error)="$event.target.src='assets/logo-bn.png'"
+               class="w-full h-full object-contain mix-blend-multiply transition-opacity duration-300 p-2">
         </div>
 
         <div class="mt-auto">
-          <h3 class="text-black font-bold text-sm leading-tight mb-1 line-clamp-2">
+          <h3 class="text-black font-black text-[15px] leading-tight mb-1 line-clamp-2 tracking-tight">
             {{ item.nombre }}
           </h3>
-          <p class="text-gray-500 text-xs font-medium">
+          <p class="text-[#f57c00] text-[10px] font-bold uppercase tracking-widest">
             {{ item.musculo }}
           </p>
         </div>
-
       </div>
-
     </div>
 
-    <div *ngIf="ejerciciosFiltrados.length === 0" class="flex flex-col items-center justify-center py-20 opacity-50">
-      <ion-icon name="search-outline" class="text-4xl text-gray-400 mb-2"></ion-icon>
-      <p class="text-gray-600 font-bold text-sm">No se encontraron ejercicios</p>
+    <div *ngIf="ejerciciosFiltrados.length === 0" class="flex flex-col items-center justify-center py-24 opacity-60">
+      <div class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+        <ion-icon name="search-outline" class="text-2xl text-gray-400"></ion-icon>
+      </div>
+      <p class="text-black font-bold text-base tracking-tight">No hay resultados</p>
+      <p class="text-gray-500 font-medium text-xs mt-1">Intenta con otra palabra o filtro</p>
     </div>
 
   </div>
