@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { 
   Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-  signOut, user, GoogleAuthProvider, 
-  signInWithRedirect, getRedirectResult, // 👈 NUEVOS IMPORTS DE REDIRECCIÓN
+  signOut, user, GoogleAuthProvider, signInWithPopup, 
   sendEmailVerification 
 } from '@angular/fire/auth';
 import { 
@@ -72,7 +71,7 @@ export class AuthService {
         email: email,
         nombre: nombre,
         rol: 'pendiente', 
-        onboardingCompletado: false, 
+        onboardingCompletado: false, // 👈 Se agrega para control
         fechaRegistro: new Date(),
         foto: `https://ui-avatars.com/api/?name=${nombre}&background=random`,
         licenciaUsada: 'N/A' 
@@ -98,7 +97,7 @@ export class AuthService {
   }
 
   // ==========================================
-  // 🌐 4. LOGIN CON GOOGLE (VERSIÓN REDIRECT)
+  // 🌐 4. LOGIN CON GOOGLE 
   // ==========================================
   async loginConGoogle() {
     const provider = new GoogleAuthProvider();
@@ -106,42 +105,29 @@ export class AuthService {
     provider.addScope('email');
 
     try {
-      // 👇 Disparamos la redirección. El navegador se irá a Google entero.
-      await signInWithRedirect(this.auth, provider);
-    } catch (error) {
-      console.error('Error al redirigir a Google:', error);
-      throw error;
-    }
-  }
+      const credencial = await signInWithPopup(this.auth, provider);
+      const user = credencial.user;
 
-  // 👇 NUEVA FUNCIÓN: Atrapa al usuario cuando regresa de Google
-  async procesarRedireccionGoogle() {
-    try {
-      const credencial = await getRedirectResult(this.auth);
+      const userRef = doc(this.firestore, `usuarios/${user.uid}`);
+      const userSnap = await getDoc(userRef);
 
-      if (credencial && credencial.user) {
-        const user = credencial.user;
-        const userRef = doc(this.firestore, `usuarios/${user.uid}`);
-        const userSnap = await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            uid: user.uid,
-            email: user.email,
-            nombre: user.displayName || 'Nuevo Guerrero', 
-            foto: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'G'}&background=random`,
-            rol: 'pendiente', 
-            onboardingCompletado: false, 
-            xpTotal: 0,
-            fechaRegistro: new Date(),
-            licenciaUsada: 'Google OAuth'
-          });
-        }
-        return user; // Retornamos el usuario listo para entrar
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          nombre: user.displayName || 'Nuevo Guerrero', 
+          foto: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'G'}&background=random`,
+          rol: 'pendiente', 
+          onboardingCompletado: false, // 👈 Se agrega para control
+          xpTotal: 0,
+          fechaRegistro: new Date(),
+          licenciaUsada: 'Google OAuth'
+        });
       }
-      return null; // Si no venimos de redirección, regresa nulo
+
+      return user;
     } catch (error) {
-      console.error('Error procesando redirección de Google:', error);
+      console.error('Error en autenticación con Google:', error);
       throw error;
     }
   }
