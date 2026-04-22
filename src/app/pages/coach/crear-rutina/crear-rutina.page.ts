@@ -6,12 +6,13 @@ import { ActivatedRoute } from '@angular/router';
 import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
 import { SelectorEjerciciosPage } from 'src/app/modals/selector-ejercicios/selector-ejercicios.page';
-import { addIcons } from 'ionicons';
+
+// 👇 1. Importamos los íconos normales
 import { 
   arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
   folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
   list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-  personOutline, chevronDownOutline, checkmarkOutline, downloadOutline // 👈 Todos seguros aquí
+  personOutline, chevronDownOutline, checkmarkOutline, downloadOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -19,9 +20,17 @@ import {
   templateUrl: './crear-rutina.page.html',
   styleUrls: ['./crear-rutina.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule] // 👈 IonicModule se encarga de todo
+  imports: [IonicModule, CommonModule, FormsModule] 
 })
 export class CrearRutinaPage implements OnInit {
+
+  // 👇 2. EL BLINDAJE: Guardamos los íconos directamente en la clase para que el HTML los vea sin fallas
+  icons = {
+    arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
+    folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
+    list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
+    personOutline, chevronDownOutline, checkmarkOutline, downloadOutline
+  };
 
   rutinaId: string | null = null; 
   uidCoach: string | null = null;
@@ -67,12 +76,7 @@ export class CrearRutinaPage implements OnInit {
     private alertCtrl: AlertController, 
     private route: ActivatedRoute 
   ) {
-    addIcons({ 
-      arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
-      folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
-      list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-      personOutline, chevronDownOutline, checkmarkOutline, downloadOutline
-    });
+    // Ya no usamos addIcons() aquí. ¡Cero amnesia en producción!
   }
 
   async ngOnInit() {
