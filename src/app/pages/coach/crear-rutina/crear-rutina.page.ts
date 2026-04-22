@@ -1,13 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// 👇 AQUÍ ESTÁ EL SECRETO: Importar los componentes problemáticos directamente
-import { 
-  IonicModule, NavController, ToastController, LoadingController, 
-  ModalController, AlertController
-} from '@ionic/angular'; 
-
+import { IonicModule, NavController, ToastController, LoadingController, ModalController, AlertController } from '@ionic/angular'; 
 import { ActivatedRoute } from '@angular/router'; 
 import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
@@ -17,7 +11,7 @@ import {
   arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
   folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
   list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-  personOutline, chevronDownOutline, checkmarkOutline, downloadOutline, // 👈 Me di cuenta que faltaba este en tu lista
+  personOutline, chevronDownOutline, checkmarkOutline, downloadOutline // 👈 Todos seguros aquí
 } from 'ionicons/icons';
 
 @Component({
@@ -25,8 +19,7 @@ import {
   templateUrl: './crear-rutina.page.html',
   styleUrls: ['./crear-rutina.page.scss'],
   standalone: true,
-  // 👇 Le aseguramos a Angular que SI O SI vamos a usar el IonRange
-  imports: [IonicModule, CommonModule, FormsModule, ] 
+  imports: [IonicModule, CommonModule, FormsModule] // 👈 IonicModule se encarga de todo
 })
 export class CrearRutinaPage implements OnInit {
 
@@ -74,7 +67,6 @@ export class CrearRutinaPage implements OnInit {
     private alertCtrl: AlertController, 
     private route: ActivatedRoute 
   ) {
-    // Registramos los íconos (incluyendo el downloadOutline que faltaba en tu captura)
     addIcons({ 
       arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
       folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
