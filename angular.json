@@ -19,7 +19,7 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "prerender": false,
-           "ssr": false,
+            "ssr": false,
             "outputPath": "dist/app",
             "index": "src/index.html",
             "polyfills": [
@@ -29,6 +29,7 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/_redirects",
+              "src/_headers", 
               {
                 "glob": "**/*",
                 "input": "src/assets",
