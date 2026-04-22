@@ -6,9 +6,6 @@ import { AuthService } from 'src/app/services/auth';
 import { RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
 
-// 👇 1. Importamos Auth y sendEmailVerification de Firebase
-import { Auth, sendEmailVerification } from '@angular/fire/auth';
-
 import { 
   personOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
   arrowForwardOutline, arrowBackOutline, checkmarkCircleOutline, alertCircleOutline
@@ -40,7 +37,6 @@ export class RegistroPage implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private auth: Auth, // 👈 2. Inyectamos Firebase Auth directamente aquí
     private navCtrl: NavController,
     private toastCtrl: ToastController
   ) {
@@ -83,26 +79,20 @@ export class RegistroPage implements OnInit {
     this.cargando = true;
 
     try {
+      // 👇 REGISTRO LITE: Solo mandamos 3 cosas. 
+      // El auth.service.ts se encarga de mandar el correo y ponerle rol "pendiente"
       await this.authService.registrar(
         this.usuario.email, 
         this.usuario.password, 
-        this.usuario.nombre, 
-        'alumno', 
-        '' 
+        this.usuario.nombre
       );
 
-      // 👇 SEGUNDO ESCUDO: LA MAGIA DE LA VERIFICACIÓN
-      const user = this.auth.currentUser;
-      if (user) {
-        await sendEmailVerification(user); // Dispara el correo de Firebase
-      }
-
-      // 🔒 Cerramos su sesión de inmediato para que no se salten la seguridad
+      // 🔒 Cerramos su sesión de inmediato para que no se salten el cadenero del Onboarding
       this.authService.logout();
 
       this.mostrarMensaje('¡Cuenta creada! Revisa tu correo para verificar tu acceso. 📩', 'success');
       
-      // 🚀 Los mandamos a Login en lugar de Onboarding
+      // 🚀 Los mandamos a Login
       this.navCtrl.navigateRoot('/login');
 
     } catch (error: any) {
@@ -121,7 +111,7 @@ export class RegistroPage implements OnInit {
   async mostrarMensaje(mensaje: string, color: 'success' | 'warning' | 'danger') {
     const toast = await this.toastCtrl.create({
       message: mensaje,
-      duration: 4000, // Le damos más tiempo para que lean lo del correo
+      duration: 4000, 
       position: 'top', 
       mode: 'ios',
       cssClass: `apple-pill-toast toast-${color}`, 

@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-// 👇 1. IMPORTAMOS LAS HERRAMIENTAS DE GOOGLE (GoogleAuthProvider y signInWithPopup)
 import { 
   Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-  signOut, user, GoogleAuthProvider, signInWithPopup 
+  signOut, user, GoogleAuthProvider, signInWithPopup, 
+  sendEmailVerification 
 } from '@angular/fire/auth';
 import { 
   Firestore, doc, setDoc, getDoc, 
@@ -55,29 +55,26 @@ export class AuthService {
   }
 
   // ==========================================
-  // 2. REGISTRO TRADICIONAL (EMAIL/PASS)
+  // 2. REGISTRO LITE (EMAIL/PASS)
   // ==========================================
-  async registrar(email: string, pass: string, nombre: string, rol: 'coach' | 'alumno', codigo?: string) {
+  async registrar(email: string, pass: string, nombre: string) {
     try {
-      // --- 🚨 ZONA DE SEGURIDAD ---
-      if (rol === 'coach') {
-        if (!codigo) throw new Error('code-required');
-        const esValido = await this.validarCodigoInvitacion(codigo);
-        if (!esValido) throw new Error('invalid-code');
-      }
-      // -----------------------------
-
       const credencial = await createUserWithEmailAndPassword(this.auth, email, pass);
       const uid = credencial.user.uid;
 
+      // DISPARAMOS EL CORREO DE VERIFICACIÓN
+      await sendEmailVerification(credencial.user);
+
+      // Guardamos la base del perfil con rol "pendiente"
       const datosUsuario = {
         uid: uid,
         email: email,
         nombre: nombre,
-        rol: rol,
+        rol: 'pendiente', 
+        onboardingCompletado: false, // 👈 Se agrega para control
         fechaRegistro: new Date(),
         foto: `https://ui-avatars.com/api/?name=${nombre}&background=random`,
-        licenciaUsada: codigo || 'N/A' 
+        licenciaUsada: 'N/A' 
       };
 
       await setDoc(doc(this.firestore, 'usuarios', uid), datosUsuario);
@@ -100,31 +97,28 @@ export class AuthService {
   }
 
   // ==========================================
-  // 🌐 4. LOGIN CON GOOGLE (NUEVO)
+  // 🌐 4. LOGIN CON GOOGLE 
   // ==========================================
   async loginConGoogle() {
     const provider = new GoogleAuthProvider();
-    // Solicitamos acceso explícito al perfil y correo
     provider.addScope('profile');
     provider.addScope('email');
 
     try {
-      // Abre la ventana emergente de Google
       const credencial = await signInWithPopup(this.auth, provider);
       const user = credencial.user;
 
-      // Verificamos si el usuario ya existe en nuestra base de datos
       const userRef = doc(this.firestore, `usuarios/${user.uid}`);
       const userSnap = await getDoc(userRef);
 
-      // Si es la PRIMERA VEZ que entra con Google, le creamos su ficha automáticamente
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
-          nombre: user.displayName || 'Nuevo Guerrero', // 🔥 Google nos da su nombre real
-          foto: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'G'}&background=random`, // 🔥 Google nos da su avatar
-          rol: 'alumno', // Por defecto los ingresos por Google son alumnos
+          nombre: user.displayName || 'Nuevo Guerrero', 
+          foto: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'G'}&background=random`,
+          rol: 'pendiente', 
+          onboardingCompletado: false, // 👈 Se agrega para control
           xpTotal: 0,
           fechaRegistro: new Date(),
           licenciaUsada: 'Google OAuth'

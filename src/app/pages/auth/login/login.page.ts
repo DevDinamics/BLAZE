@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
+import { AuthService } from 'src/app/services/auth'; // 👈 Importamos nuestro servicio
 
 import { 
   mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -11,8 +12,8 @@ import {
   alertCircleOutline, keyOutline 
 } from 'ionicons/icons';
 
-import { Auth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from '@angular/fire/auth';
-import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
+import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '@angular/fire/auth';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-login',
@@ -32,12 +33,10 @@ export class LoginPage implements OnInit {
   cargando = false;
   cargandoGoogle = false;
 
-  // 👇 Variables para el Modal de Recuperación
   modalRecuperarAbierto = false;
   emailRecuperacion = '';
   enviandoCorreo = false;
 
-  // 🛡️ LISTA NEGRA: Dominios de correos temporales/falsos que no queremos
   dominiosBloqueados = [
     'yopmail.com', 'temp-mail.org', '10minutemail.com', 
     'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
@@ -47,7 +46,8 @@ export class LoginPage implements OnInit {
     private auth: Auth,
     private firestore: Firestore,
     private navCtrl: NavController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private authService: AuthService // 👈 Lo inyectamos
   ) {
     addIcons({ 
       mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -59,9 +59,7 @@ export class LoginPage implements OnInit {
   ngOnInit() {
     const user = this.auth.currentUser;
     if (user) {
-      // 🛡️ Escudo extra: Si por caché la app recuerda a un usuario de correo/contraseña que no ha verificado, lo saca.
       const esLoginPorCorreo = user.providerData.some(p => p.providerId === 'password');
-      
       if (esLoginPorCorreo && !user.emailVerified) {
         this.auth.signOut();
       } else {
@@ -82,15 +80,10 @@ export class LoginPage implements OnInit {
   }
 
   // ==========================================
-  // 👇 LÓGICA DE RECUPERACIÓN DE CONTRASEÑA
+  // RECUPERACIÓN DE CONTRASEÑA
   // ==========================================
-
   abrirModalRecuperar() {
-    if (this.credenciales.email) {
-      this.emailRecuperacion = this.credenciales.email;
-    } else {
-      this.emailRecuperacion = '';
-    }
+    this.emailRecuperacion = this.credenciales.email ? this.credenciales.email : '';
     this.modalRecuperarAbierto = true;
   }
 
@@ -122,7 +115,6 @@ export class LoginPage implements OnInit {
   // ==========================================
   // LOGIN NORMAL Y GOOGLE
   // ==========================================
-
   async login() {
     if (!this.credenciales.email || !this.credenciales.password) {
       this.mostrarMensaje('Por favor ingresa tu correo y contraseña.', 'warning');
@@ -139,17 +131,17 @@ export class LoginPage implements OnInit {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, this.credenciales.email, this.credenciales.password);
 
-      // ==========================================
-      // 👇 EL CADENERO DEL LOGIN (VERIFICACIÓN)
-      // ==========================================
-      if (!userCredential.user.emailVerified) {
-        this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos para poder ingresar.', 'warning');
-        await this.auth.signOut(); // Los volvemos a sacar a patadas
+      // 👇 PASE VIP PARA ADMIN Y CADENERO PARA EL RESTO
+     /* const esAdminVIP = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
+      
+      if (!userCredential.user.emailVerified && !esAdminVIP) {
+        this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
+        await this.auth.signOut(); 
         this.cargando = false;
-        return; // Detenemos la ejecución aquí
+        return; 
       }
+        */
 
-      // Si pasa el cadenero, es que su correo es 100% real
       await this.redirigirPorRol(userCredential.user.uid);
 
     } catch (error: any) {
@@ -163,29 +155,11 @@ export class LoginPage implements OnInit {
     this.cargandoGoogle = true;
 
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(this.auth, provider);
-      const user = result.user;
-
-      const userDocRef = doc(this.firestore, 'usuarios', user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
+      // 👇 Usamos la magia de nuestro auth.service.ts
+      const user = await this.authService.loginConGoogle();
+      if (user) {
         await this.redirigirPorRol(user.uid);
-      } else {
-        await setDoc(userDocRef, {
-          nombre: user.displayName || 'Usuario',
-          email: user.email,
-          foto: user.photoURL || '',
-          rol: 'alumno', 
-          fechaRegistro: new Date(),
-          xpTotal: 0
-        });
-
-        this.cargandoGoogle = false;
-        this.navCtrl.navigateRoot('/onboarding'); 
       }
-
     } catch (error: any) {
       console.error(error);
       this.cargandoGoogle = false;
@@ -193,6 +167,10 @@ export class LoginPage implements OnInit {
         this.mostrarMensaje('Error al iniciar con Google.', 'danger');
       }
     }
+  }
+
+  loginApple() {
+    this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. 🍏', 'warning');
   }
 
   async redirigirPorRol(uid: string) {
@@ -208,7 +186,8 @@ export class LoginPage implements OnInit {
         this.cargando = false;
         this.cargandoGoogle = false;
 
-        if (!onboardingCompletado && !data['peso']) { 
+        // 👇 EL FILTRO MAESTRO: Si es pendiente, directo al Onboarding
+        if (rol === 'pendiente' || !onboardingCompletado) { 
            this.navCtrl.navigateRoot('/onboarding');
            return;
         }

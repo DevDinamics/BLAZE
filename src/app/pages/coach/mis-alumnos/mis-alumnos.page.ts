@@ -69,15 +69,16 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     this.cargando = true;
 
     try {
+      // 👇 SOLUCIÓN: Buscamos solo por coachId
       const q = query(
         collection(this.firestore, 'usuarios'), 
-        where('coachId', '==', this.coachId), 
-        where('rol', '==', 'alumno')
+        where('coachId', '==', this.coachId)
       );
       
       const snapshot = await getDocs(q);
       
-      this.todosLosAlumnos = snapshot.docs.map(doc => {
+      // 1. Mapeamos todos los documentos
+      let todos = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           uid: doc.id, 
@@ -90,14 +91,18 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
           objetivo: data['objetivo'] || 'No definido',
           experiencia: data['experiencia'] || 'Principiante',
           fechaRegistro: data['fechaRegistro']?.toDate() || new Date(),
-          // 👇 2. Leemos el estado del puntito para saber si tenemos que limpiarlo
-          vistoPorCoach: data['vistoPorCoach'] !== undefined ? data['vistoPorCoach'] : true 
+          vistoPorCoach: data['vistoPorCoach'] !== undefined ? data['vistoPorCoach'] : true,
+          rol: data['rol'] // Necesitamos esto para filtrar
         };
       });
 
+      // 👇 2. Filtramos en memoria (Aceptamos 'alumno' o 'atleta')
+      this.todosLosAlumnos = todos.filter((user: any) => user.rol === 'alumno' || user.rol === 'atleta');
+      
+      // 3. Pasamos al arreglo de búsqueda
       this.alumnosFiltrados = [...this.todosLosAlumnos];
 
-      // 👇 3. ¡Ejecutamos la limpieza! Si hay nuevos, los marcamos como vistos.
+      // 4. Limpiamos los foquitos
       await this.marcarAlumnosComoVistos();
 
     } catch (error) {

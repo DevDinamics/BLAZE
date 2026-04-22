@@ -21,19 +21,25 @@ export const onboardingGuard: CanActivateFn = (route, state) => {
       // Si hay usuario, vamos a revisar su documento en Firestore
       const docRef = doc(firestore, `usuarios/${user.uid}`);
       
-      // docData es la forma "RxJS" de leer Firestore (hace juego con tu código)
+      // docData es la forma "RxJS" de leer Firestore
       return docData(docRef).pipe(
         take(1),
         map((data: any) => {
-          // Si el documento existe y YA TIENE ROL...
-          if (data && data.rol) {
-             // 🔴 Ya escogió rol, lo pateamos a su dashboard correspondiente
-             const rutaDestino = data.rol === 'coach' ? '/coach/dashboard' : '/entreno/dashboard';
+          
+          // 👇 LA CORRECCIÓN MAESTRA ESTÁ AQUÍ
+          // Revisamos si existe, si tiene rol, y SI ESE ROL ES DIFERENTE DE 'pendiente'
+          if (data && data.rol && data.rol !== 'pendiente') {
+             
+             // 🔴 Ya tiene un rol final (coach o alumno), lo pateamos a su dashboard
+             // NOTA: Cambié '/entreno/dashboard' por '/entreno' para respetar tu app.routes principal
+             const rutaDestino = data.rol === 'coach' ? '/coach/dashboard' : '/entreno';
              return router.createUrlTree([rutaDestino]);
+             
           } else {
-             // 🟢 No tiene rol asignado. ¡Déjalo entrar al Onboarding!
+             // 🟢 No tiene rol, o su rol es 'pendiente'. ¡Déjalo entrar al Onboarding!
              return true;
           }
+          
         })
       );
     })

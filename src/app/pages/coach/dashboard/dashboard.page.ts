@@ -182,27 +182,33 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
   cargarRankingReal() {
     if (!this.uidCoach) return;
     
-    // Quitamos el orderBy temporalmente por si el alumno nuevo no tiene xpTotal aún
+    // 👇 SOLUCIÓN: Buscamos solo por 1 campo para no romper a Firebase.
+    // Todos los que tengan mi coachId, me pertenecen.
     const q = query(
       collection(this.firestore, 'usuarios'), 
-      where('coachId', '==', this.uidCoach), 
-      where('rol', '==', 'alumno')
+      where('coachId', '==', this.uidCoach)
     );
     
     this.suscripcionRanking = onSnapshot(q, (snapshot) => {
       this.ngZone.run(() => { 
-        this.totalAlumnos = snapshot.size; 
+        // 1. Extraemos a todos los usuarios que arrojó la base de datos
         let todos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // La lógica del puntito
-        this.tieneNuevosAlumnos = todos.some((user: any) => user.vistoPorCoach === false);
+        // 2. Filtramos en memoria para asegurarnos de que sean alumnos
+        let soloAlumnos = todos.filter((user: any) => user.rol === 'alumno' || user.rol === 'atleta');
+        // 3. Actualizamos nuestras variables
+        this.totalAlumnos = soloAlumnos.length; 
+        
+        // 4. La lógica del puntito rojo
+        this.tieneNuevosAlumnos = soloAlumnos.some((user: any) => user.vistoPorCoach === false);
 
-        // 🕵️‍♀️ EL RADAR: Abre tu consola y mira esto sin hacer clic en la tarjeta
-        console.log('--- RADAR DE ALUMNOS ---');
-        console.log('Total de alumnos:', this.totalAlumnos);
-        console.log('Datos de todos:', todos);
+        // 🕵️‍♀️ EL RADAR
+        console.log('--- RADAR DE ALUMNOS (VERSIÓN SMART) ---');
+        console.log('Total de alumnos filtrados:', this.totalAlumnos);
         console.log('¿Debe prender el puntito?:', this.tieneNuevosAlumnos);
       });
+    }, (error) => {
+      console.error("🔥 Error crítico en el Radar:", error);
     });
   }
 
