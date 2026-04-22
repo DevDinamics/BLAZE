@@ -2,7 +2,7 @@
   <ion-toolbar style="--background: #ffffff;">
     <div class="px-4 pt-4 pb-2 flex items-center gap-4">
       <button (click)="regresar()" class="h-10 w-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-black active:scale-95 transition-transform hover:bg-gray-100 shadow-sm">
-        <ion-icon [icon]="icons.arrowBack"></ion-icon>
+        <ion-icon name="arrow-back"></ion-icon>
       </button>
       
       <div>
@@ -26,16 +26,16 @@
       <div *ngIf="!esModoPlantilla" (click)="abrirModalPlantillas()" class="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-300 flex justify-between items-center cursor-pointer active:bg-gray-100 transition-colors hover:border-gray-400 group">
         <div class="flex items-center gap-3">
           <div class="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-200">
-            <ion-icon [icon]="icons.copyOutline" class="text-black text-sm"></ion-icon>
+            <ion-icon name="copy-outline" class="text-black text-sm"></ion-icon>
           </div>
           <span class="text-black font-bold text-sm tracking-tight">Cargar desde plantilla</span>
         </div>
-        <ion-icon [icon]="icons.searchOutline" class="text-gray-400"></ion-icon>
+        <ion-icon name="search-outline" class="text-gray-400"></ion-icon>
       </div>
 
       <div *ngIf="esModoPlantilla" class="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-center gap-4">
         <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
-            <ion-icon [icon]="icons.documentTextOutline" class="text-xl"></ion-icon>
+            <ion-icon name="document-text-outline" class="text-xl"></ion-icon>
         </div>
         <div>
           <p class="text-blue-700 text-sm font-bold tracking-tight">Diseñando Molde</p>
@@ -73,7 +73,7 @@
             
             <div class="flex items-center gap-3 relative z-10 pointer-events-none">
               <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-200 overflow-hidden shrink-0">
-                <ion-icon *ngIf="!rutina.alumnoId" [icon]="icons.personOutline" class="text-gray-400 text-lg"></ion-icon>
+                <ion-icon *ngIf="!rutina.alumnoId" name="person-outline" class="text-gray-400 text-lg"></ion-icon>
                 <ng-container *ngIf="rutina.alumnoId">
                   <ng-container *ngFor="let a of alumnos">
                     <img *ngIf="a.uid === rutina.alumnoId" [src]="a.foto || 'https://ui-avatars.com/api/?name=' + a.nombre + '&background=f9fafb&color=f57c00&font-weight=bold'" class="w-full h-full object-cover">
@@ -92,26 +92,44 @@
               </div>
             </div>
 
-            <ion-icon [icon]="icons.chevronDownOutline" class="text-gray-400 relative z-10 pointer-events-none"></ion-icon>
+            <ion-icon name="chevron-down-outline" class="text-gray-400 relative z-10 pointer-events-none"></ion-icon>
             <div class="absolute inset-0 w-full h-full z-20" (click)="abrirModalAlumnos()"></div>
           </div>
         </div>
 
         <div>
-          <div class="flex justify-between items-center mb-2 pl-1">
+          <div class="flex justify-between items-center mb-3 pl-1">
              <label class="text-xs font-bold text-gray-800">Duración</label>
-             <span class="text-black font-bold text-xs bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">
+             <span class="text-white font-bold text-xs bg-[#f57c00] px-3 py-1.5 rounded-md shadow-sm">
                {{ rutina.semanas }} Semanas
              </span>
           </div>
-          <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-1 shadow-sm">
-            <ion-range min="4" max="12" step="1" [snaps]="true" [ticks]="true" [(ngModel)]="rutina.semanas" 
-                       style="--bar-background: #e5e7eb; --bar-background-active: #f57c00; --knob-background: #f57c00; --knob-size: 16px; --tick-background: #cbd5e1; --tick-background-active: #f57c00;">
-              <ion-label slot="start" class="text-xs text-gray-400 font-bold mr-2">4</ion-label>
-              <ion-label slot="end" class="text-xs text-gray-400 font-bold ml-2">12</ion-label>
-            </ion-range>
+          
+          <div class="bg-gray-50 rounded-2xl border border-gray-200 px-5 py-5 shadow-sm">
+            <div class="flex items-center gap-4">
+              <span class="text-xs text-gray-400 font-bold w-4 text-center">4</span>
+              
+              <div class="relative w-full flex items-center">
+                <div class="absolute w-full h-2 bg-gray-200 rounded-full z-0"></div>
+                
+                <div class="absolute h-2 bg-[#f57c00] rounded-full z-0 transition-all" 
+                     [style.width]="((rutina.semanas - 4) / 8) * 100 + '%'"></div>
+
+                <div class="absolute w-full flex justify-between px-0.5 z-0 pointer-events-none">
+                  <div *ngFor="let tick of [4,5,6,7,8,9,10,11,12]" 
+                       class="h-3 w-3 rounded-full transition-colors border-2 border-white box-content"
+                       [ngClass]="rutina.semanas >= tick ? 'bg-[#f57c00]' : 'bg-gray-200'">
+                  </div>
+                </div>
+
+                <input type="range" min="4" max="12" step="1" [(ngModel)]="rutina.semanas"
+                       class="w-full appearance-none bg-transparent cursor-pointer z-10 m-0 h-8 custom-slider">
+              </div>
+
+              <span class="text-xs text-gray-400 font-bold w-4 text-center">12</span>
+            </div>
           </div>
-        </div>
+          </div>
 
       </div>
 
@@ -136,13 +154,13 @@
           <input type="text" [(ngModel)]="rutina.sesiones[sesionActivaIndex].nombre" 
                  class="bg-transparent text-black font-black uppercase text-base outline-none w-full py-3 placeholder:text-gray-300"
                  placeholder="NOMBRE DE SESIÓN">
-          <ion-icon [icon]="icons.createOutline" class="text-gray-400 text-lg ml-2"></ion-icon>
+          <ion-icon name="create-outline" class="text-gray-400 text-lg ml-2"></ion-icon>
         </div>
 
         <div class="space-y-4 relative z-10">
           
           <div *ngIf="rutina.sesiones[sesionActivaIndex].ejercicios.length === 0" class="text-center py-10 border-2 border-dashed border-gray-300 rounded-2xl bg-white">
-            <ion-icon [icon]="icons.barbellOutline" class="text-3xl text-gray-300 mb-2"></ion-icon>
+            <ion-icon name="barbell-outline" class="text-3xl text-gray-300 mb-2"></ion-icon>
             <p class="text-gray-500 text-xs font-bold mb-3">Sesión en blanco</p>
             <button (click)="agregarEjercicio()" class="text-black font-bold text-xs bg-gray-100 px-5 py-2.5 rounded-full hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">
               Agregar Ejercicio
@@ -153,7 +171,7 @@
                class="bg-white rounded-2xl border border-gray-200 p-4 relative shadow-sm">
             
             <button (click)="eliminarEjercicio(j)" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 p-1.5 active:scale-90 transition-transform bg-gray-50 rounded-full border border-gray-100">
-              <ion-icon [icon]="icons.trashOutline" class="text-sm"></ion-icon>
+              <ion-icon name="trash-outline" class="text-sm"></ion-icon>
             </button>
 
             <div class="flex items-center gap-3 mb-4 pr-8">
@@ -162,7 +180,7 @@
                      *ngIf="ej.imagen" 
                      (error)="$event.target.src='assets/logo-bn.png'"
                      class="object-contain w-full h-full mix-blend-multiply">
-                <ion-icon [icon]="icons.barbellOutline" *ngIf="!ej.imagen" class="text-gray-400 text-xl"></ion-icon>
+                <ion-icon name="barbell-outline" *ngIf="!ej.imagen" class="text-gray-400 text-xl"></ion-icon>
               </div>
               <div>
                 <h4 class="text-black font-bold text-sm leading-tight mb-1 line-clamp-1">{{ ej.nombre }}</h4>
@@ -186,7 +204,7 @@
             </div>
 
             <div class="relative group/input">
-              <ion-icon [icon]="icons.flashOutline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></ion-icon>
+              <ion-icon name="flash-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></ion-icon>
               <input type="text" [(ngModel)]="ej.nota" placeholder="Añadir nota o instrucción especial..." 
                      class="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-8 pr-3 text-black text-xs outline-none focus:border-black transition-colors shadow-sm">
             </div>
@@ -194,7 +212,7 @@
 
           <button *ngIf="rutina.sesiones[sesionActivaIndex].ejercicios.length > 0" (click)="agregarEjercicio()" 
                   class="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center gap-2 text-gray-500 hover:text-black hover:border-black hover:bg-gray-50 transition-all active:scale-95 bg-white">
-            <ion-icon [icon]="icons.addCircleOutline" class="text-lg"></ion-icon>
+            <ion-icon name="add-circle-outline" class="text-lg"></ion-icon>
             <span class="font-bold text-xs">Agregar Ejercicio</span>
           </button>
         </div>
@@ -209,12 +227,12 @@
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-black font-black text-xl tracking-tight">Mis Plantillas</h2>
           <button (click)="cerrarModalPlantillas()" class="text-gray-400 bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center active:scale-90">
-            <ion-icon [icon]="icons.closeOutline" class="text-xl"></ion-icon>
+            <ion-icon name="close-outline" class="text-xl"></ion-icon>
           </button>
         </div>
 
         <div class="bg-gray-50 rounded-2xl p-1 mb-6 border border-gray-200 flex items-center px-4 shadow-sm">
-          <ion-icon [icon]="icons.searchOutline" class="text-gray-400"></ion-icon>
+          <ion-icon name="search-outline" class="text-gray-400"></ion-icon>
           <input type="text" (input)="buscarPlantilla($event)" placeholder="Buscar plantilla..." class="bg-transparent w-full p-3 text-black text-sm font-medium outline-none">
         </div>
 
@@ -230,7 +248,7 @@
                  <span class="text-[10px] text-gray-600 font-bold bg-gray-100 px-2 py-0.5 rounded border border-gray-200">{{ p.semanas }} Semanas</span>
                </div>
              </div>
-             <ion-icon [icon]="icons.downloadOutline" class="text-gray-400 text-xl"></ion-icon>
+             <ion-icon name="download-outline" class="text-gray-400 text-xl"></ion-icon>
           </div>
         </div>
       </div>
@@ -246,7 +264,7 @@
             <p class="text-gray-500 text-xs font-medium mt-0.5">¿A quién le asignaremos este plan?</p>
           </div>
           <button (click)="cerrarModalAlumnos()" class="text-gray-400 bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center active:scale-90">
-            <ion-icon [icon]="icons.closeOutline" class="text-xl"></ion-icon>
+            <ion-icon name="close-outline" class="text-xl"></ion-icon>
           </button>
         </div>
 
@@ -267,7 +285,7 @@
              </div>
 
              <div *ngIf="rutina.alumnoId === a.uid" class="h-6 w-6 rounded-full bg-black flex items-center justify-center">
-                <ion-icon [icon]="icons.checkmarkOutline" class="text-white text-sm"></ion-icon>
+                <ion-icon name="checkmark-outline" class="text-white text-sm"></ion-icon>
              </div>
           </div>
         </div>
@@ -282,7 +300,7 @@
     <button (click)="guardarRutina()" 
             class="w-full py-4 rounded-full font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
             [ngClass]="esModoPlantilla ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-black text-white hover:bg-gray-900'">
-      <ion-icon [icon]="icons.saveOutline" class="text-lg"></ion-icon>
+      <ion-icon name="save-outline" class="text-lg"></ion-icon>
       {{ esModoPlantilla ? 'Guardar Molde' : 'Asignar Plan' }}
     </button>
   </div>
@@ -291,4 +309,35 @@
 <style>
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  /* 👇 CSS de la nueva barra premium */
+  .custom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
+  .custom-slider::-webkit-slider-runnable-track {
+    background: transparent;
+    height: 100%;
+  }
+  .custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 26px;
+    height: 26px;
+    background: #f57c00;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 2px 8px rgba(245,124,0,0.4);
+    cursor: pointer;
+  }
+  .custom-slider::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    background: #f57c00;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 2px 8px rgba(245,124,0,0.4);
+    cursor: pointer;
+  }
 </style>

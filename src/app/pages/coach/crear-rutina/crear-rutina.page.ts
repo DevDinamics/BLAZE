@@ -7,12 +7,14 @@ import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
 import { SelectorEjerciciosPage } from 'src/app/modals/selector-ejercicios/selector-ejercicios.page';
 
-// 👇 1. Importamos los íconos normales
+// 👇 Importamos TODOS los iconos que usas en el HTML
+import { addIcons } from 'ionicons';
 import { 
-  arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
-  folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
-  list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-  personOutline, chevronDownOutline, checkmarkOutline, downloadOutline
+  arrowBack, copyOutline, searchOutline, documentTextOutline, personOutline, 
+  chevronDownOutline, createOutline, barbellOutline, trashOutline, flashOutline, 
+  addCircleOutline, closeOutline, downloadOutline, checkmarkOutline, saveOutline,
+  timeOutline, add, time, folderOpenOutline, list, swapHorizontal, flameOutline, 
+  calendarOutline, notificationsOutline, alertCircleOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -23,14 +25,6 @@ import {
   imports: [IonicModule, CommonModule, FormsModule] 
 })
 export class CrearRutinaPage implements OnInit {
-
-  // 👇 2. EL BLINDAJE: Guardamos los íconos directamente en la clase para que el HTML los vea sin fallas
-  icons = {
-    arrowBack, add, trashOutline, timeOutline, addCircleOutline, saveOutline, time, 
-    folderOpenOutline, barbellOutline, copyOutline, closeOutline, documentTextOutline, searchOutline, flashOutline,
-    list, swapHorizontal, flameOutline, calendarOutline, notificationsOutline, createOutline, alertCircleOutline,
-    personOutline, chevronDownOutline, checkmarkOutline, downloadOutline
-  };
 
   rutinaId: string | null = null; 
   uidCoach: string | null = null;
@@ -76,11 +70,31 @@ export class CrearRutinaPage implements OnInit {
     private alertCtrl: AlertController, 
     private route: ActivatedRoute 
   ) {
-    // Ya no usamos addIcons() aquí. ¡Cero amnesia en producción!
+    // 👇 REGISTRAMOS TODOS LOS ICONOS (Igual que en Mis Alumnos)
+    addIcons({ 
+      'arrow-back': arrowBack, 
+      'copy-outline': copyOutline, 
+      'search-outline': searchOutline, 
+      'document-text-outline': documentTextOutline, 
+      'person-outline': personOutline, 
+      'chevron-down-outline': chevronDownOutline, 
+      'create-outline': createOutline, 
+      'barbell-outline': barbellOutline, 
+      'trash-outline': trashOutline, 
+      'flash-outline': flashOutline, 
+      'add-circle-outline': addCircleOutline, 
+      'close-outline': closeOutline, 
+      'download-outline': downloadOutline, 
+      'checkmark-outline': checkmarkOutline, 
+      'save-outline': saveOutline,
+      'time-outline': timeOutline, 'add': add, 'time': time, 'folder-open-outline': folderOpenOutline, 
+      'list': list, 'swap-horizontal': swapHorizontal, 'flame-outline': flameOutline, 
+      'calendar-outline': calendarOutline, 'notifications-outline': notificationsOutline, 
+      'alert-circle-outline': alertCircleOutline
+    });
   }
 
   async ngOnInit() {
-
     this.route.queryParams.subscribe(params => {
       if (params['preselectAlumno']) {
         this.rutina.alumnoId = params['preselectAlumno'];
@@ -90,19 +104,13 @@ export class CrearRutinaPage implements OnInit {
     this.authService.user$.subscribe(async user => {
       if (user) {
         this.uidCoach = user.uid; 
-        
         const todosAlumnos = await this.coachService.obtenerMisAlumnos(this.uidCoach);
-        
         this.alumnos = todosAlumnos.filter((a: any) => 
-          a.uid !== this.uidCoach && 
-          a.nombre && 
-          a.nombre.toLowerCase() !== 'admin' && 
-          !a.nombre.toLowerCase().includes('administrador')
+          a.uid !== this.uidCoach && a.nombre && a.nombre.toLowerCase() !== 'admin' && !a.nombre.toLowerCase().includes('administrador')
         );
 
         const todasRutinas: any = await this.coachService.obtenerMisRutinas(this.uidCoach); 
         this.rutinasActivasDelCoach = todasRutinas.filter((r: any) => r.active === true && !r.esPlantilla);
-
         this.misPlantillas = await this.coachService.obtenerMisPlantillas(this.uidCoach);
         this.plantillasFiltradas = [...this.misPlantillas];
 
@@ -121,19 +129,17 @@ export class CrearRutinaPage implements OnInit {
 
   async verificarAlumno() {
     if (!this.rutina.alumnoId) return;
-
     const rutinaExistente = this.rutinasActivasDelCoach.find(r => r.alumnoId === this.rutina.alumnoId);
 
     if (rutinaExistente) {
       const alert = await this.alertCtrl.create({
         header: 'Plan Activo Detectado',
-        message: 'Este alumno ya tiene una rutina. Si continúas, la actual se archivará y esta pasará a ser la principal.',
+        message: 'Este alumno ya tiene una rutina. Si continúas, la actual se archivará.',
         mode: 'ios',
         buttons: [
           { text: 'Cancelar', role: 'cancel', handler: () => { this.rutina.alumnoId = ''; } },
           {
-            text: 'Reemplazar',
-            role: 'confirm',
+            text: 'Reemplazar', role: 'confirm',
             handler: async () => {
               await this.coachService.actualizarRutina(rutinaExistente.id, { active: false });
               this.mostrarToast('Rutina anterior archivada', 'medium');
@@ -161,8 +167,7 @@ export class CrearRutinaPage implements OnInit {
 
   async agregarEjercicio() {
     const modal = await this.modalCtrl.create({
-      component: SelectorEjerciciosPage,
-      breakpoints: [0, 0.9], initialBreakpoint: 0.9, handle: true 
+      component: SelectorEjerciciosPage, breakpoints: [0, 0.9], initialBreakpoint: 0.9, handle: true 
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss();
@@ -176,13 +181,10 @@ export class CrearRutinaPage implements OnInit {
     }
   }
 
-  eliminarEjercicio(index: number) {
-    this.rutina.sesiones[this.sesionActivaIndex].ejercicios.splice(index, 1);
-  }
+  eliminarEjercicio(index: number) { this.rutina.sesiones[this.sesionActivaIndex].ejercicios.splice(index, 1); }
 
   async guardarRutina() {
     if (!this.rutina.nombre) return this.mostrarToast('Agrega un nombre al plan', 'warning');
-    
     const loading = await this.loadingCtrl.create({ message: 'Guardando...', mode: 'ios' });
     await loading.present();
 
@@ -191,12 +193,8 @@ export class CrearRutinaPage implements OnInit {
       const totalEjercicios = this.rutina.sesiones.reduce((total, sesion) => total + sesion.ejercicios.length, 0);
 
       const datosBase = {
-        ...this.rutina, 
-        coachId: this.uidCoach,
-        active: true,
-        esPlantilla: this.esModoPlantilla,
-        nombreAlumno: alumnoSelect?.nombre || 'Alumno',
-        totalEjercicios: totalEjercicios 
+        ...this.rutina, coachId: this.uidCoach, active: true, esPlantilla: this.esModoPlantilla,
+        nombreAlumno: alumnoSelect?.nombre || 'Alumno', totalEjercicios: totalEjercicios 
       };
 
       if (this.rutinaId) {
@@ -206,21 +204,16 @@ export class CrearRutinaPage implements OnInit {
       }
       this.mostrarToast('Plan guardado con éxito', 'success');
       this.navCtrl.back();
-    } catch (e) { 
-      this.mostrarToast('Error al guardar', 'danger'); 
-    } finally { 
-      loading.dismiss(); 
-    }
+    } catch (e) { this.mostrarToast('Error al guardar', 'danger'); } 
+    finally { loading.dismiss(); }
   }
 
   abrirModalPlantillas() { this.modalPlantillasAbierto = true; }
   cerrarModalPlantillas() { this.modalPlantillasAbierto = false; }
-  
   buscarPlantilla(ev: any) {
     const t = ev.target.value.toLowerCase();
     this.plantillasFiltradas = this.misPlantillas.filter(p => p.nombre.toLowerCase().includes(t));
   }
-  
   seleccionarPlantilla(p: any) {
     this.rutina.sesiones = JSON.parse(JSON.stringify(p.sesiones || []));
     this.rutina.nombre = p.nombre + ' (Copia)';
@@ -229,25 +222,15 @@ export class CrearRutinaPage implements OnInit {
     this.cerrarModalPlantillas();
   }
 
-  abrirModalAlumnos() { 
-    this.modalAlumnosAbierto = true; 
-  }
-  
-  cerrarModalAlumnos() { 
-    this.modalAlumnosAbierto = false; 
-  }
-  
+  abrirModalAlumnos() { this.modalAlumnosAbierto = true; }
+  cerrarModalAlumnos() { this.modalAlumnosAbierto = false; }
   seleccionarAlumno(alumno: any) {
     this.rutina.alumnoId = alumno.uid;
     this.cerrarModalAlumnos();
-    
-    setTimeout(() => {
-      this.verificarAlumno();
-    }, 300);
+    setTimeout(() => { this.verificarAlumno(); }, 300);
   }
 
   regresar() { this.navCtrl.back(); }
-  
   async mostrarToast(m: string, c: string) {
     const t = await this.toastCtrl.create({ message: m, duration: 2000, color: c, mode: 'ios' });
     t.present();
