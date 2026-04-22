@@ -104,11 +104,12 @@
                {{ rutina.semanas }} Semanas
              </span>
           </div>
-          <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 shadow-sm flex items-center gap-4">
-            <span class="text-xs text-gray-400 font-bold">4</span>
-            <input type="range" min="4" max="12" step="1" [(ngModel)]="rutina.semanas"
-                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-            <span class="text-xs text-gray-400 font-bold">12</span>
+          <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-1 shadow-sm">
+            <ion-range min="4" max="12" step="1" snaps="true" [(ngModel)]="rutina.semanas" 
+                       style="--bar-background: #e5e7eb; --bar-background-active: #f57c00; --knob-background: #f57c00; --knob-size: 16px;">
+              <ion-label slot="start" class="text-xs text-gray-400 font-bold mr-2">4</ion-label>
+              <ion-label slot="end" class="text-xs text-gray-400 font-bold ml-2">12</ion-label>
+            </ion-range>
           </div>
         </div>
 
