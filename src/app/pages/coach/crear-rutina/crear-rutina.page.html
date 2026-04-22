@@ -98,40 +98,39 @@
         </div>
 
         <div>
-          <div class="flex justify-between items-center mb-3 pl-1">
-             <label class="text-xs font-bold text-gray-800">Duración</label>
-             <span class="text-white font-bold text-xs bg-[#f57c00] px-3 py-1.5 rounded-md shadow-sm">
+          <div class="flex justify-between items-center mb-4 pl-1">
+             <label class="text-sm font-black text-gray-800 tracking-tight">Duración</label>
+             <span class="text-white font-bold text-xs bg-[#f57c00] px-3 py-1.5 rounded-lg shadow-sm">
                {{ rutina.semanas }} Semanas
              </span>
           </div>
           
-          <div class="bg-gray-50 rounded-2xl border border-gray-200 px-5 py-5 shadow-sm">
+          <div class="bg-white rounded-3xl border border-gray-100 px-5 py-6 shadow-sm">
             <div class="flex items-center gap-4">
               <span class="text-xs text-gray-400 font-bold w-4 text-center">4</span>
               
-              <div class="relative w-full flex items-center">
-                <div class="absolute w-full h-2 bg-gray-200 rounded-full z-0"></div>
+              <div class="relative w-full h-8 flex items-center">
+                <div class="absolute w-full h-2.5 bg-[#f1f5f9] rounded-full z-0"></div>
                 
-                <div class="absolute h-2 bg-[#f57c00] rounded-full z-0 transition-all" 
+                <div class="absolute h-2.5 bg-[#f57c00] rounded-full z-0 transition-all duration-300 ease-out" 
                      [style.width]="((rutina.semanas - 4) / 8) * 100 + '%'"></div>
 
-                <div class="absolute w-full flex justify-between px-0.5 z-0 pointer-events-none">
+                <div class="absolute w-full flex items-center justify-between px-[2px] z-0 pointer-events-none">
                   <div *ngFor="let tick of [4,5,6,7,8,9,10,11,12]" 
-                       class="h-3 w-3 rounded-full transition-colors border-2 border-white box-content"
-                       [ngClass]="rutina.semanas >= tick ? 'bg-[#f57c00]' : 'bg-gray-200'">
+                       class="h-[10px] w-[10px] rounded-full transition-colors duration-300 border-[2px]"
+                       [ngClass]="rutina.semanas >= tick ? 'bg-[#f57c00] border-[#f57c00]' : 'bg-white border-[#e2e8f0]'">
                   </div>
                 </div>
 
                 <input type="range" min="4" max="12" step="1" [(ngModel)]="rutina.semanas"
-                       class="w-full appearance-none bg-transparent cursor-pointer z-10 m-0 h-8 custom-slider">
+                       class="absolute w-full appearance-none bg-transparent cursor-pointer z-10 m-0 h-full top-0 left-0 custom-slider">
               </div>
 
               <span class="text-xs text-gray-400 font-bold w-4 text-center">12</span>
             </div>
           </div>
-          </div>
-
-      </div>
+        </div>
+        </div>
 
       <hr class="border-gray-100 my-4">
 
@@ -310,7 +309,7 @@
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   
-  /* 👇 CSS de la nueva barra premium */
+  /* 👇 CSS de la nueva barra premium refinada */
   .custom-slider {
     -webkit-appearance: none;
     appearance: none;
@@ -320,24 +319,36 @@
     background: transparent;
     height: 100%;
   }
+  
+  /* Thumb para Chrome/Safari/iOS */
   .custom-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     background: #f57c00;
     border-radius: 50%;
-    border: 4px solid white;
-    box-shadow: 0 2px 8px rgba(245,124,0,0.4);
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 1px rgba(245,124,0,0.1), 0 4px 10px rgba(245, 124, 0, 0.4);
     cursor: pointer;
+    transition: transform 0.1s ease;
   }
+  .custom-slider::-webkit-slider-thumb:active {
+    transform: scale(0.92);
+  }
+  
+  /* Thumb para Firefox */
   .custom-slider::-moz-range-thumb {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     background: #f57c00;
     border-radius: 50%;
-    border: 4px solid white;
-    box-shadow: 0 2px 8px rgba(245,124,0,0.4);
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 1px rgba(245,124,0,0.1), 0 4px 10px rgba(245, 124, 0, 0.4);
     cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .custom-slider::-moz-range-thumb:active {
+    transform: scale(0.92);
   }
 </style>

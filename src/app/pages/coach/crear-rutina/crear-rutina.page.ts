@@ -7,7 +7,6 @@ import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
 import { SelectorEjerciciosPage } from 'src/app/modals/selector-ejercicios/selector-ejercicios.page';
 
-// 👇 Importamos TODOS los iconos que usas en el HTML
 import { addIcons } from 'ionicons';
 import { 
   arrowBack, copyOutline, searchOutline, documentTextOutline, personOutline, 
@@ -70,27 +69,16 @@ export class CrearRutinaPage implements OnInit {
     private alertCtrl: AlertController, 
     private route: ActivatedRoute 
   ) {
-    // 👇 REGISTRAMOS TODOS LOS ICONOS (Igual que en Mis Alumnos)
     addIcons({ 
-      'arrow-back': arrowBack, 
-      'copy-outline': copyOutline, 
-      'search-outline': searchOutline, 
-      'document-text-outline': documentTextOutline, 
-      'person-outline': personOutline, 
-      'chevron-down-outline': chevronDownOutline, 
-      'create-outline': createOutline, 
-      'barbell-outline': barbellOutline, 
-      'trash-outline': trashOutline, 
-      'flash-outline': flashOutline, 
-      'add-circle-outline': addCircleOutline, 
-      'close-outline': closeOutline, 
-      'download-outline': downloadOutline, 
-      'checkmark-outline': checkmarkOutline, 
-      'save-outline': saveOutline,
+      'arrow-back': arrowBack, 'copy-outline': copyOutline, 'search-outline': searchOutline, 
+      'document-text-outline': documentTextOutline, 'person-outline': personOutline, 
+      'chevron-down-outline': chevronDownOutline, 'create-outline': createOutline, 
+      'barbell-outline': barbellOutline, 'trash-outline': trashOutline, 'flash-outline': flashOutline, 
+      'add-circle-outline': addCircleOutline, 'close-outline': closeOutline, 
+      'download-outline': downloadOutline, 'checkmark-outline': checkmarkOutline, 'save-outline': saveOutline,
       'time-outline': timeOutline, 'add': add, 'time': time, 'folder-open-outline': folderOpenOutline, 
       'list': list, 'swap-horizontal': swapHorizontal, 'flame-outline': flameOutline, 
-      'calendar-outline': calendarOutline, 'notifications-outline': notificationsOutline, 
-      'alert-circle-outline': alertCircleOutline
+      'calendar-outline': calendarOutline, 'notifications-outline': notificationsOutline, 'alert-circle-outline': alertCircleOutline
     });
   }
 
@@ -127,31 +115,6 @@ export class CrearRutinaPage implements OnInit {
     });
   }
 
-  async verificarAlumno() {
-    if (!this.rutina.alumnoId) return;
-    const rutinaExistente = this.rutinasActivasDelCoach.find(r => r.alumnoId === this.rutina.alumnoId);
-
-    if (rutinaExistente) {
-      const alert = await this.alertCtrl.create({
-        header: 'Plan Activo Detectado',
-        message: 'Este alumno ya tiene una rutina. Si continúas, la actual se archivará.',
-        mode: 'ios',
-        buttons: [
-          { text: 'Cancelar', role: 'cancel', handler: () => { this.rutina.alumnoId = ''; } },
-          {
-            text: 'Reemplazar', role: 'confirm',
-            handler: async () => {
-              await this.coachService.actualizarRutina(rutinaExistente.id, { active: false });
-              this.mostrarToast('Rutina anterior archivada', 'medium');
-              this.rutinasActivasDelCoach = this.rutinasActivasDelCoach.filter(r => r.id !== rutinaExistente.id);
-            }
-          }
-        ]
-      });
-      await alert.present();
-    }
-  }
-
   async cargarDatosParaEditar(id: string) {
     const loading = await this.loadingCtrl.create({ message: 'Cargando...', mode: 'ios' });
     await loading.present();
@@ -183,12 +146,53 @@ export class CrearRutinaPage implements OnInit {
 
   eliminarEjercicio(index: number) { this.rutina.sesiones[this.sesionActivaIndex].ejercicios.splice(index, 1); }
 
+  // 👇 LÓGICA PRINCIPAL DEL BOTÓN GUARDAR
   async guardarRutina() {
     if (!this.rutina.nombre) return this.mostrarToast('Agrega un nombre al plan', 'warning');
+    
+    // 🛡️ BLOQUEO DE FANTASMAS: Si es una rutina (no plantilla) debe tener un alumno
+    if (!this.esModoPlantilla && !this.rutina.alumnoId) {
+      return this.mostrarToast('⚠️ Selecciona a un alumno para asignar el plan', 'warning');
+    }
+
+    // 🛡️ ALERTA DE SOBREESCRITURA: Verificamos si el alumno ya tiene un plan activo
+    if (!this.esModoPlantilla && this.rutina.alumnoId && !this.rutinaId) {
+      const rutinaExistente = this.rutinasActivasDelCoach.find(r => r.alumnoId === this.rutina.alumnoId);
+      
+      if (rutinaExistente) {
+        const alert = await this.alertCtrl.create({
+          header: 'Plan Activo Detectado',
+          message: 'Este alumno ya tiene una rutina activa. ¿Deseas sobreescribirla con esta nueva?',
+          mode: 'ios',
+          buttons: [
+            { text: 'Cancelar', role: 'cancel' },
+            { 
+              text: 'Sobreescribir', 
+              role: 'confirm', 
+              handler: () => { this.ejecutarGuardadoFinal(rutinaExistente.id); } 
+            }
+          ]
+        });
+        await alert.present();
+        return; // Detenemos aquí, el guardado seguirá solo si acepta en la alerta.
+      }
+    }
+
+    // Si todo está bien y no hay rutina que sobreescribir, guardamos directo
+    this.ejecutarGuardadoFinal();
+  }
+
+  // Función interna que hace el trabajo pesado en Firebase
+  async ejecutarGuardadoFinal(idRutinaAnterior?: string) {
     const loading = await this.loadingCtrl.create({ message: 'Guardando...', mode: 'ios' });
     await loading.present();
 
     try {
+      // Si nos pasaron un ID de rutina vieja, la archivamos
+      if (idRutinaAnterior) {
+        await this.coachService.actualizarRutina(idRutinaAnterior, { active: false });
+      }
+
       const alumnoSelect = this.alumnos.find(a => a.uid === this.rutina.alumnoId);
       const totalEjercicios = this.rutina.sesiones.reduce((total, sesion) => total + sesion.ejercicios.length, 0);
 
@@ -202,18 +206,26 @@ export class CrearRutinaPage implements OnInit {
       } else {
         await this.coachService.crearRutina({ ...datosBase, fechaCreacion: new Date() });
       }
+
       this.mostrarToast('Plan guardado con éxito', 'success');
       this.navCtrl.back();
-    } catch (e) { this.mostrarToast('Error al guardar', 'danger'); } 
-    finally { loading.dismiss(); }
+
+    } catch (e) { 
+      console.error(e);
+      this.mostrarToast('Error de permisos en Firebase', 'danger'); 
+    } finally { 
+      loading.dismiss(); 
+    }
   }
 
   abrirModalPlantillas() { this.modalPlantillasAbierto = true; }
   cerrarModalPlantillas() { this.modalPlantillasAbierto = false; }
+  
   buscarPlantilla(ev: any) {
     const t = ev.target.value.toLowerCase();
     this.plantillasFiltradas = this.misPlantillas.filter(p => p.nombre.toLowerCase().includes(t));
   }
+  
   seleccionarPlantilla(p: any) {
     this.rutina.sesiones = JSON.parse(JSON.stringify(p.sesiones || []));
     this.rutina.nombre = p.nombre + ' (Copia)';
@@ -224,13 +236,15 @@ export class CrearRutinaPage implements OnInit {
 
   abrirModalAlumnos() { this.modalAlumnosAbierto = true; }
   cerrarModalAlumnos() { this.modalAlumnosAbierto = false; }
+  
   seleccionarAlumno(alumno: any) {
     this.rutina.alumnoId = alumno.uid;
     this.cerrarModalAlumnos();
-    setTimeout(() => { this.verificarAlumno(); }, 300);
+    // NOTA: Quitamos el setTimeout de verificar alumno de aquí, ahora lo hace al guardar.
   }
 
   regresar() { this.navCtrl.back(); }
+  
   async mostrarToast(m: string, c: string) {
     const t = await this.toastCtrl.create({ message: m, duration: 2000, color: c, mode: 'ios' });
     t.present();
