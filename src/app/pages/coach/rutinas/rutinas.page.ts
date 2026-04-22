@@ -5,7 +5,7 @@ import { IonicModule, NavController, AlertController, LoadingController, ToastCo
 import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
 
-// 👇 1. Importamos las herramientas de Firebase para poder buscar la foto
+// Herramientas de Firebase
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 import { addIcons } from 'ionicons';
@@ -34,7 +34,7 @@ export class RutinasPage {
   rutinaSeleccionada: any = null;
 
   constructor(
-    private firestore: Firestore, // 👇 2. Inyectamos Firestore aquí
+    private firestore: Firestore,
     private coachService: CoachService, 
     private authService: AuthService,
     private navCtrl: NavController,
@@ -64,9 +64,7 @@ export class RutinasPage {
             this.misPlantillas = todas.filter((r: any) => r.esPlantilla === true);
             this.rutinasActivas = todas.filter((r: any) => !r.esPlantilla);
 
-            // ==========================================
-            // 👇 3. MAGIA PARA TRAER LOS AVATARES
-            // ==========================================
+            // MAGIA PARA TRAER LOS AVATARES
             for (let rutina of this.rutinasActivas) {
               if (rutina.alumnoId) { 
                 try {
@@ -74,7 +72,6 @@ export class RutinasPage {
                   const alumnoSnap = await getDoc(alumnoRef);
                   
                   if (alumnoSnap.exists()) {
-                    // Guardamos la foto real en la rutina para que el HTML la lea
                     rutina.fotoAlumno = alumnoSnap.data()['foto'];
                   }
                 } catch (e) {
@@ -82,8 +79,6 @@ export class RutinasPage {
                 }
               }
             }
-            // ==========================================
-
           } else {
             this.misPlantillas = [];
             this.rutinasActivas = [];
@@ -116,24 +111,33 @@ export class RutinasPage {
 
   cerrarOpciones() {
     this.mostrarModalOpciones = false;
-    setTimeout(() => this.rutinaSeleccionada = null, 300); 
+    // Damos tiempo a que la animación termine antes de limpiar la variable
+    setTimeout(() => {
+      if (!this.mostrarModalOpciones) {
+        this.rutinaSeleccionada = null;
+      }
+    }, 400); 
   }
 
+  // 👇 SOLUCIÓN 1: Evitamos chocar con la animación del modal
   editarRutina() {
     const id = this.rutinaSeleccionada?.id;
-    this.cerrarOpciones();
+    this.mostrarModalOpciones = false; // Disparamos el cierre
+    
     if (id) {
-      this.navCtrl.navigateForward(['/coach/crear-rutina', { id: id }]);
+      // Esperamos 350ms a que el modal se cierre por completo antes de viajar
+      setTimeout(() => {
+        this.navCtrl.navigateForward(['/coach/crear-rutina', { id: id }]);
+      }, 350);
     }
   }
 
-  iniciarBorrado() {
+  // 👇 SOLUCIÓN 2: Lanzamos la alerta encima del modal sin cerrarlo primero
+  async iniciarBorrado() {
     const rutina = this.rutinaSeleccionada;
-    this.cerrarOpciones();
     if (rutina) {
-      setTimeout(() => {
-        this.confirmarBorrar(rutina);
-      }, 350);
+      // Directo a la confirmación, sin cerrar el modal todavía
+      await this.confirmarBorrar(rutina);
     }
   }
 
@@ -141,19 +145,28 @@ export class RutinasPage {
     const alert = await this.alertCtrl.create({
       header: '¿Eliminar?',
       message: `Se eliminará permanentemente ${rutina.esPlantilla ? 'esta plantilla' : 'este plan asignado'}.`,
+      mode: 'ios',
       buttons: [
-        { text: 'Cancelar', role: 'cancel' },
+        { 
+          text: 'Cancelar', 
+          role: 'cancel' 
+        },
         {
           text: 'Sí, Borrar',
           handler: async () => {
-            const loading = await this.loadingCtrl.create({ message: 'Borrando...' });
+            // Cerramos el modal ahora que ya confirmaron
+            this.mostrarModalOpciones = false; 
+            
+            const loading = await this.loadingCtrl.create({ message: 'Borrando...', mode: 'ios' });
             await loading.present();
+            
             try {
               await this.coachService.eliminarRutina(rutina.id);
               this.mostrarToast('Eliminado correctamente 🗑️', 'success');
               this.cargarRutinas(); 
             } catch (error) {
-              this.mostrarToast('Error al borrar', 'danger');
+              console.error('Error al borrar de Firestore:', error);
+              this.mostrarToast('Error al borrar de la base de datos', 'danger');
             } finally {
               loading.dismiss();
             }
@@ -161,11 +174,18 @@ export class RutinasPage {
         }
       ]
     });
+    
     await alert.present();
   }
 
   async mostrarToast(mensaje: string, color: string) {
-    const toast = await this.toastCtrl.create({ message: mensaje, duration: 2000, color });
+    const toast = await this.toastCtrl.create({ 
+      message: mensaje, 
+      duration: 2500, 
+      color: color,
+      mode: 'ios',
+      position: 'top'
+    });
     toast.present();
   }
 
