@@ -3,7 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, LoadingController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { arrowBackOutline, personOutline, peopleOutline, scaleOutline, barbellOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import { 
+  arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
+  barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
+} from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 
 import { AuthService } from 'src/app/services/auth';
@@ -21,14 +24,16 @@ export class OnboardingPage implements OnDestroy {
   pasoActual: number = 1;
   totalPasos: number = 1; 
 
-  // 👇 LISTA DE TUS AVATARES (Ajusta los nombres a las imágenes que tengas)
-  // 👇 1. Creamos listas separadas para cada rol
+  // 👇 Variable en tiempo real para mostrar en el UI
+  edadMostrada: number | null = null;
+
   avataresAtleta = [
-    'assets/icon/avatar-h-1.png', 
-    'assets/icon/avatar-m-1.png',
-    'assets/icon/avatar-h-2.png',
-    'assets/icon/avatar-oso.png', // Tu famoso osito 🐻
-    'assets/icon/avatar-ninja.png'
+    'assets/avatar-entreno/avatar_h_1.png',
+    'assets/avatar-entreno/avatar_h_2.png',
+    'assets/avatar-entreno/avatar_h_3.png',
+    'assets/avatar-entreno/avatar_m_1.png',
+    'assets/avatar-entreno/avatar_m_2.png',
+    'assets/avatar-entreno/avatar_m_3.png'
   ];
 
   avataresCoach = [
@@ -40,7 +45,6 @@ export class OnboardingPage implements OnDestroy {
     'assets/avatar-coach/avatar-mujer-3.png'
   ];
 
-  // 👇 2. Creamos una función "Mágica" que decide qué lista entregar
   get avataresDisponibles() {
     return this.datos.rol === 'coach' ? this.avataresCoach : this.avataresAtleta;
   }
@@ -48,11 +52,15 @@ export class OnboardingPage implements OnDestroy {
   datos: any = {
     rol: '',
     genero: '',
+    fechaNacimiento: '', 
     peso: null,
+    estatura: null,      
     objetivo: '',
+    tieneLesion: null,   
+    detalleLesion: '',   
     especialidad: '',
     bio: '',
-    avatar: '' // 👇 Nueva variable para el avatar
+    avatar: '' 
   };
 
   private authSub: Subscription | null = null;
@@ -63,7 +71,10 @@ export class OnboardingPage implements OnDestroy {
     private studentService: StudentService,
     private loadingCtrl: LoadingController
   ) {
-    addIcons({ arrowBackOutline, personOutline, peopleOutline, scaleOutline, barbellOutline, checkmarkCircleOutline });
+    addIcons({ 
+      arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
+      barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
+    });
   }
 
   ngOnDestroy() {
@@ -76,25 +87,28 @@ export class OnboardingPage implements OnDestroy {
 
   seleccionarRol(rol: string) {
     this.datos.rol = rol;
-    // 👇 SUMAMOS 1 PASO EXTRA PARA EL AVATAR: Atleta ahora tiene 5, Coach 3.
-    this.totalPasos = rol === 'atleta' ? 5 : 3; 
+    this.totalPasos = rol === 'atleta' ? 7 : 3; 
   }
 
   puedeAvanzar(): boolean {
     if (this.pasoActual === 1) return this.datos.rol !== '';
     
-    // Validaciones Atleta
     if (this.datos.rol === 'atleta') {
       if (this.pasoActual === 2) return this.datos.genero !== '';
-      if (this.pasoActual === 3) return this.datos.peso > 0;
-      if (this.pasoActual === 4) return this.datos.objetivo !== '';
-      if (this.pasoActual === 5) return this.datos.avatar !== ''; // Validar Avatar
+      if (this.pasoActual === 3) return this.datos.fechaNacimiento !== '';
+      if (this.pasoActual === 4) return this.datos.peso > 0 && this.datos.estatura > 0;
+      if (this.pasoActual === 5) return this.datos.objetivo !== '';
+      if (this.pasoActual === 6) {
+         if (this.datos.tieneLesion === null) return false;
+         if (this.datos.tieneLesion && this.datos.detalleLesion.trim() === '') return false;
+         return true;
+      }
+      if (this.pasoActual === 7) return this.datos.avatar !== ''; 
     }
 
-    // Validaciones Coach
     if (this.datos.rol === 'coach') {
       if (this.pasoActual === 2) return this.datos.especialidad !== '' && this.datos.bio !== '';
-      if (this.pasoActual === 3) return this.datos.avatar !== ''; // Validar Avatar
+      if (this.pasoActual === 3) return this.datos.avatar !== '';
     }
 
     return true;
@@ -114,6 +128,26 @@ export class OnboardingPage implements OnDestroy {
     }
   }
 
+  // 👇 Disparador desde el Modal del HTML
+  actualizarEdad() {
+    if (this.datos.fechaNacimiento) {
+      this.edadMostrada = this.calcularEdad(this.datos.fechaNacimiento);
+    }
+  }
+
+  calcularEdad(fechaNacimiento: string): number {
+    if (!fechaNacimiento) return 0;
+    const hoy = new Date();
+    const cumpleanos = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - cumpleanos.getFullYear();
+    const mes = hoy.getMonth() - cumpleanos.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoy.getDate() < cumpleanos.getDate())) {
+      edad--;
+    }
+    return edad;
+  }
+
   async finalizarOnboarding() {
     const loading = await this.loadingCtrl.create({
       message: 'Creando tu perfil BLAZE...',
@@ -126,16 +160,25 @@ export class OnboardingPage implements OnDestroy {
       this.authSub = this.authService.user$.subscribe(async (user) => {
         if (user) {
           
-          const perfilActualizado = {
+          const perfilActualizado: any = {
             rol: this.datos.rol,
-            genero: this.datos.genero || null,
-            peso: this.datos.peso ? Number(this.datos.peso) : null,
-            objetivo: this.datos.objetivo || null,
-            especialidad: this.datos.especialidad || null,
-            bio: this.datos.bio || null,
-            foto: this.datos.avatar, // 👇 AQUÍ GUARDAMOS EL AVATAR COMO SU FOTO OFICIAL
+            foto: this.datos.avatar,
             onboardingCompletado: true
           };
+
+          if (this.datos.rol === 'atleta') {
+            perfilActualizado.genero = this.datos.genero;
+            perfilActualizado.fechaNacimiento = this.datos.fechaNacimiento;
+            perfilActualizado.edad = this.calcularEdad(this.datos.fechaNacimiento); 
+            perfilActualizado.peso = Number(this.datos.peso);
+            perfilActualizado.estatura = Number(this.datos.estatura);
+            perfilActualizado.objetivo = this.datos.objetivo;
+            perfilActualizado.tieneLesion = this.datos.tieneLesion;
+            perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
+          } else {
+            perfilActualizado.especialidad = this.datos.especialidad;
+            perfilActualizado.bio = this.datos.bio;
+          }
 
           await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
           loading.dismiss();
