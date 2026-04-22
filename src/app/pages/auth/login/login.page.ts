@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { AuthService } from 'src/app/services/auth'; // 👈 Importamos nuestro servicio
+import { AuthService } from 'src/app/services/auth'; 
 
 import { 
   mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -12,7 +12,8 @@ import {
   alertCircleOutline, keyOutline 
 } from 'ionicons/icons';
 
-import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '@angular/fire/auth';
+// 👇 Agregamos onAuthStateChanged para manejar la sesión de forma hiper-segura
+import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 @Component({
@@ -47,7 +48,7 @@ export class LoginPage implements OnInit {
     private firestore: Firestore,
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private authService: AuthService // 👈 Lo inyectamos
+    private authService: AuthService 
   ) {
     addIcons({ 
       mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -56,16 +57,36 @@ export class LoginPage implements OnInit {
     });
   }
 
-  ngOnInit() {
-    const user = this.auth.currentUser;
-    if (user) {
-      const esLoginPorCorreo = user.providerData.some(p => p.providerId === 'password');
-      if (esLoginPorCorreo && !user.emailVerified) {
-        this.auth.signOut();
-      } else {
-        this.redirigirPorRol(user.uid);
+  async ngOnInit() {
+    this.cargandoGoogle = true; // Prendemos el loader por si venimos de regreso de Google
+
+    try {
+      // 1. Checamos si el usuario viene "rebotando" de la página de Google
+      const userDeGoogle = await this.authService.procesarRedireccionGoogle();
+      
+      if (userDeGoogle) {
+        await this.redirigirPorRol(userDeGoogle.uid);
+        return; // Terminamos aquí si vino de Google
       }
+    } catch (error) {
+      this.mostrarMensaje('Error al procesar el inicio con Google.', 'danger');
     }
+
+    // 2. Si no venimos de Google, checamos de forma segura si ya tenía una sesión activa
+    onAuthStateChanged(this.auth, async (user) => {
+      if (user) {
+        const esLoginPorCorreo = user.providerData.some(p => p.providerId === 'password');
+        if (esLoginPorCorreo && !user.emailVerified) {
+          await this.auth.signOut();
+          this.cargandoGoogle = false;
+        } else {
+          await this.redirigirPorRol(user.uid);
+        }
+      } else {
+        // Si no hay usuario, quitamos el loader y mostramos la pantalla normal
+        this.cargandoGoogle = false;
+      }
+    });
   }
 
   esEmailSeguro(email: string): boolean {
@@ -130,20 +151,7 @@ export class LoginPage implements OnInit {
 
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, this.credenciales.email, this.credenciales.password);
-
-      // 👇 PASE VIP PARA ADMIN Y CADENERO PARA EL RESTO
-     /* const esAdminVIP = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
-      
-      if (!userCredential.user.emailVerified && !esAdminVIP) {
-        this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
-        await this.auth.signOut(); 
-        this.cargando = false;
-        return; 
-      }
-        */
-
       await this.redirigirPorRol(userCredential.user.uid);
-
     } catch (error: any) {
       console.error(error);
       this.cargando = false;
@@ -153,19 +161,14 @@ export class LoginPage implements OnInit {
 
   async loginGoogle() {
     this.cargandoGoogle = true;
-
     try {
-      // 👇 Usamos la magia de nuestro auth.service.ts
-      const user = await this.authService.loginConGoogle();
-      if (user) {
-        await this.redirigirPorRol(user.uid);
-      }
+      // Ejecutamos la redirección (El navegador se irá a Google enterito)
+      await this.authService.loginConGoogle();
+      // Ya no hacemos nada más aquí, el ngOnInit se encargará cuando regresen.
     } catch (error: any) {
       console.error(error);
       this.cargandoGoogle = false;
-      if (error.code !== 'auth/popup-closed-by-user') {
-        this.mostrarMensaje('Error al iniciar con Google.', 'danger');
-      }
+      this.mostrarMensaje('Error al conectar con Google.', 'danger');
     }
   }
 
@@ -186,7 +189,6 @@ export class LoginPage implements OnInit {
         this.cargando = false;
         this.cargandoGoogle = false;
 
-        // 👇 EL FILTRO MAESTRO: Si es pendiente, directo al Onboarding
         if (rol === 'pendiente' || !onboardingCompletado) { 
            this.navCtrl.navigateRoot('/onboarding');
            return;
