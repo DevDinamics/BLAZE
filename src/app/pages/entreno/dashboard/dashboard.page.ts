@@ -19,9 +19,7 @@ import { StoryViewerPage } from 'src/app/modals/story-viewer/story-viewer.page';
 import { VerPerfilCoachComponent } from 'src/app/modals/ver-perfil-coach/ver-perfil-coach.component';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
-// 👇 Importamos addIcons para registrar los iconos de la tarjeta de compañero
 import { addIcons } from 'ionicons';
-
 import { 
   flameOutline, barbellOutline, addCircleOutline, starOutline, playOutline, 
   timeOutline, listOutline, checkmarkCircleOutline, calendarOutline,
@@ -29,7 +27,7 @@ import {
   constructOutline, helpCircleOutline, trophyOutline, personOutline, 
   alertCircleOutline, hourglassOutline, apertureOutline, cameraOutline, 
   addOutline, chevronForwardOutline, play, clipboardOutline, moonOutline, sparklesOutline,
-  close, personAdd // Nuevos iconos para el modal del team
+  close, personAdd 
 } from 'ionicons/icons';
 
 @Component({
@@ -81,7 +79,6 @@ export class EntrenoDashboardPage implements OnDestroy {
   historias: any[] = [];
   rankingTeam: any[] = []; 
 
-  // 👇 Variables para el Diseño Dinámico y Selector de Días
   fechaActualFormateada: string = '';
   sesionHoyTexto: string = '';
   esDiaDeDescanso: boolean = false;
@@ -106,7 +103,6 @@ export class EntrenoDashboardPage implements OnDestroy {
     fotoCoach: ''
   };
 
-  // 👇 Variables para el Perfil de Compañeros
   modalCompaneroAbierto = false;
   companeroSeleccionado: any = null;
 
@@ -119,13 +115,11 @@ export class EntrenoDashboardPage implements OnDestroy {
     private navCtrl: NavController,
     private alertController: AlertController
   ) {
-    // Registramos los íconos del modal de compañeros para que funcionen con name="..."
     addIcons({ close, 'person-add': personAdd });
   }
 
   async ionViewWillEnter() {
     if (this.suscripcionAuth) { this.suscripcionAuth.unsubscribe(); }
-
     this.suscripcionAuth = this.authService.user$.subscribe(async user => {
       if (user) {
         await this.cargarDatos(user.uid);
@@ -135,13 +129,8 @@ export class EntrenoDashboardPage implements OnDestroy {
     });
   }
 
-  ionViewWillLeave() {
-    this.limpiarSuscripciones();
-  }
-
-  ngOnDestroy() {
-    this.limpiarSuscripciones();
-  }
+  ionViewWillLeave() { this.limpiarSuscripciones(); }
+  ngOnDestroy() { this.limpiarSuscripciones(); }
 
   limpiarSuscripciones() {
     if (this.suscripcionPerfil) this.suscripcionPerfil(); 
@@ -184,9 +173,7 @@ export class EntrenoDashboardPage implements OnDestroy {
             this.calcularVencimiento(rutina);
           }
 
-          // Ejecutamos la lógica de fechas y selector dinámico
           this.configurarFechaYRutina();
-
           this.cargarHistorias(this.perfil.equipoId);
           
           if (this.perfil.coachId) {
@@ -204,58 +191,63 @@ export class EntrenoDashboardPage implements OnDestroy {
     });
   }
 
-  // 👇 LÓGICA MATEMÁTICA PARA EL CALENDARIO Y SELECCIÓN
   configurarFechaYRutina() {
     const opciones: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
     this.fechaActualFormateada = new Date().toLocaleDateString('es-ES', opciones).replace(',', '');
 
     if (this.rutinaActual && this.rutinaActual.sesiones) {
       let diaSemana = new Date().getDay(); 
-      diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; // Lunes = 0, Domingo = 6
+      diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; // Lunes = 0
 
       this.diaActualCalendario = diaSemana;
       const totalSesiones = this.rutinaActual.sesiones.length;
 
-      // Autoseleccionar el día según el calendario
-      if (diaSemana >= totalSesiones) {
-        this.seleccionarDia(-1); 
-      } else {
-        this.seleccionarDia(diaSemana); 
-      }
+      // Autoseleccionar hoy, o el último día si hoy cae fuera del arreglo
+      const diaASeleccionar = diaSemana >= totalSesiones ? totalSesiones - 1 : diaSemana;
+      this.seleccionarDia(diaASeleccionar); 
+
     } else {
       this.esDiaDeDescanso = false;
       this.sesionHoyTexto = 'Rutina Activa';
     }
   }
 
-  // Cambia los datos de la tarjeta cuando tocan un día distinto
+  // 👇 LA LÓGICA INTELIGENTE DE DETECCIÓN
   seleccionarDia(index: number) {
     this.diaSeleccionadoIndex = index;
     
-    if (index === -1) {
+    if (this.rutinaActual && this.rutinaActual.sesiones && this.rutinaActual.sesiones[index]) {
+      const sesion = this.rutinaActual.sesiones[index];
+      
+      // Verificamos si la sesión tiene ejercicios y si el arreglo de ejercicios tiene al menos 1 elemento
+      const tieneEjercicios = sesion.ejercicios && Array.isArray(sesion.ejercicios) && sesion.ejercicios.length > 0;
+
+      if (!tieneEjercicios) {
+        // Es un día vacío -> DESCANSO
+        this.esDiaDeDescanso = true;
+        this.fraseMotivacional = this.frasesDescanso[Math.floor(Math.random() * this.frasesDescanso.length)];
+      } else {
+        // Tiene ejercicios -> ENTRENO
+        this.esDiaDeDescanso = false;
+        this.sesionHoyTexto = sesion.nombre || `Día ${index + 1}`;
+      }
+    } else {
+      // Por seguridad, si falla la lectura, asumimos descanso
       this.esDiaDeDescanso = true;
       this.fraseMotivacional = this.frasesDescanso[Math.floor(Math.random() * this.frasesDescanso.length)];
-    } else {
-      this.esDiaDeDescanso = false;
-      this.sesionHoyTexto = this.rutinaActual.sesiones[index]?.nombre || `Día ${index + 1}`;
     }
   }
 
   cargarRankingDelTeam(coachId: string) {
     if (this.suscripcionRankingTeam) this.suscripcionRankingTeam();
-
     const q = query(
       collection(this.firestore, 'usuarios'),
       where('coachId', '==', coachId),
       where('rol', '==', 'alumno'),
       orderBy('xpTotal', 'desc')
     );
-
     this.suscripcionRankingTeam = onSnapshot(q, (snapshot) => {
-      let todosLosAlumnos = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      let todosLosAlumnos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       this.rankingTeam = todosLosAlumnos.filter((u: any) => u.xpTotal > 0);
     });
   }
@@ -281,14 +273,11 @@ export class EntrenoDashboardPage implements OnDestroy {
     const modal = await this.modalCtrl.create({
       component: VerPerfilCoachComponent,
       componentProps: { coach: this.coachActual },
-      breakpoints: [0, 0.85],
-      initialBreakpoint: 0.85,
-      cssClass: 'modal-pro-sheet' 
+      breakpoints: [0, 0.85], initialBreakpoint: 0.85, cssClass: 'modal-pro-sheet' 
     });
     await modal.present();
   }
 
-  // 👇 NUEVOS MÉTODOS PARA EL PERFIL DEL COMPAÑERO
   verPerfilCompanero(user: any) {
     this.companeroSeleccionado = user;
     this.modalCompaneroAbierto = true;
@@ -296,27 +285,19 @@ export class EntrenoDashboardPage implements OnDestroy {
 
   cerrarPerfilCompanero() {
     this.modalCompaneroAbierto = false;
-    // Le damos 300ms a la animación para que cierre suave antes de borrar los datos
-    setTimeout(() => {
-      this.companeroSeleccionado = null;
-    }, 300);
+    setTimeout(() => { this.companeroSeleccionado = null; }, 300);
   }
 
   limpiarDatosLocales() {
-    this.rutinaActual = null;
-    this.coachActual = null;
-    this.diasRestantes = null;
-    this.historias = []; 
-    this.rankingTeam = [];
+    this.rutinaActual = null; this.coachActual = null;
+    this.diasRestantes = null; this.historias = []; this.rankingTeam = [];
   }
 
   async mostrarAlertaExpulsion() {
     const alert = await this.alertController.create({
-      header: 'ACCESO REVOCADO 🚫',
-      subHeader: 'Ya no formas parte del Team',
+      header: 'ACCESO REVOCADO 🚫', subHeader: 'Ya no formas parte del Team',
       message: 'Tu coach te ha eliminado del equipo o el grupo ha sido disuelto.',
-      buttons: ['ENTENDIDO'],
-      backdropDismiss: false
+      buttons: ['ENTENDIDO'], backdropDismiss: false
     });
     await alert.present();
   }
@@ -324,55 +305,37 @@ export class EntrenoDashboardPage implements OnDestroy {
   async subirStory() {
     try {
       const image = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.Uri,
-        source: CameraSource.Prompt
+        quality: 80, allowEditing: false, resultType: CameraResultType.Uri, source: CameraSource.Prompt
       });
-
       const modal = await this.modalCtrl.create({
-        component: UploadPreviewPage,
-        componentProps: { imagePath: image.webPath }
+        component: UploadPreviewPage, componentProps: { imagePath: image.webPath }
       });
       await modal.present();
-
       const { data, role } = await modal.onDidDismiss();
-
-      if (role === 'confirm' && data.confirm) {
-        await this.procesarSubidaFirebase(image);
-      }
-    } catch (error) {
-      console.log('Cancelado o Error en cámara:', error);
-    }
+      if (role === 'confirm' && data.confirm) { await this.procesarSubidaFirebase(image); }
+    } catch (error) { console.log('Cancelado o Error en cámara:', error); }
   }
 
   async procesarSubidaFirebase(image: any) {
     const loading = await this.loadingCtrl.create({ message: 'Subiendo Story... 🚀', spinner: 'crescent' });
     await loading.present();
-
     try {
       const blob = await this.readAsBlob(image);
       if (this.perfil && this.perfil.uid) {
         const usuarioStory = {
-          uid: this.perfil.uid,
-          nombre: this.perfil.nombre,
-          foto: this.perfil.foto || 'assets/avatar-h-1.png', 
-          equipoId: this.perfil.equipoId
+          uid: this.perfil.uid, nombre: this.perfil.nombre,
+          foto: this.perfil.foto || 'assets/avatar-h-1.png', equipoId: this.perfil.equipoId
         };
         await this.studentService.subirHistoria(blob, usuarioStory);
         this.mostrarToast('¡Historia publicada! 🔥', 'success');
       }
-    } catch (error) {
-      this.mostrarToast('Error al subir.', 'danger');
-    } finally {
-      loading.dismiss();
-    }
+    } catch (error) { this.mostrarToast('Error al subir.', 'danger'); } 
+    finally { loading.dismiss(); }
   }
 
   private async readAsBlob(photo: any) {
     const response = await fetch(photo.webPath!);
-    const blob = await response.blob();
-    return blob;
+    return await response.blob();
   }
 
   calcularVencimiento(rutina: any) {
@@ -405,18 +368,11 @@ export class EntrenoDashboardPage implements OnDestroy {
   lanzarNotificacion(rutina: any, coach: any, modo: 'nuevo' | 'editado') {
     const msj = modo === 'nuevo' ? `te acaba de asignar el plan` : `acaba de realizar AJUSTES en el plan`;
     const titulo = modo === 'nuevo' ? 'NUEVA MISIÓN' : 'PLAN ACTUALIZADO';
-    
     const iconoDinamico = modo === 'nuevo' ? this.iconBarbell : this.iconConstruct; 
-    
     const foto = coach?.foto || 'assets/avatar-h-1.png';
 
     this.notificacion = { 
-      tipo: 'rutina', 
-      titulo, 
-      nombrePlan: rutina.nombre, 
-      mensaje: msj, 
-      icono: iconoDinamico,
-      fotoCoach: foto 
+      tipo: 'rutina', titulo, nombrePlan: rutina.nombre, mensaje: msj, icono: iconoDinamico, fotoCoach: foto 
     };
     this.mostrarBienvenida = true;
   }
@@ -424,19 +380,15 @@ export class EntrenoDashboardPage implements OnDestroy {
   cerrarBienvenida() { this.mostrarBienvenida = false; }
 
   irAEntrenar() {
-    if (this.diaSeleccionadoIndex === -1) return; 
+    if (this.esDiaDeDescanso) return; // Si es descanso, no hay nada que iniciar
 
     if (this.mostrarBienvenida) {
       this.cerrarBienvenida();
       setTimeout(() => {
-        this.navCtrl.navigateForward(['/entreno/mi-rutina'], { 
-          queryParams: { dia: this.diaSeleccionadoIndex } 
-        });
+        this.navCtrl.navigateForward(['/entreno/mi-rutina'], { queryParams: { dia: this.diaSeleccionadoIndex } });
       }, 350); 
     } else {
-      this.navCtrl.navigateForward(['/entreno/mi-rutina'], { 
-        queryParams: { dia: this.diaSeleccionadoIndex } 
-      });
+      this.navCtrl.navigateForward(['/entreno/mi-rutina'], { queryParams: { dia: this.diaSeleccionadoIndex } });
     }
   }
 

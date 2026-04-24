@@ -7,7 +7,7 @@
       
       <div>
         <h1 class="text-xl font-black text-black tracking-tight leading-none">
-          Constructor de Dieta
+          Creador de Dieta
         </h1>
         <p class="text-gray-500 text-xs font-medium mt-0.5">
           Diseña un plan nutricional
@@ -34,7 +34,7 @@
         </label>
         <div class="relative">
           <select [(ngModel)]="plan.alumnoId" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-black font-bold text-sm focus:border-black focus:outline-none appearance-none transition-colors shadow-sm">
-            <option value="PLANTILLA">💾 Guardar como Plantilla Base</option>
+            <option value="PLANTILLA">Guardar como Plantilla</option>
             <option disabled>──────────</option>
             <option *ngFor="let alumno of misAlumnos" [value]="alumno.uid">Asignar a: {{ alumno.nombre }}</option>
           </select>
