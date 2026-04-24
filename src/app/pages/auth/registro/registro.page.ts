@@ -29,7 +29,6 @@ export class RegistroPage implements OnInit {
   mostrarPassword = false;
   cargando = false;
 
-  // 🛡️ PRIMER ESCUDO: Dominios basura bloqueados
   dominiosBloqueados = [
     'yopmail.com', 'temp-mail.org', '10minutemail.com', 
     'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
@@ -48,7 +47,6 @@ export class RegistroPage implements OnInit {
 
   ngOnInit() {}
 
-  // 🛡️ Validador de correo y dominio
   esEmailSeguro(email: string): boolean {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regex.test(email)) return false;
@@ -79,21 +77,18 @@ export class RegistroPage implements OnInit {
     this.cargando = true;
 
     try {
-      // 👇 REGISTRO LITE: Solo mandamos 3 cosas. 
-      // El auth.service.ts se encarga de mandar el correo y ponerle rol "pendiente"
+      // 1. Registramos al usuario (el AuthService envía el correo de verificación por detrás)
       await this.authService.registrar(
         this.usuario.email, 
         this.usuario.password, 
         this.usuario.nombre
       );
 
-      // 🔒 Cerramos su sesión de inmediato para que no se salten el cadenero del Onboarding
-      this.authService.logout();
-
-      this.mostrarMensaje('¡Cuenta creada! Revisa tu correo para verificar tu acceso. 📩', 'success');
+      this.mostrarMensaje('¡Bienvenido! Te enviamos un correo para verificar tu cuenta. 🚀', 'success');
       
-      // 🚀 Los mandamos a Login
-      this.navCtrl.navigateRoot('/login');
+      // 2. PASE DE CORTESÍA: Como Firebase ya inició su sesión, lo mandamos directo al Onboarding
+      // sin cerrarle la sesión, logrando la misma fluidez que Google.
+      this.navCtrl.navigateRoot('/onboarding');
 
     } catch (error: any) {
       this.cargando = false;

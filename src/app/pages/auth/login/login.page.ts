@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { AuthService } from 'src/app/services/auth'; // 👈 Importamos nuestro servicio
+import { AuthService } from 'src/app/services/auth'; 
 
 import { 
   mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -12,7 +12,7 @@ import {
   alertCircleOutline, keyOutline 
 } from 'ionicons/icons';
 
-import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 @Component({
@@ -22,7 +22,7 @@ import { Firestore, doc, getDoc } from '@angular/fire/firestore';
   standalone: true,
   imports: [IonicModule, CommonModule, FormsModule, RouterModule]
 })
-export class LoginPage implements OnInit {
+export class LoginPage {
 
   credenciales = {
     email: '',
@@ -36,6 +36,8 @@ export class LoginPage implements OnInit {
   modalRecuperarAbierto = false;
   emailRecuperacion = '';
   enviandoCorreo = false;
+  
+  private authSub: any = null;
 
   dominiosBloqueados = [
     'yopmail.com', 'temp-mail.org', '10minutemail.com', 
@@ -47,7 +49,7 @@ export class LoginPage implements OnInit {
     private firestore: Firestore,
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private authService: AuthService // 👈 Lo inyectamos
+    private authService: AuthService 
   ) {
     addIcons({ 
       mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -56,15 +58,23 @@ export class LoginPage implements OnInit {
     });
   }
 
-  ngOnInit() {
-    const user = this.auth.currentUser;
-    if (user) {
-      const esLoginPorCorreo = user.providerData.some(p => p.providerId === 'password');
-      if (esLoginPorCorreo && !user.emailVerified) {
-        this.auth.signOut();
+  async ionViewDidEnter() {
+    this.cargandoGoogle = true; 
+
+    // Espía de sesión: Si tiene sesión activa (por registro o guardada), entra directo.
+    // Como quitamos el Redirect, esto es todo lo que necesitamos.
+    this.authSub = onAuthStateChanged(this.auth, async (user) => {
+      if (user) {
+        await this.redirigirPorRol(user.uid); // 👈 Escrito correctamente
       } else {
-        this.redirigirPorRol(user.uid);
+        this.cargandoGoogle = false;
       }
+    });
+  }
+
+  ionViewWillLeave() {
+    if (this.authSub) {
+      this.authSub(); 
     }
   }
 
@@ -113,7 +123,7 @@ export class LoginPage implements OnInit {
   }
 
   // ==========================================
-  // LOGIN NORMAL Y GOOGLE
+  // LOGIN MANUAL (El Cadenero Estricto)
   // ==========================================
   async login() {
     if (!this.credenciales.email || !this.credenciales.password) {
@@ -131,8 +141,8 @@ export class LoginPage implements OnInit {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, this.credenciales.email, this.credenciales.password);
 
-      // 👇 PASE VIP PARA ADMIN Y CADENERO PARA EL RESTO
-     /* const esAdminVIP = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
+      // EL CADENERO: Si el usuario intenta hacer login manual, DEBE estar verificado.
+      const esAdminVIP = this.credenciales.email.toLowerCase() === 'admin@fitgo.com'; 
       
       if (!userCredential.user.emailVerified && !esAdminVIP) {
         this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
@@ -140,7 +150,6 @@ export class LoginPage implements OnInit {
         this.cargando = false;
         return; 
       }
-        */
 
       await this.redirigirPorRol(userCredential.user.uid);
 
@@ -151,15 +160,15 @@ export class LoginPage implements OnInit {
     }
   }
 
+  // ==========================================
+  // LOGIN GOOGLE
+  // ==========================================
   async loginGoogle() {
     this.cargandoGoogle = true;
 
     try {
-      // 👇 Usamos la magia de nuestro auth.service.ts
-      const user = await this.authService.loginConGoogle();
-      if (user) {
-        await this.redirigirPorRol(user.uid);
-      }
+      await this.authService.loginConGoogle();
+      // El espía (onAuthStateChanged) detectará que iniciaste sesión y te redirigirá solito
     } catch (error: any) {
       console.error(error);
       this.cargandoGoogle = false;
@@ -173,6 +182,7 @@ export class LoginPage implements OnInit {
     this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. 🍏', 'warning');
   }
 
+  // 👇 Corregido el nombre de la función aquí
   async redirigirPorRol(uid: string) {
     try {
       const userDocRef = doc(this.firestore, 'usuarios', uid);
@@ -186,7 +196,7 @@ export class LoginPage implements OnInit {
         this.cargando = false;
         this.cargandoGoogle = false;
 
-        // 👇 EL FILTRO MAESTRO: Si es pendiente, directo al Onboarding
+        // FILTRO MAESTRO
         if (rol === 'pendiente' || !onboardingCompletado) { 
            this.navCtrl.navigateRoot('/onboarding');
            return;
