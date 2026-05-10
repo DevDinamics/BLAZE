@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { AuthService } from 'src/app/services/auth'; 
+import { AuthService } from 'src/app/services/auth';
 
 import { 
   mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -24,10 +24,7 @@ import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 })
 export class LoginPage {
 
-  credenciales = {
-    email: '',
-    password: ''
-  };
+  credenciales = { email: '', password: '' };
 
   mostrarPassword = false;
   cargando = false;
@@ -36,11 +33,11 @@ export class LoginPage {
   modalRecuperarAbierto = false;
   emailRecuperacion = '';
   enviandoCorreo = false;
-  
+
   private authSub: any = null;
 
   dominiosBloqueados = [
-    'yopmail.com', 'temp-mail.org', '10minutemail.com', 
+    'yopmail.com', 'temp-mail.org', '10minutemail.com',
     'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
   ];
 
@@ -49,7 +46,7 @@ export class LoginPage {
     private firestore: Firestore,
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private authService: AuthService 
+    private authService: AuthService
   ) {
     addIcons({ 
       mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
@@ -59,13 +56,19 @@ export class LoginPage {
   }
 
   async ionViewDidEnter() {
-    this.cargandoGoogle = true; 
+    // Mostramos el spinner mientras resolvemos el estado inicial
+    this.cargandoGoogle = true;
 
-    // Espía de sesión: Si tiene sesión activa (por registro o guardada), entra directo.
-    // Como quitamos el Redirect, esto es todo lo que necesitamos.
+    // ✅ PASO 1: Intentamos recoger el resultado de un redirect de Google.
+    // Si el usuario venía de loginConGoogle(), aquí procesamos su cuenta.
+    // Si no venía de Google, esto devuelve false y no hace nada.
+    await this.authService.manejarResultadoGoogle();
+
+    // ✅ PASO 2: El espía de sesión detecta el estado real y redirige.
+    // Funciona tanto para login normal como para el resultado de Google.
     this.authSub = onAuthStateChanged(this.auth, async (user) => {
       if (user) {
-        await this.redirigirPorRol(user.uid); // 👈 Escrito correctamente
+        await this.redirigirPorRol(user.uid);
       } else {
         this.cargandoGoogle = false;
       }
@@ -74,26 +77,23 @@ export class LoginPage {
 
   ionViewWillLeave() {
     if (this.authSub) {
-      this.authSub(); 
+      this.authSub();
+      this.authSub = null;
     }
   }
 
   esEmailSeguro(email: string): boolean {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regex.test(email)) return false;
-
     const dominio = email.split('@')[1].toLowerCase();
-    if (this.dominiosBloqueados.includes(dominio)) {
-      return false;
-    }
-    return true;
+    return !this.dominiosBloqueados.includes(dominio);
   }
 
   // ==========================================
   // RECUPERACIÓN DE CONTRASEÑA
   // ==========================================
   abrirModalRecuperar() {
-    this.emailRecuperacion = this.credenciales.email ? this.credenciales.email : '';
+    this.emailRecuperacion = this.credenciales.email || '';
     this.modalRecuperarAbierto = true;
   }
 
@@ -102,20 +102,17 @@ export class LoginPage {
       this.mostrarMensaje('Ingresa un correo electrónico válido.', 'warning');
       return;
     }
-
     this.enviandoCorreo = true;
-
     try {
       await sendPasswordResetEmail(this.auth, this.emailRecuperacion);
       this.mostrarMensaje('¡Enlace enviado! Revisa tu bandeja de entrada o spam.', 'success');
       this.modalRecuperarAbierto = false;
     } catch (error: any) {
-      console.error(error);
       if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-         this.mostrarMensaje('No encontramos una cuenta con este correo.', 'danger');
+        this.mostrarMensaje('No encontramos una cuenta con este correo.', 'danger');
       } else {
-         this.mostrarMensaje('Si el correo existe, recibirás un enlace en breve.', 'success');
-         this.modalRecuperarAbierto = false;
+        this.mostrarMensaje('Si el correo existe, recibirás un enlace en breve.', 'success');
+        this.modalRecuperarAbierto = false;
       }
     } finally {
       this.enviandoCorreo = false;
@@ -123,14 +120,13 @@ export class LoginPage {
   }
 
   // ==========================================
-  // LOGIN MANUAL (El Cadenero Estricto)
+  // LOGIN MANUAL
   // ==========================================
   async login() {
     if (!this.credenciales.email || !this.credenciales.password) {
       this.mostrarMensaje('Por favor ingresa tu correo y contraseña.', 'warning');
       return;
     }
-
     if (!this.esEmailSeguro(this.credenciales.email)) {
       this.mostrarMensaje('Por favor usa un proveedor de correo válido.', 'warning');
       return;
@@ -139,22 +135,21 @@ export class LoginPage {
     this.cargando = true;
 
     try {
-      const userCredential = await signInWithEmailAndPassword(this.auth, this.credenciales.email, this.credenciales.password);
+      const userCredential = await signInWithEmailAndPassword(
+        this.auth, this.credenciales.email, this.credenciales.password
+      );
 
-      // EL CADENERO: Si el usuario intenta hacer login manual, DEBE estar verificado.
-      const esAdminVIP = this.credenciales.email.toLowerCase() === 'admin@fitgo.com'; 
-      
-      if (!userCredential.user.emailVerified && !esAdminVIP) {
+      // Verificación de email (excepto admin)
+      const esAdmin = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
+      if (!userCredential.user.emailVerified && !esAdmin) {
         this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
-        await this.auth.signOut(); 
+        await this.auth.signOut();
         this.cargando = false;
-        return; 
+        return;
       }
 
-      await this.redirigirPorRol(userCredential.user.uid);
-
+      // El onAuthStateChanged del ionViewDidEnter detecta el login y redirige
     } catch (error: any) {
-      console.error(error);
       this.cargando = false;
       this.manejarErrorFirebase(error.code);
     }
@@ -165,16 +160,13 @@ export class LoginPage {
   // ==========================================
   async loginGoogle() {
     this.cargandoGoogle = true;
-
     try {
+      // Inicia el redirect a Google — la app se va y regresa
+      // manejarResultadoGoogle() en ionViewDidEnter recoge el resultado
       await this.authService.loginConGoogle();
-      // El espía (onAuthStateChanged) detectará que iniciaste sesión y te redirigirá solito
     } catch (error: any) {
-      console.error(error);
       this.cargandoGoogle = false;
-      if (error.code !== 'auth/popup-closed-by-user') {
-        this.mostrarMensaje('Error al iniciar con Google.', 'danger');
-      }
+      this.mostrarMensaje('Error al iniciar con Google.', 'danger');
     }
   }
 
@@ -182,39 +174,41 @@ export class LoginPage {
     this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. 🍏', 'warning');
   }
 
-  // 👇 Corregido el nombre de la función aquí
+  // ==========================================
+  // REDIRECCIÓN POR ROL
+  // ==========================================
   async redirigirPorRol(uid: string) {
     try {
       const userDocRef = doc(this.firestore, 'usuarios', uid);
       const userDocSnap = await getDoc(userDocRef);
 
-      if (userDocSnap.exists()) {
-        const data = userDocSnap.data();
-        const rol = data['rol'];
-        const onboardingCompletado = data['onboardingCompletado'];
+      this.cargando = false;
+      this.cargandoGoogle = false;
 
-        this.cargando = false;
-        this.cargandoGoogle = false;
-
-        // FILTRO MAESTRO
-        if (rol === 'pendiente' || !onboardingCompletado) { 
-           this.navCtrl.navigateRoot('/onboarding');
-           return;
-        }
-
-        if (rol === 'coach') {
-          this.navCtrl.navigateRoot('/coach/dashboard');
-        } else if (rol === 'alumno') {
-          this.navCtrl.navigateRoot('/entreno');
-        } else {
-          this.mostrarMensaje('No se pudo determinar tu tipo de cuenta.', 'danger');
-        }
-
-      } else {
-        this.cargando = false;
-        this.cargandoGoogle = false;
+      if (!userDocSnap.exists()) {
         this.mostrarMensaje('No se encontró tu perfil.', 'danger');
+        return;
       }
+
+      const data = userDocSnap.data();
+      const rol = data['rol'];
+      const onboardingCompletado = data['onboardingCompletado'];
+
+      // Si el onboarding no está completo → a terminarlo
+      if (!onboardingCompletado || rol === 'pendiente') {
+        this.navCtrl.navigateRoot('/onboarding');
+        return;
+      }
+
+      // Onboarding completo → su dashboard
+      if (rol === 'coach') {
+        this.navCtrl.navigateRoot('/coach/dashboard');
+      } else if (rol === 'alumno' || rol === 'atleta') {
+        this.navCtrl.navigateRoot('/entreno');
+      } else {
+        this.mostrarMensaje('No se pudo determinar tu tipo de cuenta.', 'danger');
+      }
+
     } catch (error) {
       console.error(error);
       this.cargando = false;
@@ -227,9 +221,9 @@ export class LoginPage {
     const toast = await this.toastCtrl.create({
       message: mensaje,
       duration: 3500,
-      position: 'top', 
+      position: 'top',
       mode: 'ios',
-      cssClass: `apple-pill-toast toast-${color}`, 
+      cssClass: `apple-pill-toast toast-${color}`,
       icon: color === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'
     });
     toast.present();
@@ -237,7 +231,7 @@ export class LoginPage {
 
   manejarErrorFirebase(codigoError: string) {
     let mensaje = 'Ocurrió un error al iniciar sesión.';
-    if (codigoError === 'auth/invalid-credential' || codigoError === 'auth/user-not-found' || codigoError === 'auth/wrong-password') {
+    if (['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(codigoError)) {
       mensaje = 'Correo o contraseña incorrectos.';
     } else if (codigoError === 'auth/too-many-requests') {
       mensaje = 'Demasiados intentos. Intenta más tarde.';

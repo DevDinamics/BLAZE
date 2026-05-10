@@ -2,44 +2,45 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth, authState } from '@angular/fire/auth';
 import { Firestore, doc, docData } from '@angular/fire/firestore';
-import { switchMap, map, take } from 'rxjs/operators';
+import { switchMap, map, filter, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 
+/**
+ * 🛡️ ONBOARDING GUARD
+ * Solo deja entrar al onboarding a usuarios que:
+ *   1. Tienen sesión activa
+ *   2. NO han completado el onboarding (rol === 'pendiente' o onboardingCompletado === false)
+ *
+ * Sin sesión             → /login
+ * Con sesión + completado → su dashboard (ya no necesita onboarding)
+ * Con sesión + pendiente  → deja pasar ✅
+ */
 export const onboardingGuard: CanActivateFn = (route, state) => {
   const auth = inject(Auth);
   const firestore = inject(Firestore);
   const router = inject(Router);
 
   return authState(auth).pipe(
-    take(1), // Solo tomamos el primer valor para no dejar la suscripción abierta
+    // 🔑 Esperamos a que Firebase decida (undefined = inicializando, null = sin sesión, User = con sesión)
+    filter(user => user !== undefined),
+    take(1),
     switchMap(user => {
       if (!user) {
-        // No hay usuario, lo mandamos al login
+        // Sin sesión → no puede estar en onboarding
         return of(router.createUrlTree(['/login']));
       }
 
-      // Si hay usuario, vamos a revisar su documento en Firestore
       const docRef = doc(firestore, `usuarios/${user.uid}`);
-      
-      // docData es la forma "RxJS" de leer Firestore
       return docData(docRef).pipe(
         take(1),
         map((data: any) => {
-          
-          // 👇 LA CORRECCIÓN MAESTRA ESTÁ AQUÍ
-          // Revisamos si existe, si tiene rol, y SI ESE ROL ES DIFERENTE DE 'pendiente'
-          if (data && data.rol && data.rol !== 'pendiente') {
-             
-             // 🔴 Ya tiene un rol final (coach o alumno), lo pateamos a su dashboard
-             // NOTA: Cambié '/entreno/dashboard' por '/entreno' para respetar tu app.routes principal
-             const rutaDestino = data.rol === 'coach' ? '/coach/dashboard' : '/entreno';
-             return router.createUrlTree([rutaDestino]);
-             
-          } else {
-             // 🟢 No tiene rol, o su rol es 'pendiente'. ¡Déjalo entrar al Onboarding!
-             return true;
+          if (data && data.onboardingCompletado && data.rol !== 'pendiente') {
+            // Ya completó el onboarding → lo mandamos a su lugar
+            const ruta = data.rol === 'coach' ? '/coach/dashboard' : '/entreno';
+            return router.createUrlTree([ruta]);
           }
-          
+          // Onboarding pendiente → puede entrar ✅
+          return true;
         })
       );
     })

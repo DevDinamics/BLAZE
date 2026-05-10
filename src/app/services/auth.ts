@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { 
   Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-  signOut, user, GoogleAuthProvider, signInWithPopup, 
+  signOut, user, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
   sendEmailVerification 
 } from '@angular/fire/auth';
 import { 
@@ -18,10 +18,10 @@ export class AuthService {
   private auth = inject(Auth);
   private firestore = inject(Firestore);
 
-  // Observable: Quién está conectado
+  // Observable: quién está conectado
   user$ = user(this.auth);
 
-  // Observable: Datos completos del usuario (incluyendo rol)
+  // Observable: datos completos del usuario (incluyendo rol)
   perfilCompleto$ = this.user$.pipe(
     switchMap(usuario => {
       if (usuario) {
@@ -42,8 +42,8 @@ export class AuthService {
     try {
       const invitacionesRef = collection(this.firestore, 'invitaciones');
       const q = query(
-        invitacionesRef, 
-        where('codigo', '==', codigo), 
+        invitacionesRef,
+        where('codigo', '==', codigo),
         where('activo', '==', true)
       );
       const querySnapshot = await getDocs(q);
@@ -55,80 +55,93 @@ export class AuthService {
   }
 
   // ==========================================
-  // 2. REGISTRO LITE (EMAIL/PASS)
+  // 2. REGISTRO (EMAIL / CONTRASEÑA)
   // ==========================================
   async registrar(email: string, pass: string, nombre: string) {
-    try {
-      const credencial = await createUserWithEmailAndPassword(this.auth, email, pass);
-      const uid = credencial.user.uid;
+    const credencial = await createUserWithEmailAndPassword(this.auth, email, pass);
+    const uid = credencial.user.uid;
 
-      // DISPARAMOS EL CORREO DE VERIFICACIÓN
-      await sendEmailVerification(credencial.user);
+    // Enviamos correo de verificación (el usuario lo verifica en su tiempo,
+    // pero NO lo bloqueamos para entrar al onboarding)
+    await sendEmailVerification(credencial.user);
 
-      // Guardamos la base del perfil con rol "pendiente"
-      const datosUsuario = {
-        uid: uid,
-        email: email,
-        nombre: nombre,
-        rol: 'pendiente', 
-        onboardingCompletado: false, // 👈 Se agrega para control
-        fechaRegistro: new Date(),
-        foto: `https://ui-avatars.com/api/?name=${nombre}&background=random`,
-        licenciaUsada: 'N/A' 
-      };
+    // Perfil base con rol 'pendiente' — el onboarding lo completará
+    await setDoc(doc(this.firestore, 'usuarios', uid), {
+      uid,
+      email,
+      nombre,
+      rol: 'pendiente',
+      onboardingCompletado: false,
+      fechaRegistro: new Date(),
+      foto: `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}&background=random`,
+      licenciaUsada: 'N/A'
+    });
 
-      await setDoc(doc(this.firestore, 'usuarios', uid), datosUsuario);
-      return uid;
-    } catch (error) {
-      throw error;
-    }
+    return uid;
   }
 
   // ==========================================
-  // 3. LOGIN TRADICIONAL
+  // 3. LOGIN TRADICIONAL (EMAIL / CONTRASEÑA)
   // ==========================================
   async login(email: string, pass: string) {
-    try {
-      const credencial = await signInWithEmailAndPassword(this.auth, email, pass);
-      return credencial.user;
-    } catch (error) {
-      throw error;
-    }
+    const credencial = await signInWithEmailAndPassword(this.auth, email, pass);
+    return credencial.user;
   }
 
   // ==========================================
-  // 🌐 4. LOGIN CON GOOGLE 
+  // 4. LOGIN CON GOOGLE
+  //
+  // ✅ Usamos signInWithRedirect en lugar de signInWithPopup porque:
+  //   - signInWithPopup falla en navegadores móviles (Safari iOS, WebViews)
+  //   - signInWithPopup falla en PWAs y apps en producción
+  //   - signInWithRedirect funciona en todas las plataformas
+  //
+  // Flujo: este método inicia el redirect.
+  //        manejarResultadoGoogle() recoge el resultado al volver.
+  //        Llama manejarResultadoGoogle() en ionViewDidEnter del LoginPage.
   // ==========================================
   async loginConGoogle() {
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
+    await signInWithRedirect(this.auth, provider);
+    // La app se redirige a Google y regresa — el resultado lo maneja manejarResultadoGoogle()
+  }
 
+  async manejarResultadoGoogle(): Promise<boolean> {
     try {
-      const credencial = await signInWithPopup(this.auth, provider);
-      const user = credencial.user;
+      const resultado = await getRedirectResult(this.auth);
 
+      if (!resultado) {
+        // No venimos de un redirect de Google — flujo normal, nada que hacer
+        return false;
+      }
+
+      const user = resultado.user;
       const userRef = doc(this.firestore, `usuarios/${user.uid}`);
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
+        // Usuario nuevo: creamos su perfil base
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
-          nombre: user.displayName || 'Nuevo Guerrero', 
-          foto: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'G'}&background=random`,
-          rol: 'pendiente', 
-          onboardingCompletado: false, // 👈 Se agrega para control
+          nombre: user.displayName || 'Nuevo Guerrero',
+          foto: user.photoURL || `https://ui-avatars.com/api/?name=G&background=random`,
+          rol: 'pendiente',
+          onboardingCompletado: false,
           xpTotal: 0,
           fechaRegistro: new Date(),
           licenciaUsada: 'Google OAuth'
         });
       }
 
-      return user;
-    } catch (error) {
-      console.error('Error en autenticación con Google:', error);
-      throw error;
+      return true; // Indica que sí había un resultado de Google que procesar
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error('Error procesando resultado de Google:', error);
+      }
+      return false;
     }
   }
 

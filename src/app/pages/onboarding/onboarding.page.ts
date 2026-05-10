@@ -7,7 +7,8 @@ import {
   arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
 } from 'ionicons/icons';
-import { Subscription } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
@@ -22,9 +23,7 @@ import { StudentService } from 'src/app/services/student';
 export class OnboardingPage implements OnDestroy {
 
   pasoActual: number = 1;
-  totalPasos: number = 1; 
-
-  // 👇 Variable en tiempo real para mostrar en el UI
+  totalPasos: number = 1;
   edadMostrada: number | null = null;
 
   avataresAtleta = [
@@ -52,18 +51,16 @@ export class OnboardingPage implements OnDestroy {
   datos: any = {
     rol: '',
     genero: '',
-    fechaNacimiento: '', 
+    fechaNacimiento: '',
     peso: null,
-    estatura: null,      
+    estatura: null,
     objetivo: '',
-    tieneLesion: null,   
-    detalleLesion: '',   
+    tieneLesion: null,
+    detalleLesion: '',
     especialidad: '',
     bio: '',
-    avatar: '' 
+    avatar: ''
   };
-
-  private authSub: Subscription | null = null;
 
   constructor(
     private navCtrl: NavController,
@@ -78,7 +75,7 @@ export class OnboardingPage implements OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.authSub) this.authSub.unsubscribe();
+    // Ya no hay suscripciones manuales que limpiar — firstValueFrom se cierra solo
   }
 
   generarArregloPasos(): number[] {
@@ -87,23 +84,23 @@ export class OnboardingPage implements OnDestroy {
 
   seleccionarRol(rol: string) {
     this.datos.rol = rol;
-    this.totalPasos = rol === 'atleta' ? 7 : 3; 
+    this.totalPasos = rol === 'atleta' ? 7 : 3;
   }
 
   puedeAvanzar(): boolean {
     if (this.pasoActual === 1) return this.datos.rol !== '';
-    
+
     if (this.datos.rol === 'atleta') {
       if (this.pasoActual === 2) return this.datos.genero !== '';
       if (this.pasoActual === 3) return this.datos.fechaNacimiento !== '';
       if (this.pasoActual === 4) return this.datos.peso > 0 && this.datos.estatura > 0;
       if (this.pasoActual === 5) return this.datos.objetivo !== '';
       if (this.pasoActual === 6) {
-         if (this.datos.tieneLesion === null) return false;
-         if (this.datos.tieneLesion && this.datos.detalleLesion.trim() === '') return false;
-         return true;
+        if (this.datos.tieneLesion === null) return false;
+        if (this.datos.tieneLesion && this.datos.detalleLesion.trim() === '') return false;
+        return true;
       }
-      if (this.pasoActual === 7) return this.datos.avatar !== ''; 
+      if (this.pasoActual === 7) return this.datos.avatar !== '';
     }
 
     if (this.datos.rol === 'coach') {
@@ -128,7 +125,6 @@ export class OnboardingPage implements OnDestroy {
     }
   }
 
-  // 👇 Disparador desde el Modal del HTML
   actualizarEdad() {
     if (this.datos.fechaNacimiento) {
       this.edadMostrada = this.calcularEdad(this.datos.fechaNacimiento);
@@ -141,7 +137,6 @@ export class OnboardingPage implements OnDestroy {
     const cumpleanos = new Date(fechaNacimiento);
     let edad = hoy.getFullYear() - cumpleanos.getFullYear();
     const mes = hoy.getMonth() - cumpleanos.getMonth();
-    
     if (mes < 0 || (mes === 0 && hoy.getDate() < cumpleanos.getDate())) {
       edad--;
     }
@@ -157,42 +152,56 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
-      this.authSub = this.authService.user$.subscribe(async (user) => {
-        if (user) {
-          
-          const perfilActualizado: any = {
-            rol: this.datos.rol,
-            foto: this.datos.avatar,
-            onboardingCompletado: true
-          };
+      // ✅ firstValueFrom con filter(u => u !== undefined) garantiza que esperamos
+      // a que Firebase inicialice antes de intentar guardar. Evita el bug donde
+      // el subscribe dispara con null en producción.
+      const user = await firstValueFrom(
+        this.authService.user$.pipe(filter(u => u !== undefined))
+      );
 
-          if (this.datos.rol === 'atleta') {
-            perfilActualizado.genero = this.datos.genero;
-            perfilActualizado.fechaNacimiento = this.datos.fechaNacimiento;
-            perfilActualizado.edad = this.calcularEdad(this.datos.fechaNacimiento); 
-            perfilActualizado.peso = Number(this.datos.peso);
-            perfilActualizado.estatura = Number(this.datos.estatura);
-            perfilActualizado.objetivo = this.datos.objetivo;
-            perfilActualizado.tieneLesion = this.datos.tieneLesion;
-            perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
-          } else {
-            perfilActualizado.especialidad = this.datos.especialidad;
-            perfilActualizado.bio = this.datos.bio;
-          }
+      if (!user) {
+        await loading.dismiss();
+        // Sin sesión activa — algo salió muy mal, regresamos al login
+        this.navCtrl.navigateRoot('/login');
+        return;
+      }
 
-          await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
-          loading.dismiss();
+      const perfilActualizado: any = {
+        rol: this.datos.rol,
+        foto: this.datos.avatar,
+        onboardingCompletado: true  // 🔑 Esta bandera es lo que desbloquea el acceso
+      };
 
-          if (this.datos.rol === 'coach') {
-            this.navCtrl.navigateRoot('/coach/dashboard');
-          } else {
-            this.navCtrl.navigateRoot('/entreno'); 
-          }
-        }
-      });
+      if (this.datos.rol === 'atleta') {
+        perfilActualizado.genero = this.datos.genero;
+        perfilActualizado.fechaNacimiento = this.datos.fechaNacimiento;
+        perfilActualizado.edad = this.calcularEdad(this.datos.fechaNacimiento);
+        perfilActualizado.peso = Number(this.datos.peso);
+        perfilActualizado.estatura = Number(this.datos.estatura);
+        perfilActualizado.objetivo = this.datos.objetivo;
+        perfilActualizado.tieneLesion = this.datos.tieneLesion;
+        perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
+      } else {
+        perfilActualizado.especialidad = this.datos.especialidad;
+        perfilActualizado.bio = this.datos.bio;
+      }
+
+      // Guardamos en Firestore
+      await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
+
+      await loading.dismiss();
+
+      // Navegamos a su destino final
+      if (this.datos.rol === 'coach') {
+        this.navCtrl.navigateRoot('/coach/dashboard');
+      } else {
+        this.navCtrl.navigateRoot('/entreno');
+      }
+
     } catch (error) {
       console.error('Error al guardar onboarding:', error);
-      loading.dismiss();
+      await loading.dismiss();
+      // Aquí podrías mostrar un toast de error al usuario
     }
   }
 }
