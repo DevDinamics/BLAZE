@@ -7,10 +7,13 @@ import {
   arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
 } from 'ionicons/icons';
+
+// ✅ Usamos authState directamente — es más confiable que user$ de AuthService
+// porque garantiza que emite null (sin sesión) o User (con sesión), nunca undefined.
+import { Auth, authState } from '@angular/fire/auth';
 import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
-import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 
 @Component({
@@ -63,8 +66,8 @@ export class OnboardingPage implements OnDestroy {
   };
 
   constructor(
+    private auth: Auth,
     private navCtrl: NavController,
-    private authService: AuthService,
     private studentService: StudentService,
     private loadingCtrl: LoadingController
   ) {
@@ -74,9 +77,7 @@ export class OnboardingPage implements OnDestroy {
     });
   }
 
-  ngOnDestroy() {
-    // Ya no hay suscripciones manuales que limpiar — firstValueFrom se cierra solo
-  }
+  ngOnDestroy() {}
 
   generarArregloPasos(): number[] {
     return Array(this.totalPasos).fill(0);
@@ -152,16 +153,14 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
-      // ✅ firstValueFrom con filter(u => u !== undefined) garantiza que esperamos
-      // a que Firebase inicialice antes de intentar guardar. Evita el bug donde
-      // el subscribe dispara con null en producción.
+      // ✅ authState() emite null o User — nunca queda colgado como user$
+      // filter(u => u !== null) espera hasta tener un usuario real confirmado
       const user = await firstValueFrom(
-        this.authService.user$.pipe(filter(u => u !== undefined))
+        authState(this.auth).pipe(filter(u => u !== null))
       );
 
       if (!user) {
         await loading.dismiss();
-        // Sin sesión activa — algo salió muy mal, regresamos al login
         this.navCtrl.navigateRoot('/login');
         return;
       }
@@ -169,7 +168,7 @@ export class OnboardingPage implements OnDestroy {
       const perfilActualizado: any = {
         rol: this.datos.rol,
         foto: this.datos.avatar,
-        onboardingCompletado: true  // 🔑 Esta bandera es lo que desbloquea el acceso
+        onboardingCompletado: true  // 🔑 Esta bandera desbloquea el acceso
       };
 
       if (this.datos.rol === 'atleta') {
@@ -186,12 +185,10 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio;
       }
 
-      // Guardamos en Firestore
       await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
 
       await loading.dismiss();
 
-      // Navegamos a su destino final
       if (this.datos.rol === 'coach') {
         this.navCtrl.navigateRoot('/coach/dashboard');
       } else {
@@ -201,7 +198,6 @@ export class OnboardingPage implements OnDestroy {
     } catch (error) {
       console.error('Error al guardar onboarding:', error);
       await loading.dismiss();
-      // Aquí podrías mostrar un toast de error al usuario
     }
   }
 }

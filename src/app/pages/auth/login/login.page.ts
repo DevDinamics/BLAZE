@@ -56,16 +56,9 @@ export class LoginPage {
   }
 
   async ionViewDidEnter() {
-    // Mostramos el spinner mientras resolvemos el estado inicial
     this.cargandoGoogle = true;
 
-    // ✅ PASO 1: Intentamos recoger el resultado de un redirect de Google.
-    // Si el usuario venía de loginConGoogle(), aquí procesamos su cuenta.
-    // Si no venía de Google, esto devuelve false y no hace nada.
-    await this.authService.manejarResultadoGoogle();
-
-    // ✅ PASO 2: El espía de sesión detecta el estado real y redirige.
-    // Funciona tanto para login normal como para el resultado de Google.
+    // Espía de sesión: detecta cualquier cambio de auth (login normal o Google)
     this.authSub = onAuthStateChanged(this.auth, async (user) => {
       if (user) {
         await this.redirigirPorRol(user.uid);
@@ -139,7 +132,6 @@ export class LoginPage {
         this.auth, this.credenciales.email, this.credenciales.password
       );
 
-      // Verificación de email (excepto admin)
       const esAdmin = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
       if (!userCredential.user.emailVerified && !esAdmin) {
         this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
@@ -147,8 +139,8 @@ export class LoginPage {
         this.cargando = false;
         return;
       }
+      // El onAuthStateChanged detecta el login y redirige automáticamente
 
-      // El onAuthStateChanged del ionViewDidEnter detecta el login y redirige
     } catch (error: any) {
       this.cargando = false;
       this.manejarErrorFirebase(error.code);
@@ -161,12 +153,14 @@ export class LoginPage {
   async loginGoogle() {
     this.cargandoGoogle = true;
     try {
-      // Inicia el redirect a Google — la app se va y regresa
-      // manejarResultadoGoogle() en ionViewDidEnter recoge el resultado
+      // loginConGoogle() hace el popup Y crea el perfil en Firestore si es nuevo.
+      // Al terminar, onAuthStateChanged detecta la sesión y llama redirigirPorRol().
       await this.authService.loginConGoogle();
     } catch (error: any) {
       this.cargandoGoogle = false;
-      this.mostrarMensaje('Error al iniciar con Google.', 'danger');
+      if (error.code !== 'auth/popup-closed-by-user') {
+        this.mostrarMensaje('Error al iniciar con Google.', 'danger');
+      }
     }
   }
 
@@ -194,7 +188,7 @@ export class LoginPage {
       const rol = data['rol'];
       const onboardingCompletado = data['onboardingCompletado'];
 
-      // Si el onboarding no está completo → a terminarlo
+      // Sin onboarding completo → a terminarlo
       if (!onboardingCompletado || rol === 'pendiente') {
         this.navCtrl.navigateRoot('/onboarding');
         return;
