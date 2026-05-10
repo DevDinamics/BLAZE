@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { 
   Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-  signOut, user, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+  signOut, user, GoogleAuthProvider, signInWithPopup,
   sendEmailVerification 
 } from '@angular/fire/auth';
 import { 
@@ -61,8 +61,7 @@ export class AuthService {
     const credencial = await createUserWithEmailAndPassword(this.auth, email, pass);
     const uid = credencial.user.uid;
 
-    // Enviamos correo de verificación (el usuario lo verifica en su tiempo,
-    // pero NO lo bloqueamos para entrar al onboarding)
+    // Enviamos correo de verificación
     await sendEmailVerification(credencial.user);
 
     // Perfil base con rol 'pendiente' — el onboarding lo completará
@@ -89,60 +88,41 @@ export class AuthService {
   }
 
   // ==========================================
-  // 4. LOGIN CON GOOGLE
-  //
-  // ✅ Usamos signInWithRedirect en lugar de signInWithPopup porque:
-  //   - signInWithPopup falla en navegadores móviles (Safari iOS, WebViews)
-  //   - signInWithPopup falla en PWAs y apps en producción
-  //   - signInWithRedirect funciona en todas las plataformas
-  //
-  // Flujo: este método inicia el redirect.
-  //        manejarResultadoGoogle() recoge el resultado al volver.
-  //        Llama manejarResultadoGoogle() en ionViewDidEnter del LoginPage.
+  // 4. LOGIN CON GOOGLE (popup — funciona en web con dominio autorizado)
   // ==========================================
   async loginConGoogle() {
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
-    await signInWithRedirect(this.auth, provider);
-    // La app se redirige a Google y regresa — el resultado lo maneja manejarResultadoGoogle()
+
+    const credencial = await signInWithPopup(this.auth, provider);
+    const user = credencial.user;
+
+    const userRef = doc(this.firestore, `usuarios/${user.uid}`);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      // Usuario nuevo: creamos su perfil base
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        nombre: user.displayName || 'Nuevo Guerrero',
+        foto: user.photoURL || `https://ui-avatars.com/api/?name=G&background=random`,
+        rol: 'pendiente',
+        onboardingCompletado: false,
+        xpTotal: 0,
+        fechaRegistro: new Date(),
+        licenciaUsada: 'Google OAuth'
+      });
+    }
+
+    return user;
   }
 
+  // Mantenemos este método para compatibilidad con login.page.ts
+  // Con popup no necesitamos procesar ningún redirect
   async manejarResultadoGoogle(): Promise<boolean> {
-    try {
-      const resultado = await getRedirectResult(this.auth);
-
-      if (!resultado) {
-        // No venimos de un redirect de Google — flujo normal, nada que hacer
-        return false;
-      }
-
-      const user = resultado.user;
-      const userRef = doc(this.firestore, `usuarios/${user.uid}`);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        // Usuario nuevo: creamos su perfil base
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          nombre: user.displayName || 'Nuevo Guerrero',
-          foto: user.photoURL || `https://ui-avatars.com/api/?name=G&background=random`,
-          rol: 'pendiente',
-          onboardingCompletado: false,
-          xpTotal: 0,
-          fechaRegistro: new Date(),
-          licenciaUsada: 'Google OAuth'
-        });
-      }
-
-      return true; // Indica que sí había un resultado de Google que procesar
-    } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user') {
-        console.error('Error procesando resultado de Google:', error);
-      }
-      return false;
-    }
+    return false;
   }
 
   // ==========================================
