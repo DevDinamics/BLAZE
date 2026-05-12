@@ -181,6 +181,7 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
         
+        // 🛡️ Escudos Anti-NaN
         const edadCalc = this.calcularEdad(this.datos.fechaNacimiento);
         perfilActualizado.edad = isNaN(edadCalc) ? 0 : edadCalc;
 
@@ -195,17 +196,20 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
+      // Limpieza de nulos o indefinidos extrema
       Object.keys(perfilActualizado).forEach(key => {
         if (perfilActualizado[key] === undefined || perfilActualizado[key] === null) {
           delete perfilActualizado[key];
         }
       });
 
+      // Guardado invencible con setDoc
       const userRef = doc(this.firestore, `usuarios/${user.uid}`);
       await setDoc(userRef, perfilActualizado, { merge: true });
 
       await loading.dismiss();
 
+      // Éxito rotundo
       const toastExito = await this.toastCtrl.create({
         message: '¡Perfil creado con éxito! 🔥',
         duration: 1500,
@@ -215,12 +219,20 @@ export class OnboardingPage implements OnDestroy {
       });
       await toastExito.present();
 
-      // 👇 LA SOLUCIÓN FINAL: Usamos el enrutador de Angular para que no haya pantalla negra ni crasheos en Netlify
-      setTimeout(() => {
-        if (this.datos.rol === 'coach') {
-          this.navCtrl.navigateRoot('/coach/dashboard', { animated: true, animationDirection: 'forward' });
-        } else {
-          this.navCtrl.navigateRoot('/entreno', { animated: true, animationDirection: 'forward' });
+      // 🚦 EL ENRUTADOR HÍBRIDO (El jefe final del caché)
+      setTimeout(async () => {
+        const destino = this.datos.rol === 'coach' ? '/coach/dashboard' : '/entreno';
+        console.log(`Intentando viaje suave a: ${destino}`);
+        
+        // 1. Intentamos el viaje suave de Angular
+        const viajeExitoso = await this.navCtrl.navigateRoot(destino, { animated: true, animationDirection: 'forward' });
+        
+        // 2. Si el Guardia de Angular se pone terco y lo bloquea (viajeExitoso es false)...
+        if (!viajeExitoso) {
+          console.warn("Angular bloqueó la entrada por caché. Usando fuerza bruta...");
+          // Le damos una patada al navegador recargando la página entera.
+          // Como ya tienes tu archivo _redirects, Netlify no crasheará y te meterá directo.
+          window.location.href = destino;
         }
       }, 1500);
 
