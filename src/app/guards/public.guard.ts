@@ -1,48 +1,40 @@
-import { inject } from '@angular/core';
+import { inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth, authState } from '@angular/fire/auth';
-import { Firestore, doc, docData } from '@angular/fire/firestore';
-import { switchMap, map, filter, take } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { switchMap, filter, take } from 'rxjs/operators';
+import { from, of } from 'rxjs';
 
-/**
- * 🛡️ PUBLIC GUARD
- * Protege rutas públicas (login, registro) para que usuarios con sesión
- * activa no puedan volver a verlas.
- *
- * Sin sesión           → deja pasar ✅ (puede ver login/registro)
- * Con sesión + pendiente → /onboarding
- * Con sesión + rol final → su dashboard directamente
- *
- * ⚠️ ANTES mandaba siempre a /onboarding, lo que causaba un loop:
- *   publicGuard → /onboarding → onboardingGuard → /dashboard → publicGuard...
- *   Ahora consultamos Firestore para saber exactamente a dónde ir.
- */
 export const publicGuard: CanActivateFn = (route, state) => {
   const auth = inject(Auth);
   const firestore = inject(Firestore);
   const router = inject(Router);
+  const injector = inject(EnvironmentInjector);
 
   return authState(auth).pipe(
-    filter(user => user !== undefined), // Espera inicialización de Firebase
+    filter(user => user !== undefined),
     take(1),
     switchMap(user => {
       if (!user) {
-        // Sin sesión → puede ver login/registro ✅
-        return of(true);
+        return of(true); // Sin sesión → puede ver login/registro ✅
       }
 
-      // Hay sesión: revisamos su estado en Firestore para redirigir correctamente
-      const docRef = doc(firestore, `usuarios/${user.uid}`);
-      return docData(docRef).pipe(
-        take(1),
-        map((data: any) => {
-          if (!data || !data.onboardingCompletado || data.rol === 'pendiente') {
-            // Sesión activa pero sin onboarding → a completarlo
+      return from(
+        runInInjectionContext(injector, async () => {
+          const docRef = doc(firestore, `usuarios/${user.uid}`);
+          const snapshot = await getDoc(docRef);
+
+          if (!snapshot.exists()) {
             return router.createUrlTree(['/onboarding']);
           }
-          // Ya tiene cuenta completa → su dashboard directo
-          const ruta = data.rol === 'coach' ? '/coach/dashboard' : '/entreno';
+
+          const data = snapshot.data();
+
+          if (!data['onboardingCompletado'] || data['rol'] === 'pendiente') {
+            return router.createUrlTree(['/onboarding']);
+          }
+
+          const ruta = data['rol'] === 'coach' ? '/coach/dashboard' : '/entreno';
           return router.createUrlTree([ruta]);
         })
       );
