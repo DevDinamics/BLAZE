@@ -58,7 +58,7 @@ export class LoginPage {
   async ionViewDidEnter() {
     this.cargandoGoogle = true;
 
-    // Espía de sesión: detecta cualquier cambio de auth (login normal o Google)
+    // Espía de sesión: detecta si ya hay una sesión activa (ej. al refrescar la página)
     this.authSub = onAuthStateChanged(this.auth, async (user) => {
       if (user) {
         await this.redirigirPorRol(user.uid);
@@ -139,6 +139,7 @@ export class LoginPage {
         this.cargando = false;
         return;
       }
+
       // El onAuthStateChanged detecta el login y redirige automáticamente
 
     } catch (error: any) {
@@ -153,9 +154,10 @@ export class LoginPage {
   async loginGoogle() {
     this.cargandoGoogle = true;
     try {
-      // loginConGoogle() hace el popup Y crea el perfil en Firestore si es nuevo.
-      // Al terminar, onAuthStateChanged detecta la sesión y llama redirigirPorRol().
-      await this.authService.loginConGoogle();
+      // ✅ loginConGoogle() ya regresa el usuario directo desde el popup
+      // No esperamos al spy — redirigimos inmediatamente con el uid en mano
+      const user = await this.authService.loginConGoogle();
+      await this.redirigirPorRol(user.uid);
     } catch (error: any) {
       this.cargandoGoogle = false;
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -188,7 +190,7 @@ export class LoginPage {
       const rol = data['rol'];
       const onboardingCompletado = data['onboardingCompletado'];
 
-      // Sin onboarding completo → a terminarlo
+      // Onboarding pendiente → a completarlo
       if (!onboardingCompletado || rol === 'pendiente') {
         this.navCtrl.navigateRoot('/onboarding');
         return;

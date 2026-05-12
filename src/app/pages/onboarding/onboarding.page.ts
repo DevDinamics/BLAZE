@@ -8,12 +8,11 @@ import {
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
 } from 'ionicons/icons';
 
-// ✅ Usamos authState directamente — es más confiable que user$ de AuthService
-// porque garantiza que emite null (sin sesión) o User (con sesión), nunca undefined.
-import { Auth, authState } from '@angular/fire/auth';
+// ✅ firstValueFrom reemplaza al subscribe problemático
 import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
+import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 
 @Component({
@@ -66,8 +65,8 @@ export class OnboardingPage implements OnDestroy {
   };
 
   constructor(
-    private auth: Auth,
     private navCtrl: NavController,
+    private authService: AuthService,
     private studentService: StudentService,
     private loadingCtrl: LoadingController
   ) {
@@ -77,7 +76,9 @@ export class OnboardingPage implements OnDestroy {
     });
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    // firstValueFrom se cierra solo — no hay suscripciones que limpiar
+  }
 
   generarArregloPasos(): number[] {
     return Array(this.totalPasos).fill(0);
@@ -153,10 +154,12 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
-      // ✅ authState() emite null o User — nunca queda colgado como user$
-      // filter(u => u !== null) espera hasta tener un usuario real confirmado
+      // ✅ firstValueFrom con filter(u => u !== undefined) espera a que Firebase
+      // inicialice y entregue el usuario real — nunca actúa con undefined o null.
+      // Reemplaza al subscribe que en producción podía dispararse múltiples veces
+      // o nunca si Firebase tardaba en resolver.
       const user = await firstValueFrom(
-        authState(this.auth).pipe(filter(u => u !== null))
+        this.authService.user$.pipe(filter(u => u !== undefined))
       );
 
       if (!user) {
@@ -168,7 +171,7 @@ export class OnboardingPage implements OnDestroy {
       const perfilActualizado: any = {
         rol: this.datos.rol,
         foto: this.datos.avatar,
-        onboardingCompletado: true  // 🔑 Esta bandera desbloquea el acceso
+        onboardingCompletado: true  // 🔑 Esta bandera desbloquea el acceso a la app
       };
 
       if (this.datos.rol === 'atleta') {
@@ -185,10 +188,12 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio;
       }
 
+      // Guardamos en Firestore
       await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
 
       await loading.dismiss();
 
+      // Navegamos a su destino final según el rol elegido
       if (this.datos.rol === 'coach') {
         this.navCtrl.navigateRoot('/coach/dashboard');
       } else {
