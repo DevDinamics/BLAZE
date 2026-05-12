@@ -1,12 +1,13 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-// 👇 1. Agregamos el ToastController para que la app "hable" si hay un error
 import { IonicModule, NavController, LoadingController, ToastController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { 
   arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
-  barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
+  barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
+  // 👇 1. ÍCONOS SECRETOS DEL CALENDARIO: Sin estos, se vuelve invisible en Producción
+  chevronBack, chevronForward, caretDown, caretUp, chevronDown
 } from 'ionicons/icons';
 
 import { firstValueFrom } from 'rxjs';
@@ -20,6 +21,7 @@ import { StudentService } from 'src/app/services/student';
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
+  // 👇 2. Dejamos solo IonicModule para evitar el choque NG0300
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class OnboardingPage implements OnDestroy {
@@ -69,11 +71,13 @@ export class OnboardingPage implements OnDestroy {
     private authService: AuthService,
     private studentService: StudentService,
     private loadingCtrl: LoadingController,
-    private toastCtrl: ToastController // 👇 2. Lo inyectamos aquí
+    private toastCtrl: ToastController
   ) {
+    // 👇 3. Registramos los íconos del calendario
     addIcons({ 
       arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
-      barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
+      barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
+      chevronBack, chevronForward, caretDown, caretUp, chevronDown
     });
   }
 
@@ -153,7 +157,6 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
-      console.log('1. Obteniendo usuario...');
       const user = await firstValueFrom(
         this.authService.user$.pipe(filter(u => u !== undefined))
       );
@@ -164,7 +167,6 @@ export class OnboardingPage implements OnDestroy {
         return;
       }
 
-      console.log('2. Armando perfil...');
       const perfilActualizado: any = {
         rol: this.datos.rol,
         foto: this.datos.avatar,
@@ -185,21 +187,17 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
-      console.log('3. Limpiando datos...');
       Object.keys(perfilActualizado).forEach(key => {
         if (perfilActualizado[key] === undefined) {
           delete perfilActualizado[key];
         }
       });
 
-      console.log('4. Guardando en Firebase...', perfilActualizado);
       await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
 
       await loading.dismiss();
-      console.log('5. Éxito. Forzando recarga de aplicación...');
 
-      // 👇 EL HACK MAESTRO: Forzamos una recarga real del navegador
-      // Esto destruye la caché de los Guards y los obliga a leer la nueva base de datos.
+      // Forzamos la recarga maestra
       if (this.datos.rol === 'coach') {
         window.location.href = '/coach/dashboard';
       } else {
