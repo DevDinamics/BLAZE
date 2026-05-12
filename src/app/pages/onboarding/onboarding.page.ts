@@ -153,6 +153,7 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
+      console.log('1. Obteniendo usuario...');
       const user = await firstValueFrom(
         this.authService.user$.pipe(filter(u => u !== undefined))
       );
@@ -163,6 +164,7 @@ export class OnboardingPage implements OnDestroy {
         return;
       }
 
+      console.log('2. Armando perfil...');
       const perfilActualizado: any = {
         rol: this.datos.rol,
         foto: this.datos.avatar,
@@ -183,34 +185,34 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
-      // 👇 3. LIMPIEZA DE DATOS: Firestore odia los "undefined", los borramos antes de enviar.
+      console.log('3. Limpiando datos...');
       Object.keys(perfilActualizado).forEach(key => {
         if (perfilActualizado[key] === undefined) {
           delete perfilActualizado[key];
         }
       });
 
-      // Guardamos en Firestore
+      console.log('4. Guardando en Firebase...', perfilActualizado);
       await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
 
-      await new Promise(resolve => setTimeout(resolve, 800));
-
       await loading.dismiss();
+      console.log('5. Éxito. Forzando recarga de aplicación...');
 
+      // 👇 EL HACK MAESTRO: Forzamos una recarga real del navegador
+      // Esto destruye la caché de los Guards y los obliga a leer la nueva base de datos.
       if (this.datos.rol === 'coach') {
-        this.navCtrl.navigateRoot('/coach/dashboard', { replaceUrl: true });
+        window.location.href = '/coach/dashboard';
       } else {
-        this.navCtrl.navigateRoot('/entreno', { replaceUrl: true });
+        window.location.href = '/entreno';
       }
 
     } catch (error: any) {
       console.error('Error al guardar onboarding:', error);
       await loading.dismiss();
       
-      // 👇 4. MOSTRAMOS EL ERROR AL USUARIO: Ya no te quedarás en la oscuridad
       const mensajeError = error.message ? error.message : 'Error de conexión con la base de datos.';
       const toast = await this.toastCtrl.create({
-        message: 'Rechazado: ' + mensajeError,
+        message: 'Error: ' + mensajeError,
         duration: 5000,
         color: 'danger',
         position: 'top',
