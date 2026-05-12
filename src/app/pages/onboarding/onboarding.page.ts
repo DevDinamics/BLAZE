@@ -16,7 +16,6 @@ import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
-// 👇 1. Importamos setDoc, la herramienta más poderosa de Firestore
 import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 
 @Component({
@@ -182,7 +181,6 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
         
-        // 👇 2. ESCUDO ANTI-NaN: Si por alguna razón el número falla, ponemos 0, jamás NaN.
         const edadCalc = this.calcularEdad(this.datos.fechaNacimiento);
         perfilActualizado.edad = isNaN(edadCalc) ? 0 : edadCalc;
 
@@ -197,20 +195,17 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
-      // Limpieza de nulos o indefinidos extrema
       Object.keys(perfilActualizado).forEach(key => {
         if (perfilActualizado[key] === undefined || perfilActualizado[key] === null) {
           delete perfilActualizado[key];
         }
       });
 
-      // 👇 3. EL MODO DIOS: setDoc con merge: true nunca falla. Si el doc existe lo actualiza, si no, lo crea.
       const userRef = doc(this.firestore, `usuarios/${user.uid}`);
       await setDoc(userRef, perfilActualizado, { merge: true });
 
       await loading.dismiss();
 
-      // Éxito rotundo
       const toastExito = await this.toastCtrl.create({
         message: '¡Perfil creado con éxito! 🔥',
         duration: 1500,
@@ -220,14 +215,14 @@ export class OnboardingPage implements OnDestroy {
       });
       await toastExito.present();
 
-      // Recarga forzada para limpiar memoria
+      // 👇 LA SOLUCIÓN FINAL: Usamos el enrutador de Angular para que no haya pantalla negra ni crasheos en Netlify
       setTimeout(() => {
         if (this.datos.rol === 'coach') {
-          window.location.href = '/coach/dashboard';
+          this.navCtrl.navigateRoot('/coach/dashboard', { animated: true, animationDirection: 'forward' });
         } else {
-          window.location.href = '/entreno';
+          this.navCtrl.navigateRoot('/entreno', { animated: true, animationDirection: 'forward' });
         }
-      }, 1000);
+      }, 1500);
 
     } catch (error: any) {
       console.error('Error al guardar onboarding:', error);
