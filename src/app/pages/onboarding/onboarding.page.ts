@@ -16,7 +16,8 @@ import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
-import { Firestore, doc, updateDoc } from '@angular/fire/firestore';
+// 👇 1. Importamos setDoc, la herramienta más poderosa de Firestore
+import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-onboarding',
@@ -177,32 +178,41 @@ export class OnboardingPage implements OnDestroy {
       if (this.datos.rol === 'atleta') {
         perfilActualizado.genero = this.datos.genero;
         perfilActualizado.fechaNacimiento = this.datos.fechaNacimiento;
-        perfilActualizado.edad = this.calcularEdad(this.datos.fechaNacimiento);
-        perfilActualizado.peso = Number(this.datos.peso) || 0;
-        perfilActualizado.estatura = Number(this.datos.estatura) || 0;
         perfilActualizado.objetivo = this.datos.objetivo;
         perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
+        
+        // 👇 2. ESCUDO ANTI-NaN: Si por alguna razón el número falla, ponemos 0, jamás NaN.
+        const edadCalc = this.calcularEdad(this.datos.fechaNacimiento);
+        perfilActualizado.edad = isNaN(edadCalc) ? 0 : edadCalc;
+
+        const pesoCalc = Number(this.datos.peso);
+        perfilActualizado.peso = isNaN(pesoCalc) ? 0 : pesoCalc;
+
+        const estCalc = Number(this.datos.estatura);
+        perfilActualizado.estatura = isNaN(estCalc) ? 0 : estCalc;
+
       } else {
         perfilActualizado.especialidad = this.datos.especialidad || 'General';
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
+      // Limpieza de nulos o indefinidos extrema
       Object.keys(perfilActualizado).forEach(key => {
-        if (perfilActualizado[key] === undefined) {
+        if (perfilActualizado[key] === undefined || perfilActualizado[key] === null) {
           delete perfilActualizado[key];
         }
       });
 
-      // Guardamos en Firebase Directo
+      // 👇 3. EL MODO DIOS: setDoc con merge: true nunca falla. Si el doc existe lo actualiza, si no, lo crea.
       const userRef = doc(this.firestore, `usuarios/${user.uid}`);
-      await updateDoc(userRef, perfilActualizado);
+      await setDoc(userRef, perfilActualizado, { merge: true });
 
       await loading.dismiss();
 
-      // 👇 AQUÍ ESTÁ LA SOLUCIÓN DEL CONGELAMIENTO: Un Toast de éxito y un pequeño retraso
+      // Éxito rotundo
       const toastExito = await this.toastCtrl.create({
-        message: '¡Bienvenido a BLAZE! 🔥',
+        message: '¡Perfil creado con éxito! 🔥',
         duration: 1500,
         color: 'success',
         position: 'top',
@@ -210,20 +220,20 @@ export class OnboardingPage implements OnDestroy {
       });
       await toastExito.present();
 
-      // Esperamos 1.5 segundos para que la base de datos se ponga de acuerdo con el guardia de Angular
+      // Recarga forzada para limpiar memoria
       setTimeout(() => {
         if (this.datos.rol === 'coach') {
           window.location.href = '/coach/dashboard';
         } else {
           window.location.href = '/entreno';
         }
-      }, 1500);
+      }, 1000);
 
     } catch (error: any) {
       console.error('Error al guardar onboarding:', error);
       await loading.dismiss();
       
-      const mensajeError = error.message ? error.message : 'Error de conexión con la base de datos.';
+      const mensajeError = error.message ? error.message : 'Error de conexión con Firebase.';
       const toast = await this.toastCtrl.create({
         message: 'Error: ' + mensajeError,
         duration: 5000,
