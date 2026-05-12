@@ -188,10 +188,10 @@ export class LoginPage {
 
       const data = userDocSnap.data();
       const rol = data['rol'];
-      const onboardingCompletado = data['onboardingCompletado'];
+      const onboardingComplete = data['onboardingComplete'];
 
       // Onboarding pendiente → a completarlo
-      if (!onboardingCompletado || rol === 'pendiente') {
+      if (!onboardingComplete || rol === 'pendiente') {
         this.navCtrl.navigateRoot('/onboarding');
         return;
       }

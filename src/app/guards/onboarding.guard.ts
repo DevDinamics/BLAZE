@@ -31,7 +31,7 @@ export const onboardingGuard: CanActivateFn = (route, state) => {
 
           const data = snapshot.data();
 
-          if (data['onboardingCompletado'] === true && data['rol'] !== 'pendiente') {
+          if (data['onboardingComplete'] === true && data['rol'] !== 'pendiente') {
             const ruta = data['rol'] === 'coach' ? '/coach/dashboard' : '/entreno';
             return router.createUrlTree([ruta]);
           }

@@ -70,7 +70,7 @@ export class AuthService {
       email,
       nombre,
       rol: 'pendiente',
-      onboardingCompletado: false,
+      onboardingComplete: false,
       fechaRegistro: new Date(),
       foto: `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}&background=random`,
       licenciaUsada: 'N/A'
@@ -109,7 +109,7 @@ export class AuthService {
         nombre: user.displayName || 'Nuevo Guerrero',
         foto: user.photoURL || `https://ui-avatars.com/api/?name=G&background=random`,
         rol: 'pendiente',
-        onboardingCompletado: false,
+        onboardingComplete: false,
         xpTotal: 0,
         fechaRegistro: new Date(),
         licenciaUsada: 'Google OAuth'

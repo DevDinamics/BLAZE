@@ -30,7 +30,7 @@ export const publicGuard: CanActivateFn = (route, state) => {
 
           const data = snapshot.data();
 
-          if (!data['onboardingCompletado'] || data['rol'] === 'pendiente') {
+          if (!data['onboardingComplete'] || data['rol'] === 'pendiente') {
             return router.createUrlTree(['/onboarding']);
           }
 

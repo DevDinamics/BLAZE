@@ -171,7 +171,7 @@ export class OnboardingPage implements OnDestroy {
       const perfilActualizado: any = {
         rol: this.datos.rol,
         foto: this.datos.avatar,
-        onboardingCompletado: true
+        onboardingComplete: true
       };
 
       if (this.datos.rol === 'atleta') {
