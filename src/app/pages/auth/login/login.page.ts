@@ -25,15 +25,12 @@ import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 export class LoginPage {
 
   credenciales = { email: '', password: '' };
-
   mostrarPassword = false;
   cargando = false;
   cargandoGoogle = false;
-
   modalRecuperarAbierto = false;
   emailRecuperacion = '';
   enviandoCorreo = false;
-
   private authSub: any = null;
 
   dominiosBloqueados = [
@@ -58,7 +55,18 @@ export class LoginPage {
   async ionViewDidEnter() {
     this.cargandoGoogle = true;
 
-    // Espía de sesión: detecta si ya hay una sesión activa (ej. al refrescar la página)
+    // ✅ PASO 1: Verificamos si venimos de un redirect de Google.
+    // Cuando el usuario hace clic en "Iniciar con Google", la app navega a Google
+    // y regresa a esta misma página. getRedirectResult() captura ese resultado.
+    const googleUser = await this.authService.manejarResultadoGoogle();
+    if (googleUser) {
+      // Venimos de Google con usuario listo — redirigimos directo
+      await this.redirigirPorRol(googleUser.uid);
+      return;
+    }
+
+    // ✅ PASO 2: Espía de sesión para login normal (email/password)
+    // o si ya había una sesión activa al abrir la app.
     this.authSub = onAuthStateChanged(this.auth, async (user) => {
       if (user) {
         await this.redirigirPorRol(user.uid);
@@ -82,9 +90,6 @@ export class LoginPage {
     return !this.dominiosBloqueados.includes(dominio);
   }
 
-  // ==========================================
-  // RECUPERACIÓN DE CONTRASEÑA
-  // ==========================================
   abrirModalRecuperar() {
     this.emailRecuperacion = this.credenciales.email || '';
     this.modalRecuperarAbierto = true;
@@ -112,9 +117,6 @@ export class LoginPage {
     }
   }
 
-  // ==========================================
-  // LOGIN MANUAL
-  // ==========================================
   async login() {
     if (!this.credenciales.email || !this.credenciales.password) {
       this.mostrarMensaje('Por favor ingresa tu correo y contraseña.', 'warning');
@@ -124,14 +126,11 @@ export class LoginPage {
       this.mostrarMensaje('Por favor usa un proveedor de correo válido.', 'warning');
       return;
     }
-
     this.cargando = true;
-
     try {
       const userCredential = await signInWithEmailAndPassword(
         this.auth, this.credenciales.email, this.credenciales.password
       );
-
       const esAdmin = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
       if (!userCredential.user.emailVerified && !esAdmin) {
         this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
@@ -139,30 +138,22 @@ export class LoginPage {
         this.cargando = false;
         return;
       }
-
-      // El onAuthStateChanged detecta el login y redirige automáticamente
-
+      // onAuthStateChanged detecta el login y redirige
     } catch (error: any) {
       this.cargando = false;
       this.manejarErrorFirebase(error.code);
     }
   }
 
-  // ==========================================
-  // LOGIN GOOGLE
-  // ==========================================
   async loginGoogle() {
     this.cargandoGoogle = true;
     try {
-      // ✅ loginConGoogle() ya regresa el usuario directo desde el popup
-      // No esperamos al spy — redirigimos inmediatamente con el uid en mano
-      const user = await this.authService.loginConGoogle();
-      await this.redirigirPorRol(user.uid);
+      // Inicia el redirect — la app navega a Google y regresa al login
+      // ionViewDidEnter → manejarResultadoGoogle() recoge el resultado
+      await this.authService.loginConGoogle();
     } catch (error: any) {
       this.cargandoGoogle = false;
-      if (error.code !== 'auth/popup-closed-by-user') {
-        this.mostrarMensaje('Error al iniciar con Google.', 'danger');
-      }
+      this.mostrarMensaje('Error al iniciar con Google.', 'danger');
     }
   }
 
@@ -170,9 +161,6 @@ export class LoginPage {
     this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. 🍏', 'warning');
   }
 
-  // ==========================================
-  // REDIRECCIÓN POR ROL
-  // ==========================================
   async redirigirPorRol(uid: string) {
     try {
       const userDocRef = doc(this.firestore, 'usuarios', uid);
@@ -187,22 +175,16 @@ export class LoginPage {
       }
 
       const data = userDocSnap.data();
-      const rol = data['rol'];
-      const onboardingCompletado = data['onboardingCompletado'];
 
-      // Onboarding pendiente → a completarlo
-      if (!onboardingCompletado || rol === 'pendiente') {
+      if (!data['onboardingCompletado'] || data['rol'] === 'pendiente') {
         this.navCtrl.navigateRoot('/onboarding');
         return;
       }
 
-      // Onboarding completo → su dashboard
-      if (rol === 'coach') {
+      if (data['rol'] === 'coach') {
         this.navCtrl.navigateRoot('/coach/dashboard');
-      } else if (rol === 'alumno' || rol === 'atleta') {
-        this.navCtrl.navigateRoot('/entreno');
       } else {
-        this.mostrarMensaje('No se pudo determinar tu tipo de cuenta.', 'danger');
+        this.navCtrl.navigateRoot('/entreno');
       }
 
     } catch (error) {
