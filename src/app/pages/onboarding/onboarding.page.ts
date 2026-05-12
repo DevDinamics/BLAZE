@@ -1,18 +1,14 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// 👇 1. Controladores normales de Ionic
 import { NavController, LoadingController, ToastController } from '@ionic/angular';
-
-// 👇 2. EL TRUCO STANDALONE: Importamos SOLO lo que usas en tu HTML, sin el gigante IonicModule
 import { IonContent, IonIcon, IonModal, IonDatetime } from '@ionic/angular/standalone'; 
 
 import { addIcons } from 'ionicons';
 import { 
   arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
-  // Íconos internos secretos del calendario para que no desaparezca en producción
   chevronBack, chevronForward, caretDown, caretUp, chevronDown
 } from 'ionicons/icons';
 
@@ -20,17 +16,18 @@ import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
-import { StudentService } from 'src/app/services/student';
+import { Firestore, doc, updateDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-onboarding',
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
-  // 👇 3. Inyectamos las piezas exactas, cero choques NG0300
   imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime]
 })
 export class OnboardingPage implements OnDestroy {
+
+  private firestore = inject(Firestore);
 
   pasoActual: number = 1;
   totalPasos: number = 1;
@@ -75,7 +72,6 @@ export class OnboardingPage implements OnDestroy {
   constructor(
     private navCtrl: NavController,
     private authService: AuthService,
-    private studentService: StudentService,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
   ) {
@@ -198,16 +194,30 @@ export class OnboardingPage implements OnDestroy {
         }
       });
 
-      await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
+      // Guardamos en Firebase Directo
+      const userRef = doc(this.firestore, `usuarios/${user.uid}`);
+      await updateDoc(userRef, perfilActualizado);
 
       await loading.dismiss();
 
-      // Forzamos la recarga maestra
-      if (this.datos.rol === 'coach') {
-        window.location.href = '/coach/dashboard';
-      } else {
-        window.location.href = '/entreno';
-      }
+      // 👇 AQUÍ ESTÁ LA SOLUCIÓN DEL CONGELAMIENTO: Un Toast de éxito y un pequeño retraso
+      const toastExito = await this.toastCtrl.create({
+        message: '¡Bienvenido a BLAZE! 🔥',
+        duration: 1500,
+        color: 'success',
+        position: 'top',
+        mode: 'ios'
+      });
+      await toastExito.present();
+
+      // Esperamos 1.5 segundos para que la base de datos se ponga de acuerdo con el guardia de Angular
+      setTimeout(() => {
+        if (this.datos.rol === 'coach') {
+          window.location.href = '/coach/dashboard';
+        } else {
+          window.location.href = '/entreno';
+        }
+      }, 1500);
 
     } catch (error: any) {
       console.error('Error al guardar onboarding:', error);
