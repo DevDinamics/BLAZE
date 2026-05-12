@@ -1,7 +1,8 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, LoadingController } from '@ionic/angular';
+// 👇 1. Agregamos el ToastController para que la app "hable" si hay un error
+import { IonicModule, NavController, LoadingController, ToastController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { 
   arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
@@ -67,7 +68,8 @@ export class OnboardingPage implements OnDestroy {
     private navCtrl: NavController,
     private authService: AuthService,
     private studentService: StudentService,
-    private loadingCtrl: LoadingController
+    private loadingCtrl: LoadingController,
+    private toastCtrl: ToastController // 👇 2. Lo inyectamos aquí
   ) {
     addIcons({ 
       arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
@@ -171,37 +173,50 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.genero = this.datos.genero;
         perfilActualizado.fechaNacimiento = this.datos.fechaNacimiento;
         perfilActualizado.edad = this.calcularEdad(this.datos.fechaNacimiento);
-        perfilActualizado.peso = Number(this.datos.peso);
-        perfilActualizado.estatura = Number(this.datos.estatura);
+        perfilActualizado.peso = Number(this.datos.peso) || 0;
+        perfilActualizado.estatura = Number(this.datos.estatura) || 0;
         perfilActualizado.objetivo = this.datos.objetivo;
-        perfilActualizado.tieneLesion = this.datos.tieneLesion;
+        perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
       } else {
-        perfilActualizado.especialidad = this.datos.especialidad;
-        perfilActualizado.bio = this.datos.bio;
+        perfilActualizado.especialidad = this.datos.especialidad || 'General';
+        perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
+
+      // 👇 3. LIMPIEZA DE DATOS: Firestore odia los "undefined", los borramos antes de enviar.
+      Object.keys(perfilActualizado).forEach(key => {
+        if (perfilActualizado[key] === undefined) {
+          delete perfilActualizado[key];
+        }
+      });
 
       // Guardamos en Firestore
       await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
 
-      // ✅ FIX DEL RACE CONDITION:
-      // Esperamos 800ms para que Firestore confirme la escritura antes de navegar.
-      // Sin este delay, el onboardingGuard lee los datos viejos (onboardingCompletado: false)
-      // y nos regresa al onboarding justo cuando intentamos salir de él.
       await new Promise(resolve => setTimeout(resolve, 800));
 
       await loading.dismiss();
 
-      // Navegamos usando replaceUrl para que el guard no pueda regresarnos
       if (this.datos.rol === 'coach') {
         this.navCtrl.navigateRoot('/coach/dashboard', { replaceUrl: true });
       } else {
         this.navCtrl.navigateRoot('/entreno', { replaceUrl: true });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al guardar onboarding:', error);
       await loading.dismiss();
+      
+      // 👇 4. MOSTRAMOS EL ERROR AL USUARIO: Ya no te quedarás en la oscuridad
+      const mensajeError = error.message ? error.message : 'Error de conexión con la base de datos.';
+      const toast = await this.toastCtrl.create({
+        message: 'Rechazado: ' + mensajeError,
+        duration: 5000,
+        color: 'danger',
+        position: 'top',
+        mode: 'ios'
+      });
+      await toast.present();
     }
   }
 }
