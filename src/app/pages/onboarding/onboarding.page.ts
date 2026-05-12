@@ -8,7 +8,6 @@ import {
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline 
 } from 'ionicons/icons';
 
-// ✅ firstValueFrom reemplaza al subscribe problemático
 import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -76,9 +75,7 @@ export class OnboardingPage implements OnDestroy {
     });
   }
 
-  ngOnDestroy() {
-    // firstValueFrom se cierra solo — no hay suscripciones que limpiar
-  }
+  ngOnDestroy() {}
 
   generarArregloPasos(): number[] {
     return Array(this.totalPasos).fill(0);
@@ -154,10 +151,6 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
-      // ✅ firstValueFrom con filter(u => u !== undefined) espera a que Firebase
-      // inicialice y entregue el usuario real — nunca actúa con undefined o null.
-      // Reemplaza al subscribe que en producción podía dispararse múltiples veces
-      // o nunca si Firebase tardaba en resolver.
       const user = await firstValueFrom(
         this.authService.user$.pipe(filter(u => u !== undefined))
       );
@@ -171,7 +164,7 @@ export class OnboardingPage implements OnDestroy {
       const perfilActualizado: any = {
         rol: this.datos.rol,
         foto: this.datos.avatar,
-        onboardingCompletado: true  // 🔑 Esta bandera desbloquea el acceso a la app
+        onboardingCompletado: true
       };
 
       if (this.datos.rol === 'atleta') {
@@ -191,13 +184,19 @@ export class OnboardingPage implements OnDestroy {
       // Guardamos en Firestore
       await this.studentService.actualizarPerfil(user.uid, perfilActualizado);
 
+      // ✅ FIX DEL RACE CONDITION:
+      // Esperamos 800ms para que Firestore confirme la escritura antes de navegar.
+      // Sin este delay, el onboardingGuard lee los datos viejos (onboardingCompletado: false)
+      // y nos regresa al onboarding justo cuando intentamos salir de él.
+      await new Promise(resolve => setTimeout(resolve, 800));
+
       await loading.dismiss();
 
-      // Navegamos a su destino final según el rol elegido
+      // Navegamos usando replaceUrl para que el guard no pueda regresarnos
       if (this.datos.rol === 'coach') {
-        this.navCtrl.navigateRoot('/coach/dashboard');
+        this.navCtrl.navigateRoot('/coach/dashboard', { replaceUrl: true });
       } else {
-        this.navCtrl.navigateRoot('/entreno');
+        this.navCtrl.navigateRoot('/entreno', { replaceUrl: true });
       }
 
     } catch (error) {
