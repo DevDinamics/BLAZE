@@ -1,12 +1,18 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, LoadingController, ToastController } from '@ionic/angular';
+
+// 👇 1. Controladores normales de Ionic
+import { NavController, LoadingController, ToastController } from '@ionic/angular';
+
+// 👇 2. EL TRUCO STANDALONE: Importamos SOLO lo que usas en tu HTML, sin el gigante IonicModule
+import { IonContent, IonIcon, IonModal, IonDatetime } from '@ionic/angular/standalone'; 
+
 import { addIcons } from 'ionicons';
 import { 
   arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
-  // 👇 1. ÍCONOS SECRETOS DEL CALENDARIO: Sin estos, se vuelve invisible en Producción
+  // Íconos internos secretos del calendario para que no desaparezca en producción
   chevronBack, chevronForward, caretDown, caretUp, chevronDown
 } from 'ionicons/icons';
 
@@ -21,8 +27,8 @@ import { StudentService } from 'src/app/services/student';
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
-  // 👇 2. Dejamos solo IonicModule para evitar el choque NG0300
-  imports: [IonicModule, CommonModule, FormsModule]
+  // 👇 3. Inyectamos las piezas exactas, cero choques NG0300
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime]
 })
 export class OnboardingPage implements OnDestroy {
 
@@ -73,7 +79,6 @@ export class OnboardingPage implements OnDestroy {
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
   ) {
-    // 👇 3. Registramos los íconos del calendario
     addIcons({ 
       arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
       barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
