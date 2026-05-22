@@ -2,18 +2,31 @@ import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { NavController, LoadingController, ToastController } from '@ionic/angular';
-import { IonContent, IonIcon, IonModal, IonDatetime } from '@ionic/angular/standalone'; 
+// ✅ FIX: Todo Ionic desde UN SOLO lugar — standalone.
+// Mezclar '@ionic/angular' con '@ionic/angular/standalone' en el mismo componente
+// funciona en localhost (JIT) pero explota silenciosamente en producción (AOT).
+import {
+  NavController,
+  LoadingController,
+  ToastController,
+  IonContent,
+  IonIcon,
+  IonModal,
+  IonDatetime,
+  IonSpinner
+} from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
-import { 
-  arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
+import {
+  arrowBackOutline, personOutline, peopleOutline, scaleOutline,
   barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
   chevronBack, chevronForward, caretDown, caretUp, chevronDown
 } from 'ionicons/icons';
 
 import { firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
+// ✅ FIX: Agregamos take(1) para que firstValueFrom nunca se quede colgado
+// esperando un valor que en producción puede tardar o no llegar.
+import { filter, take } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
 import { Firestore, doc, setDoc } from '@angular/fire/firestore';
@@ -23,7 +36,8 @@ import { Firestore, doc, setDoc } from '@angular/fire/firestore';
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime]
+  // ✅ FIX: IonSpinner agregado — se usa en el HTML pero no estaba importado
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime, IonSpinner]
 })
 export class OnboardingPage implements OnDestroy {
 
@@ -75,8 +89,8 @@ export class OnboardingPage implements OnDestroy {
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
   ) {
-    addIcons({ 
-      arrowBackOutline, personOutline, peopleOutline, scaleOutline, 
+    addIcons({
+      arrowBackOutline, personOutline, peopleOutline, scaleOutline,
       barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
       chevronBack, chevronForward, caretDown, caretUp, chevronDown
     });
@@ -150,6 +164,8 @@ export class OnboardingPage implements OnDestroy {
   }
 
   async finalizarOnboarding() {
+    console.log('🚀 finalizarOnboarding iniciado, paso:', this.pasoActual);
+
     const loading = await this.loadingCtrl.create({
       message: 'Creando tu perfil BLAZE...',
       spinner: 'crescent',
@@ -158,8 +174,13 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
+      // ✅ FIX: take(1) garantiza que el observable cierre aunque Firebase
+      // tarde en inicializarse — sin esto se queda colgado en producción.
       const user = await firstValueFrom(
-        this.authService.user$.pipe(filter(u => u !== undefined))
+        this.authService.user$.pipe(
+          filter(u => u !== undefined),
+          take(1)
+        )
       );
 
       if (!user) {
@@ -180,7 +201,7 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.objetivo = this.datos.objetivo;
         perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
-        
+
         // 🛡️ Escudos Anti-NaN
         const edadCalc = this.calcularEdad(this.datos.fechaNacimiento);
         perfilActualizado.edad = isNaN(edadCalc) ? 0 : edadCalc;
@@ -196,20 +217,18 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
-      // Limpieza de nulos o indefinidos extrema
+      // Limpieza de nulos o indefinidos
       Object.keys(perfilActualizado).forEach(key => {
         if (perfilActualizado[key] === undefined || perfilActualizado[key] === null) {
           delete perfilActualizado[key];
         }
       });
 
-      // Guardado invencible con setDoc
       const userRef = doc(this.firestore, `usuarios/${user.uid}`);
       await setDoc(userRef, perfilActualizado, { merge: true });
 
       await loading.dismiss();
 
-      // Éxito rotundo
       const toastExito = await this.toastCtrl.create({
         message: '¡Perfil creado con éxito! 🔥',
         duration: 1500,
@@ -219,27 +238,25 @@ export class OnboardingPage implements OnDestroy {
       });
       await toastExito.present();
 
-      // 🚦 EL ENRUTADOR HÍBRIDO (El jefe final del caché)
       setTimeout(async () => {
         const destino = this.datos.rol === 'coach' ? '/coach/dashboard' : '/entreno';
-        console.log(`Intentando viaje suave a: ${destino}`);
-        
-        // 1. Intentamos el viaje suave de Angular
-        const viajeExitoso = await this.navCtrl.navigateRoot(destino, { animated: true, animationDirection: 'forward' });
-        
-        // 2. Si el Guardia de Angular se pone terco y lo bloquea (viajeExitoso es false)...
+        console.log(`Navegando a: ${destino}`);
+
+        const viajeExitoso = await this.navCtrl.navigateRoot(destino, {
+          animated: true,
+          animationDirection: 'forward'
+        });
+
         if (!viajeExitoso) {
-          console.warn("Angular bloqueó la entrada por caché. Usando fuerza bruta...");
-          // Le damos una patada al navegador recargando la página entera.
-          // Como ya tienes tu archivo _redirects, Netlify no crasheará y te meterá directo.
+          console.warn('Angular bloqueó la navegación. Usando window.location...');
           window.location.href = destino;
         }
       }, 1500);
 
     } catch (error: any) {
-      console.error('Error al guardar onboarding:', error);
+      console.error('❌ Error al guardar onboarding:', error);
       await loading.dismiss();
-      
+
       const mensajeError = error.message ? error.message : 'Error de conexión con Firebase.';
       const toast = await this.toastCtrl.create({
         message: 'Error: ' + mensajeError,
