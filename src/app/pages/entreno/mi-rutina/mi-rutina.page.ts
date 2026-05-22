@@ -1,7 +1,6 @@
 import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-// 👇 1. Importamos ActivatedRoute para leer la URL
 import { ActivatedRoute } from '@angular/router';
 
 import { 
@@ -20,6 +19,9 @@ import {
   informationCircleOutline, trophyOutline, checkmarkCircle, close
 } from 'ionicons/icons';
 
+// 👇 1. IMPORTAMOS FIRESTORE Y SUS FUNCIONES MÁGICAS
+import { Firestore, doc, updateDoc, increment } from '@angular/fire/firestore';
+
 @Component({
   selector: 'app-mi-rutina',
   templateUrl: './mi-rutina.page.html',
@@ -33,6 +35,10 @@ import {
 export class MiRutinaPage implements OnDestroy {
 
   public window = window;
+
+  // 👇 2. INYECTAMOS FIRESTORE Y CREAMOS LA VARIABLE PARA EL ID DEL ALUMNO
+  private firestore = inject(Firestore);
+  uidAlumno: string = ''; 
 
   iconInfo = informationCircleOutline;
   iconTime = timeOutline;
@@ -66,7 +72,7 @@ export class MiRutinaPage implements OnDestroy {
     private loadingCtrl: LoadingController,
     private authService: AuthService,
     private studentService: StudentService,
-    private route: ActivatedRoute // 👇 2. Lo inyectamos en el constructor
+    private route: ActivatedRoute
   ) {
     addIcons({ 
       timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
@@ -80,6 +86,9 @@ export class MiRutinaPage implements OnDestroy {
     this.cargando = true;
     this.authService.user$.subscribe(async user => {
       if (user) {
+        // 👇 3. GUARDAMOS EL ID DEL ALUMNO APENAS ENTRA
+        this.uidAlumno = user.uid; 
+
         const perfil = await this.studentService.obtenerMiPerfil(user.uid);
         if (perfil) {
           const rutinaRaw: any = await this.studentService.obtenerRutinaActual(user.uid, perfil['equipoId']);
@@ -87,25 +96,19 @@ export class MiRutinaPage implements OnDestroy {
           if (rutinaRaw && rutinaRaw.sesiones) {
             this.cicloCompleto = rutinaRaw;
             
-            // 👇 3. ATRAPAMOS EL PARÁMETRO DE LA URL
             let indiceSesionAEntrenar = 0;
             
             this.route.queryParams.subscribe(params => {
               if (params['dia'] !== undefined) {
-                // Si el dashboard mandó un día, lo convertimos a número y lo usamos
                 indiceSesionAEntrenar = parseInt(params['dia'], 10);
               } else {
-                // Si entraron directo, calculamos qué día de la semana es (Lunes=0)
                 let diaSemana = new Date().getDay(); 
                 diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; 
-                // Evitamos un desbordamiento si el coach puso solo 3 días y hoy es el día 6
                 indiceSesionAEntrenar = diaSemana >= rutinaRaw.sesiones.length ? 0 : diaSemana; 
               }
               
-              // 👇 4. CARGAMOS LA SESIÓN QUE CORRESPONDE
               const datosSesion = rutinaRaw.sesiones[indiceSesionAEntrenar];
               
-              // Pequeña lógica para el mensaje de "Hoy no es el día habitual"
               let diaReal = new Date().getDay();
               diaReal = diaReal === 0 ? 6 : diaReal - 1;
               const esDiaCorrecto = indiceSesionAEntrenar === diaReal;
@@ -231,7 +234,8 @@ export class MiRutinaPage implements OnDestroy {
     this.ejercicioSeleccionado = null;
   }
   
-  terminarRutina() { 
+  // 👇 4. AQUI METEMOS EL SUPERPODER PARA ACTUALIZAR FIREBASE
+  async terminarRutina() { 
     if (this.intervaloSesion) clearInterval(this.intervaloSesion);
 
     let volumenTotal = 0;
@@ -249,6 +253,18 @@ export class MiRutinaPage implements OnDestroy {
         volumenTotal += volumenDelEjercicio;
       }
     });
+
+    // LA MAGIA PARA EL DASHBOARD DEL COACH: Actualizamos fechas y sumamos 1 a la racha
+    try {
+      const alumnoRef = doc(this.firestore, `usuarios/${this.uidAlumno}`);
+      await updateDoc(alumnoRef, {
+        ultimaActividad: new Date(),
+        rachaActual: increment(1) 
+      });
+      console.log('¡Racha actualizada en Firebase!');
+    } catch (error) {
+      console.error('Error al actualizar la racha:', error);
+    }
 
     this.navCtrl.navigateRoot(['/entreno/resumen'], {
       state: { 

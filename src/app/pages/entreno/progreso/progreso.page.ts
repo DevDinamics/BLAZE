@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ToastController, LoadingController } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth';
-import { Firestore, doc, onSnapshot, collection, query, getDocs, orderBy } from '@angular/fire/firestore';
+import { Firestore, doc, onSnapshot, collection, query, getDocs, orderBy, where } from '@angular/fire/firestore';
 import { Share } from '@capacitor/share'; 
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { addIcons } from 'ionicons';
@@ -60,7 +60,6 @@ export class ProgresoPage implements OnInit, OnDestroy {
   imagenPreviewBase64: string = '';
   imagenPreviewUri: string = '';
 
-  // 👇 NUEVA VARIABLE: Guardará el avatar transformado a texto
   avatarBase64: string = '';
 
   constructor(
@@ -96,48 +95,72 @@ export class ProgresoPage implements OnInit, OnDestroy {
       if (docSnap.exists()) {
         this.perfil = docSnap.data();
         this.calcularNivel(this.perfil.xpTotal || 0);
-
-        // 👇 LLAMAMOS AL CONVERTIDOR AL CARGAR EL PERFIL
         this.prepararAvatarBase64();
       }
     });
   }
 
-  // 👇 EL TRUCO MAESTRO: Convierte la URL externa en código Base64 para burlar el CORS
   async prepararAvatarBase64() {
     let urlFoto = this.perfil?.foto;
     
-    // Si no tiene foto, generamos la URL de ui-avatars asegurando que no haya espacios en el nombre
     if (!urlFoto) {
       const nombreCodificado = this.perfil?.nombre ? encodeURIComponent(this.perfil.nombre) : 'User';
       urlFoto = `https://ui-avatars.com/api/?name=${nombreCodificado}&background=f57c00&color=fff`;
     }
 
     try {
-      // Agregamos un timestamp para obligar al navegador a no usar la caché problemática
       const urlSegura = urlFoto.includes('?') ? `${urlFoto}&_t=${new Date().getTime()}` : `${urlFoto}?_t=${new Date().getTime()}`;
-      
       const response = await fetch(urlSegura);
       const blob = await response.blob();
       
       const reader = new FileReader();
       reader.onloadend = () => {
-        this.avatarBase64 = reader.result as string; // Aquí se guarda como "data:image/png;base64,..."
+        this.avatarBase64 = reader.result as string; 
       };
       reader.readAsDataURL(blob);
     } catch (error) {
-      console.warn('No se pudo convertir el avatar a base64, usando la URL original', error);
-      this.avatarBase64 = urlFoto; // Fallback por si acaso
+      console.warn('No se pudo convertir el avatar a base64', error);
+      this.avatarBase64 = urlFoto; 
     }
   }
 
   async calcularMetricas(uid: string) {
     this.cargandoMetricas = true;
     try {
-      const historialRef = collection(this.firestore, `usuarios/${uid}/historial`);
-      const q = query(historialRef, orderBy('fecha', 'desc'));
+      const historialRef = collection(this.firestore, 'solicitudes_aprobacion');
+      
+      // 👇 1. QUITAMOS EL orderBy PARA EVITAR EL BLOQUEO DE FIREBASE
+      const q = query(
+        historialRef, 
+        where('alumnoId', '==', uid),
+        where('estado', '==', 'aprobado')
+      );
+      
       const querySnapshot = await getDocs(q);
       
+      // 👇 2. GUARDAMOS LOS DOCUMENTOS EN UN ARREGLO TEMPORAL
+      let entrenos: any[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        let fechaRegistro: Date = new Date();
+
+        // Extraemos la fecha (Soporta Timestamp de Firebase)
+        if (data['fecha'] && data['fecha'].seconds) {
+           fechaRegistro = new Date(data['fecha'].seconds * 1000);
+        } else if (typeof data['fecha'] === 'string') {
+           fechaRegistro = new Date(data['fecha']); 
+        }
+
+        entrenos.push({
+          ...data,
+          fechaReal: fechaRegistro
+        });
+      });
+
+      // 👇 3. ORDENAMOS LAS FECHAS MANUALMENTE (De más reciente a más antigua)
+      entrenos.sort((a, b) => b.fechaReal.getTime() - a.fechaReal.getTime());
+
       let totalEntrenos = 0;
       let totalKilos = 0;
       let totalMinutos = 0;
@@ -145,19 +168,13 @@ export class ProgresoPage implements OnInit, OnDestroy {
       let ultimaFechaEntreno: Date | null = null;
       let fechasEntrenadas: string[] = [];
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      // 👇 4. AHORA SÍ, CALCULAMOS TODO CON LOS DATOS ORDENADOS
+      entrenos.forEach((data) => {
         totalEntrenos++;
-        totalKilos += (data['volumenTotal'] || 0); 
-        totalMinutos += (data['duracionMinutos'] || 0);
+        totalKilos += (data['totalKilos'] || 0); 
+        totalMinutos += (data['duracionMinutos'] || 0); // Si no tienes este campo, se quedará en 0
 
-        let fechaRegistro: Date;
-        if (data['fecha'] && data['fecha'].seconds) {
-           fechaRegistro = new Date(data['fecha'].seconds * 1000);
-        } else {
-           fechaRegistro = new Date(data['fecha']); 
-        }
-
+        const fechaRegistro = data.fechaReal;
         const fechaFormat = fechaRegistro.toISOString().split('T')[0];
         fechasEntrenadas.push(fechaFormat);
 
@@ -180,6 +197,7 @@ export class ProgresoPage implements OnInit, OnDestroy {
          }
       }
 
+      // ASIGNAMOS LOS VALORES FINALES
       this.stats.entrenosCompletados = totalEntrenos;
       this.stats.kilosLevantados = totalKilos;
       this.stats.minutosEntrenados = totalMinutos;

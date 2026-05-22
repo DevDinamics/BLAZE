@@ -38,7 +38,8 @@ export class PerfilPage implements OnInit {
     totalEntrenos: 0,
     rachaActual: 0,
     objetivo: 'Perder peso',      
-    experiencia: 'Principiante'
+    experiencia: 'Principiante',
+    lesiones: ''
   };
 
   mostrarModalAvatares = false;
@@ -120,7 +121,8 @@ export class PerfilPage implements OnInit {
           totalEntrenos: datos.entrenamientosCompletados || 0,
           rachaActual: datos.racha || 0,
           objetivo: datos.objetivo || 'Perder peso',       
-          experiencia: datos.experiencia || 'Principiante'
+          experiencia: datos.experiencia || 'Principiante',
+          lesiones: datos.lesiones || ''
         };
       }
     } catch (error) {

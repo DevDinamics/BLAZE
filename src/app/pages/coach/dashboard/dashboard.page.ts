@@ -1,12 +1,11 @@
-import { Component, OnInit, OnDestroy, inject, NgZone } from '@angular/core'; // 👇 1. Importamos NgZone
+import { Component, OnInit, OnDestroy, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { 
   IonContent, IonIcon, IonSegment, IonSegmentButton, 
-  IonLabel, ToastController, NavController 
-} from '@ionic/angular/standalone'; 
+  IonLabel, ToastController, NavController, IonSpinner } from '@ionic/angular/standalone'; 
 
 import { CoachService } from 'src/app/services/coach'; 
 import { AuthService } from 'src/app/services/auth';   
@@ -15,7 +14,8 @@ import { addIcons } from 'ionicons';
 import { 
   checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
   trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
-  statsChartOutline, keyOutline, restaurantOutline, refreshOutline, settingsOutline 
+  statsChartOutline, keyOutline, restaurantOutline, refreshOutline, settingsOutline,
+  alertCircleOutline, logoWhatsapp
 } from 'ionicons/icons';
 
 import { 
@@ -28,15 +28,15 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonSpinner, 
     CommonModule, FormsModule, RouterModule,
     IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel
   ]
 })
-export class CoachDashboardPage implements OnInit, OnDestroy {
+export class CoachDashboardPage implements OnInit, OnDestroy { // 👈 EL NOMBRE IMPORTANTE
 
   private firestore = inject(Firestore);
-  private ngZone = inject(NgZone); // 👇 2. Inyectamos NgZone para despertar a Angular
+  private ngZone = inject(NgZone); 
 
   iconSettings = settingsOutline;
   iconBarbell = barbellOutline;
@@ -49,10 +49,14 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
   iconRefresh = refreshOutline;
   iconTrophy = trophyOutline;
   iconFlame = flameOutline;
+  iconAlert = alertCircleOutline; 
+  iconChat = logoWhatsapp; 
 
   segmentoActual = 'pendientes';
   pendientes: any[] = [];
-  ranking: any[] = []; 
+  
+  alumnosTop: any[] = []; 
+  alumnosEnRiesgo: any[] = []; 
   
   suscripcionSolicitudes: any; 
   suscripcionRanking: any;
@@ -62,6 +66,7 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
   coachFoto: string = ''; 
   intervaloTiempo: any; 
 
+  porcentajeActividad: number = 0;
   totalAlumnos: number = 0; 
   tieneNuevosAlumnos: boolean = false; 
 
@@ -74,7 +79,8 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
     addIcons({ 
       checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
       trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
-      statsChartOutline, keyOutline, restaurantOutline, refreshOutline, settingsOutline 
+      statsChartOutline, keyOutline, restaurantOutline, refreshOutline, settingsOutline,
+      alertCircleOutline, logoWhatsapp
     });
   }
 
@@ -87,7 +93,7 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
         this.cargarRankingReal();
         
         this.intervaloTiempo = setInterval(() => {
-          this.ngZone.run(() => { // 👇 Obligamos a actualizar los tiempos
+          this.ngZone.run(() => { 
             this.actualizarTiemposEnVivo();
           });
         }, 60000);
@@ -106,7 +112,7 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
     if (!this.uidCoach) return;
     const coachRef = doc(this.firestore, 'usuarios', this.uidCoach);
     this.suscripcionPerfil = onSnapshot(coachRef, (docSnap) => {
-      this.ngZone.run(() => { // 👇 NgZone aquí
+      this.ngZone.run(() => { 
         if (docSnap.exists()) {
           const data = docSnap.data();
           this.coachFoto = data['foto'] || ''; 
@@ -123,7 +129,7 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
               orderBy('fecha', 'desc'));
               
     this.suscripcionSolicitudes = onSnapshot(q, (snapshot) => {
-      this.ngZone.run(() => { // 👇 NgZone aquí
+      this.ngZone.run(() => { 
         this.pendientes = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
@@ -182,8 +188,6 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
   cargarRankingReal() {
     if (!this.uidCoach) return;
     
-    // 👇 SOLUCIÓN: Buscamos solo por 1 campo para no romper a Firebase.
-    // Todos los que tengan mi coachId, me pertenecen.
     const q = query(
       collection(this.firestore, 'usuarios'), 
       where('coachId', '==', this.uidCoach)
@@ -191,25 +195,60 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
     
     this.suscripcionRanking = onSnapshot(q, (snapshot) => {
       this.ngZone.run(() => { 
-        // 1. Extraemos a todos los usuarios que arrojó la base de datos
         let todos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // 2. Filtramos en memoria para asegurarnos de que sean alumnos
         let soloAlumnos = todos.filter((user: any) => user.rol === 'alumno' || user.rol === 'atleta');
-        // 3. Actualizamos nuestras variables
-        this.totalAlumnos = soloAlumnos.length; 
         
-        // 4. La lógica del puntito rojo
+        this.totalAlumnos = soloAlumnos.length; 
         this.tieneNuevosAlumnos = soloAlumnos.some((user: any) => user.vistoPorCoach === false);
 
-        // 🕵️‍♀️ EL RADAR
-        console.log('--- RADAR DE ALUMNOS (VERSIÓN SMART) ---');
-        console.log('Total de alumnos filtrados:', this.totalAlumnos);
-        console.log('¿Debe prender el puntito?:', this.tieneNuevosAlumnos);
+        let activos: any[] = [];
+        let riesgo: any[] = [];
+
+        const hoy = new Date();
+
+        soloAlumnos.forEach((user: any) => {
+          let diasInactivo = 0;
+          let racha = user.rachaActual || 0;
+
+          if (user.ultimaActividad) {
+            const fechaUltima = user.ultimaActividad.toDate ? user.ultimaActividad.toDate() : new Date(user.ultimaActividad);
+            const difTiempo = hoy.getTime() - fechaUltima.getTime();
+            diasInactivo = Math.floor(difTiempo / (1000 * 3600 * 24)); 
+          } else {
+            diasInactivo = 0; 
+          }
+
+          const alumnoProcesado = { ...user, rachaActual: racha, diasInactivo: diasInactivo };
+
+          if (diasInactivo >= 3) {
+            riesgo.push(alumnoProcesado); 
+          } else {
+            activos.push(alumnoProcesado); 
+          }
+        });
+
+        this.alumnosTop = activos.sort((a, b) => b.rachaActual - a.rachaActual);
+        this.alumnosEnRiesgo = riesgo.sort((a, b) => b.diasInactivo - a.diasInactivo);
+
+        if (this.totalAlumnos > 0) {
+          const activosReales = this.totalAlumnos - this.alumnosEnRiesgo.length;
+          this.porcentajeActividad = Math.round((activosReales / this.totalAlumnos) * 100);
+        } else {
+          this.porcentajeActividad = 0;
+        }
       });
-    }, (error) => {
-      console.error("🔥 Error crítico en el Radar:", error);
     });
+  }
+
+  contactarAlumno(alumno: any) {
+    const mensaje = `¡Venga ${alumno.nombre}! 💪 Vi que bajaste el ritmo y entraste a la Zona Fría. ¡No dejes morir tu progreso, te espero en tu próximo entreno! 🔥`;
+    
+    const telefono = alumno.telefono ? alumno.telefono.replace(/\D/g, '') : '';
+    const url = telefono 
+                ? `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}` 
+                : `whatsapp://send?text=${encodeURIComponent(mensaje)}`;
+    
+    window.open(url, '_blank');
   }
 
   async mostrarToast(mensaje: string, color: string) {
@@ -219,5 +258,4 @@ export class CoachDashboardPage implements OnInit, OnDestroy {
 
   irARutinas() { this.navCtrl.navigateForward('/coach/rutinas'); }
   ignorar(id: any) { this.pendientes = this.pendientes.filter(p => p.id !== id); }
-  async renovar(id: any) { this.mostrarToast('Notificación enviada', 'success'); }
 }

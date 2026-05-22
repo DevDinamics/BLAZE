@@ -38,7 +38,6 @@ export class ResumenPage implements OnInit {
     private studentService: StudentService,
     private toastCtrl: ToastController 
   ) {
-    // 👇 Registramos los nuevos íconos outline (y trophy regular para el premio)
     addIcons({ homeOutline, shareSocialOutline, timeOutline, barbellOutline, flameOutline, ribbonOutline, trophyOutline, alertCircleOutline });
 
     const navigation = this.router.getCurrentNavigation();
@@ -69,10 +68,22 @@ export class ResumenPage implements OnInit {
           this.resumen.nivelUsuario = nuevoNivel;
           this.resumen.progresoNivel = xpEnNivelActual / 1000;
 
+          // 👇 EL TRUCO: Convertimos "MM:SS" a un número total de minutos
+          let minutosEntrenados = 0;
+          if (this.resumen.tiempo && this.resumen.tiempo.includes(':')) {
+             const partes = this.resumen.tiempo.split(':');
+             const minutos = parseInt(partes[0], 10) || 0;
+             const segundos = parseInt(partes[1], 10) || 0;
+             // Sumamos los minutos y si los segundos pasan de 30, redondeamos hacia arriba
+             minutosEntrenados = minutos + (segundos > 30 ? 1 : 0);
+          }
+
+          // 👇 AHORA SÍ, ENVIAMOS EL CAMPO 'duracionMinutos' PARA QUE LO LEA EL DASHBOARD
           await this.studentService.registrarTerminoRutina(user.uid, {
             ...this.resumen,
             fecha: new Date(),
-            nivelAlcanzado: nuevoNivel
+            nivelAlcanzado: nuevoNivel,
+            duracionMinutos: minutosEntrenados 
           });
 
           this.guardadoExitoso = true;
@@ -85,12 +96,11 @@ export class ResumenPage implements OnInit {
     });
   }
 
-  // 👇 Notificación Estilo Pastilla iOS
   async mostrarError(mensaje: string) {
     const toast = await this.toastCtrl.create({
       message: mensaje, 
       duration: 4000,
-      position: 'top', // Arriba, debajo de la isla
+      position: 'top', 
       mode: 'ios',
       color: 'danger',
       icon: 'alert-circle-outline',
@@ -115,7 +125,7 @@ export class ResumenPage implements OnInit {
   }
 
   volverAlHome() {
-    this.navCtrl.navigateRoot('/entreno'); // Asegúrate que esta sea tu ruta correcta del dashboard del alumno
+    this.navCtrl.navigateRoot('/entreno'); 
   }
 
   compartir() {

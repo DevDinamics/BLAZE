@@ -13,7 +13,7 @@ import {
   IonIcon,
   IonModal,
   IonDatetime,
-  IonSpinner
+  
 } from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
@@ -37,7 +37,7 @@ import { Firestore, doc, setDoc } from '@angular/fire/firestore';
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
   // ✅ FIX: IonSpinner agregado — se usa en el HTML pero no estaba importado
-  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime, IonSpinner]
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime]
 })
 export class OnboardingPage implements OnDestroy {
 

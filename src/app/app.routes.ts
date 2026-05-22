@@ -47,8 +47,8 @@ export const routes: Routes = [
   {
     path: 'coach/dashboard',
     loadComponent: () => import('./pages/coach/dashboard/dashboard.page').then( m => m.CoachDashboardPage),
-    canActivate: [authGuard] // 🛡️ Guardia VIP activado
-  }, 
+    canActivate: [authGuard]
+  },
   {
     path: 'coach/ejercicios',
     loadComponent: () => import('./pages/coach/ejercicios/ejercicios.page').then( m => m.EjerciciosPage),
