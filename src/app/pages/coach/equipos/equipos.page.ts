@@ -2,11 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// 👇 FIX MÁGICO: Importamos TODO desde standalone. 
-// Esto asegura que los controladores sobrevivan al empaquetado de Producción.
 import { 
-  IonContent, IonIcon, IonSpinner, IonModal,
-  NavController, ToastController, AlertController, LoadingController, ActionSheetController 
+  IonContent, IonIcon, IonSpinner, IonModal, 
+  NavController, ToastController, LoadingController 
 } from '@ionic/angular/standalone';
 
 import { AuthService } from 'src/app/services/auth';
@@ -16,7 +14,7 @@ import {
   arrowBack, people, add, trash, shareSocial, lockClosed, star, 
   ellipsisVertical, alertCircle, checkmarkCircle, 
   copyOutline, shareSocialOutline, keyOutline,
-  rocketOutline, closeOutline
+  rocketOutline, closeOutline, createOutline, trashOutline, warning
 } from 'ionicons/icons';
 
 @Component({
@@ -24,7 +22,6 @@ import {
   templateUrl: './equipos.page.html',
   styleUrls: ['./equipos.page.scss'],
   standalone: true,
-  // 👇 FIX: Declaramos los módulos de UI de Ionic explícitamente aquí
   imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSpinner, IonModal]
 })
 export class EquiposPage implements OnInit {
@@ -42,13 +39,22 @@ export class EquiposPage implements OnInit {
   cargando = true;
 
   mostrarModalPro = false;
+  
+  mostrarModalOpciones = false;
+  equipoSeleccionado: any = null;
+
+  // 👇 Variables para los nuevos Modales Premium
+  mostrarModalFormEquipo = false;
+  modoFormEquipo: 'crear' | 'editar' = 'crear';
+  tempEquipo = { id: '', nombre: '', desc: '' };
+
+  mostrarModalBorrar = false;
+  equipoParaBorrar: any = null;
 
   constructor(
     private navCtrl: NavController,
     private toastCtrl: ToastController,
-    private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
-    private actionSheetCtrl: ActionSheetController,
     private authService: AuthService,
     private coachService: CoachService
   ) {
@@ -56,7 +62,7 @@ export class EquiposPage implements OnInit {
       arrowBack, people, add, trash, shareSocial, lockClosed, star, 
       ellipsisVertical, alertCircle, checkmarkCircle,
       copyOutline, shareSocialOutline, keyOutline,
-      rocketOutline, closeOutline 
+      rocketOutline, closeOutline, createOutline, trashOutline, warning
     });
   }
 
@@ -85,31 +91,48 @@ export class EquiposPage implements OnInit {
     this.navCtrl.back();
   }
 
+  // ── MODAL FORMULARIO: CREAR / EDITAR ──
   async crearNuevoEquipo() {
     if (this.equipos.length >= this.miPlan.maxEquipos) {
       this.mostrarModalPro = true;
       return;
     }
+    this.modoFormEquipo = 'crear';
+    this.tempEquipo = { id: '', nombre: '', desc: '' };
+    this.mostrarModalFormEquipo = true;
+  }
 
-    const alert = await this.alertCtrl.create({
-      header: 'Nuevo Equipo',
-      cssClass: 'alert-pill',
-      mode: 'ios', // 👈 Forzamos el estilo premium
-      inputs: [
-        { name: 'nombre', type: 'text', placeholder: 'Nombre (Ej: Team Hipertrofia)' },
-        { name: 'desc', type: 'text', placeholder: 'Descripción corta' }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Crear',
-          handler: (data) => {
-            if (data.nombre) this.guardarEquipoEnNube(data.nombre, data.desc);
-          }
-        }
-      ]
-    });
-    await alert.present();
+  editarNombreEquipo() {
+    const equipo = this.equipoSeleccionado;
+    this.mostrarModalOpciones = false;
+    if (equipo) {
+      setTimeout(() => {
+        this.modoFormEquipo = 'editar';
+        this.tempEquipo = { id: equipo.id, nombre: equipo.nombre, desc: equipo.descripcion || '' };
+        this.mostrarModalFormEquipo = true;
+      }, 350);
+    }
+  }
+
+  cerrarModalFormEquipo() {
+    this.mostrarModalFormEquipo = false;
+  }
+
+  async confirmarFormEquipo() {
+    if (!this.tempEquipo.nombre.trim()) {
+      this.mostrarToast('Por favor escribe un nombre.', 'danger');
+      return;
+    }
+    
+    this.cerrarModalFormEquipo();
+
+    if (this.modoFormEquipo === 'crear') {
+      await this.guardarEquipoEnNube(this.tempEquipo.nombre, this.tempEquipo.desc);
+    } else {
+      await this.coachService.actualizarEquipo(this.tempEquipo.id, this.tempEquipo.nombre);
+      this.mostrarToast('Nombre actualizado con éxito', 'success');
+      this.cargarPerfilYEquipos();
+    }
   }
 
   async guardarEquipoEnNube(nombre: string, desc: string) {
@@ -120,7 +143,7 @@ export class EquiposPage implements OnInit {
     try {
       await this.coachService.crearEquipo(nombre, this.uidCoach, this.miPlan.tipo);
       await this.cargarPerfilYEquipos();
-      this.mostrarToast('Equipo creado con exito', 'success');
+      this.mostrarToast('Equipo creado con éxito', 'success');
     } catch (error) {
       console.error(error);
       this.mostrarToast('Error al crear equipo', 'danger');
@@ -129,60 +152,25 @@ export class EquiposPage implements OnInit {
     }
   }
 
-  async opcionesEquipo(equipo: any) {
-    const actionSheet = await this.actionSheetCtrl.create({
-      header: equipo.nombre,
-      mode: 'ios', // 👈 Forzamos el estilo premium
-      buttons: [
-        {
-          text: 'Editar Nombre',
-          handler: () => {
-            actionSheet.onDidDismiss().then(() => {
-              this.alertEditar(equipo);
-            });
-          }
-        },
-        {
-          text: 'Eliminar Equipo',
-          role: 'destructive',
-          handler: () => {
-            actionSheet.onDidDismiss().then(() => {
-              this.confirmarBorrar(equipo);
-            });
-          }
-        },
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        }
-      ]
-    });
-    await actionSheet.present();
+  // ── MODAL OPCIONES ──
+  opcionesEquipo(equipo: any) {
+    this.equipoSeleccionado = equipo;
+    this.mostrarModalOpciones = true;
   }
 
-  async alertEditar(equipo: any) {
-    const alert = await this.alertCtrl.create({
-      header: 'Renombrar Equipo',
-      cssClass: 'alert-pill',
-      mode: 'ios',
-      inputs: [
-        { name: 'nombre', type: 'text', value: equipo.nombre, placeholder: 'Nuevo nombre' }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Guardar',
-          handler: async (data) => {
-            if (data.nombre) {
-              await this.coachService.actualizarEquipo(equipo.id, data.nombre);
-              this.mostrarToast('Nombre actualizado', 'success');
-              this.cargarPerfilYEquipos();
-            }
-          }
-        }
-      ]
-    });
-    await alert.present();
+  cerrarOpciones() {
+    this.mostrarModalOpciones = false;
+    setTimeout(() => {
+      if (!this.mostrarModalOpciones) this.equipoSeleccionado = null;
+    }, 400);
+  }
+
+  // ── MODAL ELIMINAR (PELIGRO) ──
+  iniciarBorradoEquipo() {
+    const equipo = this.equipoSeleccionado;
+    if (equipo) {
+      this.confirmarBorrar(equipo);
+    }
   }
 
   async confirmarBorrar(equipo: any) {
@@ -190,41 +178,42 @@ export class EquiposPage implements OnInit {
       this.mostrarToast('Error: El equipo no tiene ID', 'danger');
       return;
     }
+    this.mostrarModalOpciones = false; 
+    this.equipoParaBorrar = equipo;
+    
+    setTimeout(() => {
+      this.mostrarModalBorrar = true;
+    }, 350);
+  }
 
-    const alert = await this.alertCtrl.create({
-      header: 'Eliminar Equipo',
-      cssClass: 'alert-pill',
-      mode: 'ios',
-      message: `Se eliminara el equipo "${equipo.nombre.toUpperCase()}" y se expulsara a todos sus miembros.`,
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Eliminar',
-          role: 'destructive',
-          handler: async () => {
-            const loading = await this.loadingCtrl.create({ message: 'Eliminando...', mode: 'ios' });
-            await loading.present();
-            
-            try {
-              await this.coachService.eliminarEquipo(equipo.id, equipo.miembros || []);
-              this.mostrarToast('Equipo eliminado', 'warning');
-              await this.cargarPerfilYEquipos();
-            } catch (error) {
-              console.error('Error al borrar:', error);
-              this.mostrarToast('Error al eliminar', 'danger');
-            } finally {
-              loading.dismiss();
-            }
-          }
-        }
-      ]
-    });
-    await alert.present();
+  cerrarModalBorrar() {
+    this.mostrarModalBorrar = false;
+    this.equipoParaBorrar = null;
+  }
+
+  async confirmarBorradoReal() {
+    const equipo = this.equipoParaBorrar;
+    this.cerrarModalBorrar();
+    if (!equipo) return;
+
+    const loading = await this.loadingCtrl.create({ message: 'Eliminando...', mode: 'ios' });
+    await loading.present();
+    
+    try {
+      await this.coachService.eliminarEquipo(equipo.id, equipo.miembros || []);
+      this.mostrarToast('Equipo eliminado', 'warning');
+      await this.cargarPerfilYEquipos();
+    } catch (error) {
+      console.error('Error al borrar:', error);
+      this.mostrarToast('Error al eliminar', 'danger');
+    } finally {
+      loading.dismiss();
+    }
   }
 
   async copiarCodigo(codigo: string) {
     await navigator.clipboard.writeText(codigo);
-    this.mostrarToast('Codigo copiado al portapapeles', 'warning');
+    this.mostrarToast('Código copiado al portapapeles', 'warning');
   }
 
   async mostrarToast(mensaje: string, color: string) {
