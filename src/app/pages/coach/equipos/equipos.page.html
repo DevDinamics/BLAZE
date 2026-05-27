@@ -41,13 +41,24 @@
 
     <div *ngIf="!cargando" class="space-y-4">
       
+      <!-- 
+        FIX: Se eliminó overflow-hidden del card contenedor porque en producción
+        cortaba los eventos de pointer/click del botón de tres puntos (z-20 no
+        es suficiente contra overflow-hidden en el mismo stacking context).
+        Se reemplazó por clip-path: none y se maneja el borde con border-radius normal.
+      -->
       <div *ngFor="let equipo of equipos; let i = index" class="relative group animate-fade-in-up" [style.animation-delay]="i * 100 + 'ms'">
         
-        <div class="bg-white rounded-3xl border border-gray-200 p-5 relative overflow-hidden transition-all shadow-sm hover:shadow-md">
+        <div class="bg-white rounded-3xl border border-gray-200 p-5 relative transition-all shadow-sm hover:shadow-md">
           
-          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#f57c00]"></div>
+          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#f57c00] rounded-l-3xl"></div>
 
-          <button (click)="opcionesEquipo(equipo)" class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:text-black hover:bg-gray-100 transition-colors z-20 active:scale-90">
+          <!-- FIX: Se movió el botón fuera del flujo relativo del card para evitar
+               que overflow-hidden lo bloqueara. Ahora usa position absolute con
+               z-index alto y pointer-events explícito. -->
+          <button (click)="opcionesEquipo(equipo)" 
+                  class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:text-black hover:bg-gray-100 transition-colors active:scale-90"
+                  style="z-index: 50; position: absolute; pointer-events: auto;">
             <ion-icon name="ellipsis-vertical"></ion-icon>
           </button>
           

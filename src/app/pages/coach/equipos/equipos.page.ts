@@ -9,7 +9,7 @@ import {
   arrowBack, people, add, trash, shareSocial, lockClosed, star, 
   ellipsisVertical, alertCircle, checkmarkCircle, 
   copyOutline, shareSocialOutline, keyOutline,
-  rocketOutline, closeOutline // 👇 Iconos nuevos para el Modal PRO
+  rocketOutline, closeOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -33,7 +33,6 @@ export class EquiposPage implements OnInit {
   equipos: any[] = [];
   cargando = true;
 
-  // 👇 Variable que controla el modal de Upgrade
   mostrarModalPro = false;
 
   constructor(
@@ -79,7 +78,6 @@ export class EquiposPage implements OnInit {
   }
 
   async crearNuevoEquipo() {
-    // 👇 Si llegamos al límite, abrimos el modal PRO en lugar de la alerta gris
     if (this.equipos.length >= this.miPlan.maxEquipos) {
       this.mostrarModalPro = true;
       return;
@@ -87,6 +85,8 @@ export class EquiposPage implements OnInit {
 
     const alert = await this.alertCtrl.create({
       header: 'Nuevo Equipo',
+      // FIX: cssClass para estilo píldora tipo Apple
+      cssClass: 'alert-pill',
       inputs: [
         { name: 'nombre', type: 'text', placeholder: 'Nombre (Ej: Team Hipertrofia)' },
         { name: 'desc', type: 'text', placeholder: 'Descripción corta' }
@@ -106,13 +106,14 @@ export class EquiposPage implements OnInit {
 
   async guardarEquipoEnNube(nombre: string, desc: string) {
     if (!this.uidCoach) return;
-    const loading = await this.loadingCtrl.create({ message: 'Creando cuartel general...' });
+    const loading = await this.loadingCtrl.create({ message: 'Creando equipo...' });
     await loading.present();
 
     try {
       await this.coachService.crearEquipo(nombre, this.uidCoach, this.miPlan.tipo);
       await this.cargarPerfilYEquipos();
-      this.mostrarToast('¡Equipo creado con éxito! 🚀', 'success');
+      // FIX: sin emojis
+      this.mostrarToast('Equipo creado con exito', 'success');
     } catch (error) {
       console.error(error);
       this.mostrarToast('Error al crear equipo', 'danger');
@@ -121,21 +122,31 @@ export class EquiposPage implements OnInit {
     }
   }
 
+  // FIX PRINCIPAL: El ActionSheet se cierra antes de que el handler del botón
+  // pueda abrir la siguiente alerta en producción. Se debe esperar a que el
+  // ActionSheet haga dismiss antes de presentar la siguiente UI.
   async opcionesEquipo(equipo: any) {
     const actionSheet = await this.actionSheetCtrl.create({
       header: equipo.nombre,
+      // FIX: sin emojis en los textos
       buttons: [
         {
-          text: 'Editar Nombre ✏️',
+          text: 'Editar Nombre',
           handler: () => {
-            this.alertEditar(equipo);
+            // FIX: usar onDidDismiss para esperar que cierre antes de abrir alert
+            actionSheet.onDidDismiss().then(() => {
+              this.alertEditar(equipo);
+            });
           }
         },
         {
-          text: 'Eliminar Equipo 🗑️',
+          text: 'Eliminar Equipo',
           role: 'destructive',
           handler: () => {
-            this.confirmarBorrar(equipo);
+            // FIX: usar onDidDismiss para esperar que cierre antes de abrir alert
+            actionSheet.onDidDismiss().then(() => {
+              this.confirmarBorrar(equipo);
+            });
           }
         },
         {
@@ -150,17 +161,20 @@ export class EquiposPage implements OnInit {
   async alertEditar(equipo: any) {
     const alert = await this.alertCtrl.create({
       header: 'Renombrar Equipo',
+      // FIX: cssClass para estilo píldora tipo Apple
+      cssClass: 'alert-pill',
       inputs: [
         { name: 'nombre', type: 'text', value: equipo.nombre, placeholder: 'Nuevo nombre' }
       ],
       buttons: [
-        'Cancelar',
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Guardar',
           handler: async (data) => {
             if (data.nombre) {
               await this.coachService.actualizarEquipo(equipo.id, data.nombre);
-              this.mostrarToast('Nombre actualizado ✅', 'success');
+              // FIX: sin emojis
+              this.mostrarToast('Nombre actualizado', 'success');
               this.cargarPerfilYEquipos();
             }
           }
@@ -172,15 +186,18 @@ export class EquiposPage implements OnInit {
 
   async confirmarBorrar(equipo: any) {
     if (!equipo || !equipo.id) {
-      this.mostrarToast('Error crítico: El equipo no tiene ID 🛑', 'danger');
+      // FIX: sin emojis
+      this.mostrarToast('Error: El equipo no tiene ID', 'danger');
       return;
     }
 
     const alert = await this.alertCtrl.create({
-      header: '¿Eliminar Equipo?',
-      message: `Se eliminará el equipo "${equipo.nombre.toUpperCase()}" y se expulsará a todos sus miembros.`,
+      header: 'Eliminar Equipo',
+      // FIX: cssClass para estilo píldora tipo Apple
+      cssClass: 'alert-pill',
+      message: `Se eliminara el equipo "${equipo.nombre.toUpperCase()}" y se expulsara a todos sus miembros.`,
       buttons: [
-        'Cancelar',
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Eliminar',
           role: 'destructive',
@@ -190,11 +207,12 @@ export class EquiposPage implements OnInit {
             
             try {
               await this.coachService.eliminarEquipo(equipo.id, equipo.miembros || []);
-              this.mostrarToast('Equipo eliminado y alumnos liberados 🗑️', 'warning');
+              // FIX: sin emojis
+              this.mostrarToast('Equipo eliminado', 'warning');
               await this.cargarPerfilYEquipos();
             } catch (error) {
-              console.error('🔥 Error al borrar:', error);
-              this.mostrarToast('Error al eliminar (Revisa consola)', 'danger');
+              console.error('Error al borrar:', error);
+              this.mostrarToast('Error al eliminar', 'danger');
             } finally {
               loading.dismiss();
             }
@@ -207,7 +225,8 @@ export class EquiposPage implements OnInit {
 
   async copiarCodigo(codigo: string) {
     await navigator.clipboard.writeText(codigo);
-    this.mostrarToast('Código copiado al portapapeles 📋', 'warning');
+    // FIX: sin emojis
+    this.mostrarToast('Codigo copiado al portapapeles', 'warning');
   }
 
   async mostrarToast(mensaje: string, color: string) {

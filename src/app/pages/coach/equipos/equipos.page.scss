@@ -1,0 +1,95 @@
+// Estilo de alertas tipo píldora Apple
+// Se aplica con cssClass: 'alert-pill' en el AlertController
+
+.alert-pill {
+  .alert-wrapper {
+    border-radius: 20px !important;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    max-width: 300px !important;
+    width: 90% !important;
+    margin: auto;
+  }
+
+  .alert-head {
+    padding: 20px 20px 8px !important;
+
+    .alert-title {
+      font-size: 17px !important;
+      font-weight: 700 !important;
+      color: #000 !important;
+      text-align: center;
+      letter-spacing: -0.3px;
+    }
+  }
+
+  .alert-message {
+    font-size: 13px !important;
+    color: #555 !important;
+    text-align: center;
+    padding: 0 20px 16px !important;
+    line-height: 1.5;
+  }
+
+  .alert-input-group {
+    padding: 0 16px 12px !important;
+
+    .alert-input {
+      border: 1px solid #e0e0e0 !important;
+      border-radius: 12px !important;
+      padding: 10px 14px !important;
+      font-size: 15px !important;
+      background: #f9f9f9 !important;
+      margin-bottom: 8px;
+
+      &:focus {
+        border-color: #000 !important;
+        background: #fff !important;
+        outline: none;
+      }
+    }
+  }
+
+  .alert-button-group {
+    flex-direction: row !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    padding: 0 !important;
+    gap: 0;
+
+    .alert-button {
+      flex: 1;
+      margin: 0 !important;
+      padding: 14px 8px !important;
+      font-size: 17px !important;
+      font-weight: 400 !important;
+      color: #007aff !important;
+      border-radius: 0 !important;
+      text-align: center;
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+
+      &:last-child {
+        border-right: none;
+      }
+
+      // Botón de acción principal (el de la derecha: Crear, Guardar)
+      &:last-child:not([role='cancel']) {
+        font-weight: 700 !important;
+      }
+
+      // Botón destructivo (Eliminar)
+      &[role='destructive'] {
+        color: #ff3b30 !important;
+        font-weight: 600 !important;
+      }
+
+      // Botón cancelar
+      &[role='cancel'] {
+        color: #007aff !important;
+        font-weight: 400 !important;
+      }
+    }
+  }
+}
