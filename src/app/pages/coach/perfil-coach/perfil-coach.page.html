@@ -152,7 +152,8 @@
 
       <div *ngIf="tabActual === 'cuenta'" class="px-6 animate-fade-in space-y-8">
         
-        <div>
+        <!-- 👇 Agregamos el *ngIf para ocultar la sección si entró con Google -->
+        <div *ngIf="!esCuentaGoogle">
           <h3 class="font-black text-xl tracking-tight text-black mb-4">Seguridad</h3>
           <div class="bg-gray-50 rounded-3xl border border-gray-200 shadow-sm p-5 space-y-4">
             

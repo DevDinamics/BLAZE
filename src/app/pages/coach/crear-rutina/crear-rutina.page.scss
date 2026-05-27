@@ -1,0 +1,9 @@
+// ─── Wheel picker: ocultar scrollbar en todos los navegadores ────────────────
+.wheel-col {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

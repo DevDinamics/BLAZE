@@ -166,6 +166,7 @@
             </button>
           </div>
 
+          <!-- ─── Tarjeta de ejercicio ──────────────────────────────────────── -->
           <div *ngFor="let ej of rutina.sesiones[sesionActivaIndex].ejercicios; let j = index" 
                class="bg-white rounded-2xl border border-gray-200 p-4 relative shadow-sm">
             
@@ -173,6 +174,7 @@
               <ion-icon name="trash-outline" class="text-sm"></ion-icon>
             </button>
 
+            <!-- Imagen + nombre -->
             <div class="flex items-center gap-3 mb-4 pr-8">
               <div class="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0 p-1">
                 <img [src]="ej.imagen" 
@@ -187,22 +189,34 @@
               </div>
             </div>
 
+            <!-- ─── Botones Series / Reps / Descanso estilo Apple ─── -->
             <div class="grid grid-cols-3 gap-2 mb-3">
-              <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 text-center">
-                <label class="text-[9px] text-gray-500 font-bold uppercase block mb-1">Series</label>
-                <input type="number" [(ngModel)]="ej.series" class="bg-transparent text-black font-black text-sm text-center outline-none w-full">
-              </div>
-              <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 text-center">
-                <label class="text-[9px] text-gray-500 font-bold uppercase block mb-1">Reps</label>
-                <input type="text" [(ngModel)]="ej.reps" class="bg-transparent text-black font-black text-sm text-center outline-none w-full">
-              </div>
-              <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 text-center">
-                <label class="text-[9px] text-gray-500 font-bold uppercase block mb-1">Desc (s)</label>
-                <input type="number" [(ngModel)]="ej.descanso" class="bg-transparent text-black font-black text-sm text-center outline-none w-full">
-              </div>
+
+              <!-- Series -->
+              <button (click)="abrirPicker('series', j)"
+                      class="bg-gray-50 border border-gray-200 rounded-2xl py-3.5 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-sm hover:bg-gray-100">
+                <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Series</span>
+                <span class="text-[22px] font-black text-black leading-tight">{{ ej.series }}</span>
+              </button>
+
+              <!-- Reps (muestra repsMin–repsMax) -->
+              <button (click)="abrirPicker('reps', j)"
+                      class="bg-gray-50 border border-gray-200 rounded-2xl py-3.5 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-sm hover:bg-gray-100">
+                <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Reps</span>
+                <span class="text-[18px] font-black text-black leading-tight">{{ ej.repsMin }}–{{ ej.repsMax }}</span>
+              </button>
+
+              <!-- Descanso -->
+              <button (click)="abrirPicker('descanso', j)"
+                      class="bg-gray-50 border border-gray-200 rounded-2xl py-3.5 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all shadow-sm hover:bg-gray-100">
+                <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Desc (s)</span>
+                <span class="text-[22px] font-black text-black leading-tight">{{ ej.descanso }}</span>
+              </button>
+
             </div>
 
-            <div class="relative group/input">
+            <!-- Nota -->
+            <div class="relative">
               <ion-icon name="flash-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></ion-icon>
               <input type="text" [(ngModel)]="ej.nota" placeholder="Añadir nota o instrucción especial..." 
                      class="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-8 pr-3 text-black text-xs outline-none focus:border-black transition-colors shadow-sm">
@@ -220,6 +234,7 @@
     </div>
   </div>
 
+  <!-- ─── Modal: Plantillas ──────────────────────────────────────────────── -->
   <ion-modal [isOpen]="modalPlantillasAbierto" (didDismiss)="cerrarModalPlantillas()" [initialBreakpoint]="0.85" [breakpoints]="[0, 0.85]">
     <ng-template>
       <div class="h-full bg-white px-5 pt-8">
@@ -254,6 +269,7 @@
     </ng-template>
   </ion-modal>
 
+  <!-- ─── Modal: Alumnos ────────────────────────────────────────────────── -->
   <ion-modal [isOpen]="modalAlumnosAbierto" (didDismiss)="cerrarModalAlumnos()" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.85]">
     <ng-template>
       <div class="h-full bg-white px-5 pt-8">
@@ -292,6 +308,104 @@
     </ng-template>
   </ion-modal>
 
+  <!-- ─── Modal: Picker estilo Apple (scroll-snap puro) ───────────────── -->
+  <ion-modal [isOpen]="mostrarModalPicker"
+             (didDismiss)="mostrarModalPicker = false"
+             [initialBreakpoint]="0.44"
+             [breakpoints]="[0, 0.44]">
+    <ng-template>
+      <div style="height:100%; display:flex; flex-direction:column; background:#f2f2f7;">
+
+        <!-- Header iOS -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 12px; background:#f2f2f7;">
+          <button (click)="mostrarModalPicker = false"
+                  style="color:#007AFF; font-size:17px; font-weight:400; background:none; border:none; cursor:pointer; min-width:70px;">
+            Cancelar
+          </button>
+          <span style="color:#000; font-size:17px; font-weight:600;">{{ tituloPicker }}</span>
+          <button (click)="confirmarPicker()"
+                  style="color:#007AFF; font-size:17px; font-weight:600; background:none; border:none; cursor:pointer; min-width:70px; text-align:right;">
+            Listo
+          </button>
+        </div>
+
+        <div style="height:1px; background:#c6c6c8;"></div>
+
+        <!-- Tarjeta blanca con el wheel -->
+        <div style="background:#fff; margin:12px 16px; border-radius:14px; overflow:hidden; display:flex; align-items:center; height:216px; position:relative;">
+
+          <!-- Líneas de selección -->
+          <div style="position:absolute; top:50%; left:0; right:0; height:44px; transform:translateY(-50%); border-top:1px solid #c6c6c8; border-bottom:1px solid #c6c6c8; pointer-events:none; z-index:2;"></div>
+          <!-- Fades superior e inferior -->
+          <div style="position:absolute; top:0; left:0; right:0; height:76px; background:linear-gradient(to bottom, rgba(255,255,255,0.96), rgba(255,255,255,0)); pointer-events:none; z-index:3;"></div>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:76px; background:linear-gradient(to top, rgba(255,255,255,0.96), rgba(255,255,255,0)); pointer-events:none; z-index:3;"></div>
+
+          <!-- ── 1 columna: Series o Descanso ── -->
+          <ng-container *ngIf="pickerTipo !== 'reps'">
+            <div class="wheel-col"
+                 style="flex:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;"
+                 (scroll)="onWheelScroll($event, 1)">
+              <div style="height:86px;"></div>
+              <div *ngFor="let opt of pickerOpciones"
+                   (click)="pickerValorSeleccionado = opt.value"
+                   style="height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; cursor:pointer; transition: all 0.1s;"
+                   [style.fontWeight]="pickerValorSeleccionado === opt.value ? '600' : '400'"
+                   [style.color]="pickerValorSeleccionado === opt.value ? '#000' : '#8e8e93'"
+                   [style.fontSize]="pickerValorSeleccionado === opt.value ? '22px' : '20px'">
+                {{ opt.text }}
+              </div>
+              <div style="height:86px;"></div>
+            </div>
+          </ng-container>
+
+          <!-- ── 2 columnas: Reps ── -->
+          <ng-container *ngIf="pickerTipo === 'reps'">
+
+            <!-- Columna MIN -->
+            <div class="wheel-col"
+                 style="flex:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;"
+                 (scroll)="onWheelScroll($event, 1)">
+              <div style="height:86px;"></div>
+              <div *ngFor="let opt of pickerOpciones"
+                   (click)="pickerValorSeleccionado = opt.value"
+                   style="height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; cursor:pointer; transition: all 0.1s;"
+                   [style.fontWeight]="pickerValorSeleccionado === opt.value ? '600' : '400'"
+                   [style.color]="pickerValorSeleccionado === opt.value ? '#000' : '#8e8e93'"
+                   [style.fontSize]="pickerValorSeleccionado === opt.value ? '22px' : '20px'">
+                {{ opt.text }}
+              </div>
+              <div style="height:86px;"></div>
+            </div>
+
+            <!-- Separador central -->
+            <div style="display:flex; flex-direction:column; align-items:center; padding:0 6px; pointer-events:none; z-index:4; position:relative;">
+              <span style="color:#3c3c43; font-size:20px; font-weight:300; line-height:1;">–</span>
+              <span style="color:#8e8e93; font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-top:3px;">reps</span>
+            </div>
+
+            <!-- Columna MAX -->
+            <div class="wheel-col"
+                 style="flex:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;"
+                 (scroll)="onWheelScroll($event, 2)">
+              <div style="height:86px;"></div>
+              <div *ngFor="let opt of pickerOpciones"
+                   (click)="pickerValorSeleccionado2 = opt.value"
+                   style="height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; cursor:pointer; transition: all 0.1s;"
+                   [style.fontWeight]="pickerValorSeleccionado2 === opt.value ? '600' : '400'"
+                   [style.color]="pickerValorSeleccionado2 === opt.value ? '#000' : '#8e8e93'"
+                   [style.fontSize]="pickerValorSeleccionado2 === opt.value ? '22px' : '20px'">
+                {{ opt.text }}
+              </div>
+              <div style="height:86px;"></div>
+            </div>
+
+          </ng-container>
+
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+
 </ion-content>
 
 <ion-footer class="ion-no-border">
@@ -306,49 +420,14 @@
 </ion-footer>
 
 <style>
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-  
-  /* 👇 CSS de la nueva barra premium refinada */
-  .custom-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    outline: none;
-  }
-  .custom-slider::-webkit-slider-runnable-track {
-    background: transparent;
-    height: 100%;
-  }
-  
-  /* Thumb para Chrome/Safari/iOS */
   .custom-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    appearance: none;
     width: 24px;
     height: 24px;
+    margin-top: 4px;
     background: #f57c00;
     border-radius: 50%;
     border: 3px solid #ffffff;
-    box-shadow: 0 0 0 1px rgba(245,124,0,0.1), 0 4px 10px rgba(245, 124, 0, 0.4);
-    cursor: pointer;
-    transition: transform 0.1s ease;
-  }
-  .custom-slider::-webkit-slider-thumb:active {
-    transform: scale(0.92);
-  }
-  
-  /* Thumb para Firefox */
-  .custom-slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    background: #f57c00;
-    border-radius: 50%;
-    border: 3px solid #ffffff;
-    box-shadow: 0 0 0 1px rgba(245,124,0,0.1), 0 4px 10px rgba(245, 124, 0, 0.4);
-    cursor: pointer;
-    transition: transform 0.1s ease;
-  }
-  .custom-slider::-moz-range-thumb:active {
-    transform: scale(0.92);
+    box-shadow: 0 4px 10px rgba(245, 124, 0, 0.4);
   }
 </style>

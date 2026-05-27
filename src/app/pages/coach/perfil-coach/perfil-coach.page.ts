@@ -7,7 +7,6 @@ import { addIcons } from 'ionicons';
 import { AuthService } from 'src/app/services/auth';
 import { CoachService } from 'src/app/services/coach';
 
-// 👇 Íconos limpios (outline) para el modo claro
 import { 
   arrowBack, cameraOutline, briefcaseOutline, schoolOutline, ribbonOutline, timeOutline, 
   lockClosedOutline, eyeOutline, eyeOffOutline, personOutline, logOutOutline, trashOutline, 
@@ -26,9 +25,11 @@ export class PerfilCoachPage implements OnInit {
   uidCoach: string = '';
   cargando = true;
 
-  // 👇 Control de UI similar al alumno
   editando = false;
   tabActual: string = 'personal';
+
+  // 👇 Variable para detectar si inició con Google
+  esCuentaGoogle = false;
 
   coach = {
     nombre: '',
@@ -71,9 +72,15 @@ export class PerfilCoachPage implements OnInit {
   }
 
   async ngOnInit() {
-    this.authService.user$.subscribe(async (user) => {
+    this.authService.user$.subscribe(async (user: any) => {
       if (user) {
         this.uidCoach = user.uid;
+        
+        // 👇 Verificamos de dónde viene la sesión (Google vs Correo)
+        if (user.providerData && user.providerData.length > 0) {
+          this.esCuentaGoogle = user.providerData.some((p: any) => p.providerId === 'google.com');
+        }
+
         await this.cargarDatos();
       }
     });
@@ -102,7 +109,6 @@ export class PerfilCoachPage implements OnInit {
     }
   }
 
-  // 👇 Alternar entre ver y editar
   alternarEdicion() {
     if (this.editando) {
       this.guardarPerfil();
@@ -130,7 +136,7 @@ export class PerfilCoachPage implements OnInit {
     try {
       await this.coachService.actualizarPerfilCoach(this.uidCoach, this.coach);
       this.mostrarToast('¡Perfil actualizado exitosamente! 🚀', 'success');
-      this.editando = false; // Cerramos modo edición
+      this.editando = false; 
     } catch (error) {
       this.mostrarToast('Error al guardar. Intenta de nuevo.', 'danger');
     } finally {
