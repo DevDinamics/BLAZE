@@ -1,7 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController, AlertController, LoadingController, ActionSheetController } from '@ionic/angular';
+
+// 👇 FIX MÁGICO: Importamos TODO desde standalone. 
+// Esto asegura que los controladores sobrevivan al empaquetado de Producción.
+import { 
+  IonContent, IonIcon, IonSpinner, IonModal,
+  NavController, ToastController, AlertController, LoadingController, ActionSheetController 
+} from '@ionic/angular/standalone';
+
 import { AuthService } from 'src/app/services/auth';
 import { CoachService } from 'src/app/services/coach';
 import { addIcons } from 'ionicons';
@@ -17,7 +24,8 @@ import {
   templateUrl: './equipos.page.html',
   styleUrls: ['./equipos.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  // 👇 FIX: Declaramos los módulos de UI de Ionic explícitamente aquí
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSpinner, IonModal]
 })
 export class EquiposPage implements OnInit {
 
@@ -85,8 +93,8 @@ export class EquiposPage implements OnInit {
 
     const alert = await this.alertCtrl.create({
       header: 'Nuevo Equipo',
-      // FIX: cssClass para estilo píldora tipo Apple
       cssClass: 'alert-pill',
+      mode: 'ios', // 👈 Forzamos el estilo premium
       inputs: [
         { name: 'nombre', type: 'text', placeholder: 'Nombre (Ej: Team Hipertrofia)' },
         { name: 'desc', type: 'text', placeholder: 'Descripción corta' }
@@ -106,13 +114,12 @@ export class EquiposPage implements OnInit {
 
   async guardarEquipoEnNube(nombre: string, desc: string) {
     if (!this.uidCoach) return;
-    const loading = await this.loadingCtrl.create({ message: 'Creando equipo...' });
+    const loading = await this.loadingCtrl.create({ message: 'Creando equipo...', mode: 'ios' });
     await loading.present();
 
     try {
       await this.coachService.crearEquipo(nombre, this.uidCoach, this.miPlan.tipo);
       await this.cargarPerfilYEquipos();
-      // FIX: sin emojis
       this.mostrarToast('Equipo creado con exito', 'success');
     } catch (error) {
       console.error(error);
@@ -122,18 +129,14 @@ export class EquiposPage implements OnInit {
     }
   }
 
-  // FIX PRINCIPAL: El ActionSheet se cierra antes de que el handler del botón
-  // pueda abrir la siguiente alerta en producción. Se debe esperar a que el
-  // ActionSheet haga dismiss antes de presentar la siguiente UI.
   async opcionesEquipo(equipo: any) {
     const actionSheet = await this.actionSheetCtrl.create({
       header: equipo.nombre,
-      // FIX: sin emojis en los textos
+      mode: 'ios', // 👈 Forzamos el estilo premium
       buttons: [
         {
           text: 'Editar Nombre',
           handler: () => {
-            // FIX: usar onDidDismiss para esperar que cierre antes de abrir alert
             actionSheet.onDidDismiss().then(() => {
               this.alertEditar(equipo);
             });
@@ -143,7 +146,6 @@ export class EquiposPage implements OnInit {
           text: 'Eliminar Equipo',
           role: 'destructive',
           handler: () => {
-            // FIX: usar onDidDismiss para esperar que cierre antes de abrir alert
             actionSheet.onDidDismiss().then(() => {
               this.confirmarBorrar(equipo);
             });
@@ -161,8 +163,8 @@ export class EquiposPage implements OnInit {
   async alertEditar(equipo: any) {
     const alert = await this.alertCtrl.create({
       header: 'Renombrar Equipo',
-      // FIX: cssClass para estilo píldora tipo Apple
       cssClass: 'alert-pill',
+      mode: 'ios',
       inputs: [
         { name: 'nombre', type: 'text', value: equipo.nombre, placeholder: 'Nuevo nombre' }
       ],
@@ -173,7 +175,6 @@ export class EquiposPage implements OnInit {
           handler: async (data) => {
             if (data.nombre) {
               await this.coachService.actualizarEquipo(equipo.id, data.nombre);
-              // FIX: sin emojis
               this.mostrarToast('Nombre actualizado', 'success');
               this.cargarPerfilYEquipos();
             }
@@ -186,15 +187,14 @@ export class EquiposPage implements OnInit {
 
   async confirmarBorrar(equipo: any) {
     if (!equipo || !equipo.id) {
-      // FIX: sin emojis
       this.mostrarToast('Error: El equipo no tiene ID', 'danger');
       return;
     }
 
     const alert = await this.alertCtrl.create({
       header: 'Eliminar Equipo',
-      // FIX: cssClass para estilo píldora tipo Apple
       cssClass: 'alert-pill',
+      mode: 'ios',
       message: `Se eliminara el equipo "${equipo.nombre.toUpperCase()}" y se expulsara a todos sus miembros.`,
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
@@ -202,12 +202,11 @@ export class EquiposPage implements OnInit {
           text: 'Eliminar',
           role: 'destructive',
           handler: async () => {
-            const loading = await this.loadingCtrl.create({ message: 'Eliminando...' });
+            const loading = await this.loadingCtrl.create({ message: 'Eliminando...', mode: 'ios' });
             await loading.present();
             
             try {
               await this.coachService.eliminarEquipo(equipo.id, equipo.miembros || []);
-              // FIX: sin emojis
               this.mostrarToast('Equipo eliminado', 'warning');
               await this.cargarPerfilYEquipos();
             } catch (error) {
@@ -225,7 +224,6 @@ export class EquiposPage implements OnInit {
 
   async copiarCodigo(codigo: string) {
     await navigator.clipboard.writeText(codigo);
-    // FIX: sin emojis
     this.mostrarToast('Codigo copiado al portapapeles', 'warning');
   }
 
@@ -235,6 +233,7 @@ export class EquiposPage implements OnInit {
       duration: 1500,
       color: color,
       position: 'top',
+      mode: 'ios',
       icon: color === 'success' ? 'checkmark-circle' : 'alert-circle'
     });
     toast.present();
