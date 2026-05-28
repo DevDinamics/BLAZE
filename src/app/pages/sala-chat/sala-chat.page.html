@@ -1,0 +1,100 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); --border-width: 0 0 1px 0; --border-color: #f1f5f9;">
+    <div class="px-2 pt-2 pb-2 flex items-center justify-between">
+      
+      <div class="flex items-center gap-1">
+        <button (click)="regresar()" class="h-10 w-10 flex items-center justify-center text-[#007AFF] active:opacity-50 transition-opacity">
+          <ion-icon name="arrow-back" class="text-3xl"></ion-icon>
+        </button>
+        
+        <div class="flex items-center gap-3 cursor-pointer">
+          <div class="relative">
+            <div class="h-10 w-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+              <img [src]="contacto?.foto || 'https://ui-avatars.com/api/?name=' + (contacto?.nombre || 'Coach') + '&background=f9fafb&color=000000'" 
+                   class="w-full h-full object-cover">
+            </div>
+            <div class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+          </div>
+          <div class="leading-tight mt-0.5">
+            <h2 class="text-[15px] font-bold text-black tracking-tight leading-none">{{ contacto?.nombre || 'Coach' }} <span *ngIf="contacto?.apellido">{{ contacto?.apellido }}</span></h2>
+            <p class="text-[11px] text-gray-500 font-medium">Entrenador</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1 pr-2">
+        <button class="h-10 w-10 flex items-center justify-center text-[#007AFF] active:opacity-50 transition-opacity">
+          <ion-icon name="videocam-outline" class="text-2xl"></ion-icon>
+        </button>
+        <button class="h-10 w-10 flex items-center justify-center text-[#007AFF] active:opacity-50 transition-opacity">
+          <ion-icon name="call-outline" class="text-2xl"></ion-icon>
+        </button>
+      </div>
+
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" style="--background: #ffffff;" class="scroll-smooth">
+  
+  <div class="px-4 py-6 font-sans space-y-4 flex flex-col min-h-full">
+
+    <div class="text-center mt-2 mb-6">
+      <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">Hoy</span>
+    </div>
+
+    <ng-container *ngFor="let msg of mensajes; let i = index">
+      
+      <div *ngIf="msg.emisorId === miUid" class="flex justify-end animate-fade-in-up">
+        <div class="max-w-[75%]">
+          <div class="bg-[#007AFF] text-white px-4 py-2.5 rounded-[20px] rounded-br-[4px] shadow-sm text-[15px] leading-relaxed relative">
+            {{ msg.texto }}
+          </div>
+          <p class="text-[10px] text-gray-400 text-right mt-1 font-medium pr-1">Entregado</p>
+        </div>
+      </div>
+
+      <div *ngIf="msg.emisorId !== miUid" class="flex justify-start animate-fade-in-up gap-2">
+        <img [src]="contacto?.foto || 'https://ui-avatars.com/api/?name=' + (contacto?.nombre || 'C') + '&background=f9fafb&color=000000'" 
+             class="h-7 w-7 rounded-full object-cover self-end mb-4 border border-gray-100">
+             
+        <div class="max-w-[75%]">
+          <div class="bg-[#f2f2f7] text-black px-4 py-2.5 rounded-[20px] rounded-bl-[4px] border border-gray-100 shadow-sm text-[15px] leading-relaxed relative">
+            {{ msg.texto }}
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+
+</ion-content>
+
+<ion-footer class="ion-no-border" style="background: #ffffff;">
+  <div class="px-4 py-3 bg-white border-t border-gray-100 pb-safe flex items-end gap-2">
+    
+    <button class="h-[38px] w-[38px] rounded-full flex items-center justify-center text-[#8e8e93] active:bg-gray-100 transition-colors shrink-0 mb-0.5">
+      <ion-icon name="add-outline" class="text-3xl"></ion-icon>
+    </button>
+
+    <div class="flex-1 bg-[#f2f2f7] border border-gray-200 rounded-[20px] flex items-end overflow-hidden min-h-[40px] px-4 py-2.5 transition-colors focus-within:bg-white focus-within:border-gray-300 shadow-inner">
+      <textarea 
+        [(ngModel)]="nuevoMensaje"
+        (keyup.enter)="enviarMensaje()"
+        rows="1"
+        placeholder="Mensaje..." 
+        class="w-full bg-transparent border-none outline-none text-black text-[15px] resize-none p-0 m-0 max-h-[100px]"
+        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'">
+      </textarea>
+    </div>
+
+    <button 
+      (click)="enviarMensaje()"
+      class="h-[38px] w-[38px] rounded-full flex items-center justify-center transition-all duration-300 shrink-0 mb-0.5"
+      [ngClass]="nuevoMensaje.trim() ? 'bg-[#007AFF] text-white shadow-md active:scale-90' : 'bg-gray-100 text-gray-400 pointer-events-none'">
+      <ion-icon name="send" class="text-lg -ml-0.5 mt-0.5"></ion-icon>
+    </button>
+
+  </div>
+</ion-footer>

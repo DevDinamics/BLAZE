@@ -1,9 +1,16 @@
-// ─── Wheel picker: ocultar scrollbar en todos los navegadores ────────────────
+// ─── Wheel picker ─────────────────────────────────────────────────────────────
 .wheel-col {
+  // Ocultar scrollbar en todos los navegadores
   -ms-overflow-style: none;
   scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  // Scroll suave nativo en iOS (momentum scrolling)
+  -webkit-overflow-scrolling: touch;
+
+  // Evita que el scroll del wheel burbujee al modal y lo cierre
+  overscroll-behavior: contain;
+
+  // Evita el bounce horizontal en iOS que desincroniza el snap
+  touch-action: pan-y;
 }

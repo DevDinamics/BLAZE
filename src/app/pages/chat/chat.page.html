@@ -1,0 +1,57 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: #ffffff;">
+    <div class="px-6 pt-6 pb-2 flex justify-between items-end">
+      <h1 class="text-3xl font-black text-black tracking-tight leading-none">Mensajes</h1>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" style="--background: #ffffff;">
+  <div class="min-h-full bg-white font-sans pb-24">
+
+    <div *ngIf="cargando" class="flex justify-center items-center py-20">
+      <ion-spinner name="crescent" color="dark"></ion-spinner>
+    </div>
+
+    <div *ngIf="!cargando && !miCoach" class="flex flex-col items-center justify-center py-20 opacity-60 px-6 text-center">
+      <div class="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-200">
+        <ion-icon name="chatbubbles-outline" class="text-4xl text-gray-400"></ion-icon>
+      </div>
+      <p class="text-black font-bold text-lg tracking-tight">Sin mensajes</p>
+      <p class="text-sm text-gray-500 mt-1">Aún no tienes un Coach asignado para iniciar una conversación.</p>
+    </div>
+
+    <div *ngIf="!cargando && miCoach" class="px-2 mt-4 space-y-1 animate-fade-in-up">
+      
+      <div (click)="abrirChat()"
+           class="flex items-center gap-4 px-4 py-3 rounded-2xl active:bg-gray-50 transition-colors cursor-pointer group">
+        
+        <div class="relative">
+          <div class="h-14 w-14 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shadow-sm">
+            <img [src]="miCoach.foto || 'https://ui-avatars.com/api/?name=' + miCoach.nombre + '&background=f9fafb&color=000000&font-weight=bold'" 
+                 class="w-full h-full object-cover">
+          </div>
+          <div class="absolute bottom-0 right-0 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+        </div>
+
+        <div class="flex-1 border-b border-gray-100 pb-4 pt-1 group-last:border-none">
+          <div class="flex justify-between items-center mb-1">
+            <h3 class="text-base font-bold text-black tracking-tight leading-none">
+              Coach {{ miCoach.nombre }}
+            </h3>
+            <span class="text-[11px] text-gray-400 font-medium">En línea</span>
+          </div>
+          
+          <div class="flex justify-between items-center pr-2">
+            <p class="text-sm text-gray-500 truncate max-w-[220px] font-medium leading-none">
+              Toca para iniciar una conversación...
+            </p>
+            <ion-icon name="chevron-forward-outline" class="text-gray-300"></ion-icon>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+</ion-content>

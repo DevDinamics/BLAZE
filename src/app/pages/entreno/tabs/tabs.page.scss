@@ -1,32 +1,38 @@
 /* ======================================================
-   DISEÑO 3: APPLE PREMIUM TABS (Círculo Negro Activo)
+   DISEÑO NATIVO: APPLE / iOS TABS
    ====================================================== */
 
-/* Limpiamos estilos nativos de Ionic para evitar interferencias */
-ion-tab-bar {
-  contain: none; /* Permite que las sombras e íconos sobresalgan si es necesario */
+.apple-tab-bar {
+  /* Fondo estilo iOS con efecto de desenfoque (cristal) */
+  --background: rgba(249, 249, 249, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  
+  /* Borde superior muy sutil nativo de iOS */
+  --border: 0.5px solid rgba(0, 0, 0, 0.15);
+  
+  /* Color de los íconos inactivos (Gris iOS) */
+  --color: #8e8e93; 
+  
+  /* Color de la pestaña activa (Azul iOS por defecto, 
+     si lo prefieres negro como tu app, cambia este color a #000000) */
+  --color-selected: #007aff; 
+
+  /* Espaciado seguro para los iPhones con la línea inferior */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Efecto de "presionar" para botones inactivos */
-ion-tab-button:not(.tab-selected):active .tab-btn-content {
-  transform: scale(0.92);
-}
+/* Tipografía idéntica a iOS para las etiquetas */
+ion-tab-button {
+  ion-label {
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 2px;
+    letter-spacing: 0.1px;
+  }
 
-/* 1. EL CÍRCULO SE VUELVE NEGRO AL SELECCIONAR */
-ion-tab-button.tab-selected .tab-btn-content {
-  @apply bg-black;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra elegante Apple */
-  transform: translateY(-2px); /* Lo levanta un milímetro */
-}
-
-/* 2. EL ÍCONO SE VUELVE BLANCO AL SELECCIONAR */
-ion-tab-button.tab-selected ion-icon {
-  @apply text-white;
-  transform: scale(1.05); /* El ícono respira dentro del círculo negro */
-}
-
-/* 3. TOQUE EXTRA PARA EL BOTÓN CENTRAL (MI RUTINA) */
-ion-tab-button[tab="mi-rutina"].tab-selected .tab-btn-content {
-  @apply border-black;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); /* Sombra más fuerte porque es más grande */
+  ion-icon {
+    font-size: 24px;
+    margin-bottom: 2px;
+  }
 }

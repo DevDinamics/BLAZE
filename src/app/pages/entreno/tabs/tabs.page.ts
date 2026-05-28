@@ -1,15 +1,14 @@
 import { Component, EnvironmentInjector, inject } from '@angular/core';
 
-// 👇 CAMBIO 1: Importamos explícitamente desde 'standalone' (ADIÓS IonicModule)
-import { IonTabs, IonTabBar, IonTabButton, IonIcon } from '@ionic/angular/standalone';
+import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 
 import { 
-  homeOutline, 
-  barbellOutline, 
-  personOutline, 
-  restaurantOutline, 
-  statsChartOutline 
+  home, homeOutline, 
+  barbell, barbellOutline, 
+  chatbubbles, chatbubblesOutline, // 👈 Íconos de Chat
+  restaurant, restaurantOutline, 
+  statsChart, statsChartOutline 
 } from 'ionicons/icons'; 
 
 @Component({
@@ -17,26 +16,19 @@ import {
   templateUrl: './tabs.page.html',
   styleUrls: ['./tabs.page.scss'],
   standalone: true,
-  // 👇 CAMBIO 2: Registramos los componentes del menú aquí
-  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon],
+  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel],
 })
 export class TabsPage {
   public environmentInjector = inject(EnvironmentInjector);
 
-  // 👇 CAMBIO 3: Creamos las variables para vincularlas al HTML
-  iconHome = homeOutline;
-  iconBarbell = barbellOutline;
-  iconPerson = personOutline;
-  iconRestaurant = restaurantOutline;
-  iconStats = statsChartOutline;
-
   constructor() {
     addIcons({ 
-      homeOutline, 
-      barbellOutline, 
-      personOutline, 
-      restaurantOutline, 
-      statsChartOutline 
+      home, homeOutline, 
+      barbell, barbellOutline, 
+      chatbubbles, 'chatbubbles-outline': chatbubblesOutline, // 👈 Registramos el chat
+      restaurant, restaurantOutline, 
+      'stats-chart': statsChart,
+      'stats-chart-outline': statsChartOutline 
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -30,7 +30,13 @@ import {
     CommonModule, FormsModule
   ] 
 })
-export class CrearRutinaPage implements OnInit {
+export class CrearRutinaPage implements OnInit, AfterViewInit {
+
+  @ViewChildren('wheelCol1') wheelCol1List!: QueryList<ElementRef>;
+  @ViewChildren('wheelCol2') wheelCol2List!: QueryList<ElementRef>;
+
+  private scrollEndTimer1: any = null;
+  private scrollEndTimer2: any = null;
 
   rutinaId: string | null = null; 
   uidCoach: string | null = null;
@@ -87,6 +93,8 @@ export class CrearRutinaPage implements OnInit {
       calendarOutline, notificationsOutline, alertCircleOutline
     });
   }
+
+  ngAfterViewInit() {}
 
   ngOnInit() {
     this.authService.user$.subscribe(async user => {
@@ -175,6 +183,9 @@ export class CrearRutinaPage implements OnInit {
     return 'Descanso';
   }
 
+  /** Altura fija de cada ítem en el wheel (debe coincidir con el CSS) */
+  private readonly ITEM_H = 44;
+
   abrirPicker(tipo: 'series' | 'reps' | 'descanso', indexEjercicio: number) {
     this.pickerTipo = tipo;
     this.ejercicioSeleccionadoIndex = indexEjercicio;
@@ -206,6 +217,24 @@ export class CrearRutinaPage implements OnInit {
     }
 
     this.mostrarModalPicker = true;
+    // Espera a que Angular renderice las columnas y posiciona sin animación
+    setTimeout(() => this.scrollToCurrentValues(false), 80);
+  }
+
+  private scrollToCurrentValues(smooth = true) {
+    const behavior: ScrollBehavior = smooth ? 'smooth' : 'instant';
+    const col1 = this.wheelCol1List?.first?.nativeElement as HTMLElement | undefined;
+    if (col1) {
+      const idx1 = this.pickerOpciones.findIndex((o: any) => o.value === this.pickerValorSeleccionado);
+      if (idx1 >= 0) col1.scrollTo({ top: idx1 * this.ITEM_H, behavior });
+    }
+    if (this.pickerTipo === 'reps') {
+      const col2 = this.wheelCol2List?.first?.nativeElement as HTMLElement | undefined;
+      if (col2) {
+        const idx2 = this.pickerOpciones.findIndex((o: any) => o.value === this.pickerValorSeleccionado2);
+        if (idx2 >= 0) col2.scrollTo({ top: idx2 * this.ITEM_H, behavior });
+      }
+    }
   }
 
   /**
@@ -239,14 +268,37 @@ export class CrearRutinaPage implements OnInit {
    * @param event   Evento nativo de scroll del div
    * @param columna 1 = columna izquierda/única  |  2 = columna derecha (repsMax)
    */
+  /**
+   * onWheelScroll — usa un debounce de 80ms para detectar el final del scroll
+   * y hace snap programático al ítem más cercano, luego actualiza el valor.
+   * Esto soluciona el problema de que el dedo se levanta entre dos ítems.
+   */
   onWheelScroll(event: Event, columna: number) {
     const el = event.target as HTMLElement;
-    const index = Math.round(el.scrollTop / 44);
-    const opt   = this.pickerOpciones[index];
-    if (!opt) return;
 
-    if (columna === 1) this.pickerValorSeleccionado  = opt.value;
-    else               this.pickerValorSeleccionado2 = opt.value;
+    if (columna === 1) {
+      clearTimeout(this.scrollEndTimer1);
+      this.scrollEndTimer1 = setTimeout(() => {
+        const index = Math.round(el.scrollTop / this.ITEM_H);
+        const snapped = index * this.ITEM_H;
+        if (el.scrollTop !== snapped) {
+          el.scrollTo({ top: snapped, behavior: 'smooth' });
+        }
+        const opt = this.pickerOpciones[index];
+        if (opt) this.pickerValorSeleccionado = opt.value;
+      }, 80);
+    } else {
+      clearTimeout(this.scrollEndTimer2);
+      this.scrollEndTimer2 = setTimeout(() => {
+        const index = Math.round(el.scrollTop / this.ITEM_H);
+        const snapped = index * this.ITEM_H;
+        if (el.scrollTop !== snapped) {
+          el.scrollTo({ top: snapped, behavior: 'smooth' });
+        }
+        const opt = this.pickerOpciones[index];
+        if (opt) this.pickerValorSeleccionado2 = opt.value;
+      }, 80);
+    }
   }
 
   // ─── Navigation & Helpers ─────────────────────────────────────────────────

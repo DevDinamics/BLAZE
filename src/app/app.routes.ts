@@ -108,6 +108,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/entreno/dashboard/dashboard.page').then( m => m.EntrenoDashboardPage)
       },
       {
+        path: 'chat', // Ahora será /entreno/chat
+        loadComponent: () => import('./pages/chat/chat.page').then( m => m.ChatPage)
+      },
+      {
+        path: 'sala-chat', // Ahora será /entreno/sala-chat
+        loadComponent: () => import('./pages/sala-chat/sala-chat.page').then( m => m.SalaChatPage)
+      },
+      {
         path: 'nutricion',
         loadComponent: () => import('./pages/nutricion/dashboard/dashboard.page').then( m => m.NutricionPage)
       },
@@ -128,7 +136,7 @@ export const routes: Routes = [
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
-      }
+      },
     ]
   },
   {
@@ -154,5 +162,13 @@ export const routes: Routes = [
     path: 'perfil/ajustes',
     loadComponent: () => import('./pages/perfil/ajustes/ajustes.page').then( m => m.AjustesPage),
     canActivate: [authGuard]
+  },
+  {
+    path: 'chat',
+    loadComponent: () => import('./pages/chat/chat.page').then( m => m.ChatPage)
+  },
+  {
+    path: 'sala-chat',
+    loadComponent: () => import('./pages/sala-chat/sala-chat.page').then( m => m.SalaChatPage)
   },
 ];

@@ -8,10 +8,9 @@ import { addIcons } from 'ionicons';
 import { 
   arrowBackOutline, searchOutline, personOutline, scaleOutline, bodyOutline, 
   fitnessOutline, closeOutline, barbellOutline, restaurantOutline, starOutline,
-  mailOutline, calendarOutline, flagOutline 
+  mailOutline, calendarOutline, flagOutline, chatbubblesOutline // ✅ Agregado chatbubblesOutline
 } from 'ionicons/icons';
 
-// 👇 1. Agregamos writeBatch y doc a los imports de Firestore
 import { Firestore, collection, query, where, getDocs, writeBatch, doc } from '@angular/fire/firestore';
 import { AuthService } from 'src/app/services/auth';
 import { Subscription } from 'rxjs';
@@ -44,10 +43,11 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private loadingCtrl: LoadingController
   ) {
+    // ✅ Registramos el ícono del chat
     addIcons({ 
       arrowBackOutline, searchOutline, personOutline, scaleOutline, bodyOutline, 
       fitnessOutline, closeOutline, barbellOutline, restaurantOutline, starOutline,
-      mailOutline, calendarOutline, flagOutline
+      mailOutline, calendarOutline, flagOutline, chatbubblesOutline
     });
   }
 
@@ -69,7 +69,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     this.cargando = true;
 
     try {
-      // 👇 SOLUCIÓN: Buscamos solo por coachId
       const q = query(
         collection(this.firestore, 'usuarios'), 
         where('coachId', '==', this.coachId)
@@ -77,7 +76,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
       
       const snapshot = await getDocs(q);
       
-      // 1. Mapeamos todos los documentos
       let todos = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -92,17 +90,13 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
           experiencia: data['experiencia'] || 'Principiante',
           fechaRegistro: data['fechaRegistro']?.toDate() || new Date(),
           vistoPorCoach: data['vistoPorCoach'] !== undefined ? data['vistoPorCoach'] : true,
-          rol: data['rol'] // Necesitamos esto para filtrar
+          rol: data['rol'] 
         };
       });
 
-      // 👇 2. Filtramos en memoria (Aceptamos 'alumno' o 'atleta')
       this.todosLosAlumnos = todos.filter((user: any) => user.rol === 'alumno' || user.rol === 'atleta');
-      
-      // 3. Pasamos al arreglo de búsqueda
       this.alumnosFiltrados = [...this.todosLosAlumnos];
 
-      // 4. Limpiamos los foquitos
       await this.marcarAlumnosComoVistos();
 
     } catch (error) {
@@ -112,27 +106,20 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     }
   }
 
-  // ==========================================
-  // 🧹 FUNCIÓN DE LIMPIEZA DE NOTIFICACIONES
-  // ==========================================
   async marcarAlumnosComoVistos() {
     if (!this.coachId || this.todosLosAlumnos.length === 0) return;
 
-    // Abrimos un "paquete" de actualizaciones (Batch)
     const batch = writeBatch(this.firestore);
     let requiereActualizacion = false;
 
-    // Revisamos uno por uno a tus alumnos
     this.todosLosAlumnos.forEach(alumno => {
-      // Si encontramos a alguien con el foquito encendido (false)
       if (alumno.vistoPorCoach === false) {
         const alumnoRef = doc(this.firestore, 'usuarios', alumno.uid);
-        batch.update(alumnoRef, { vistoPorCoach: true }); // Lo apagamos
+        batch.update(alumnoRef, { vistoPorCoach: true }); 
         requiereActualizacion = true;
       }
     });
 
-    // Si encontramos al menos a uno, mandamos el paquete a Firebase
     if (requiereActualizacion) {
       try {
         await batch.commit();
@@ -166,8 +153,17 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // 🚀 ACCIONES RÁPIDAS (Navegación inteligente)
+  // 🚀 ACCIONES RÁPIDAS Y CHAT
   // ==========================================
+
+  // ✅ NUEVA FUNCIÓN PARA INICIAR EL CHAT
+  iniciarChatConAlumno() {
+    const alumno = this.alumnoSeleccionado;
+    this.cerrarExpediente();
+    this.router.navigate(['/sala-chat'], {
+      state: { contacto: alumno }
+    });
+  }
   
   irACrearRutina() {
     const alumnoId = this.alumnoSeleccionado?.uid;
@@ -185,7 +181,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     });
   }
 
-  // Utilidades médicas
   get bmi() {
     if (!this.alumnoSeleccionado || !this.alumnoSeleccionado.peso || !this.alumnoSeleccionado.altura) return 0;
     return parseFloat((this.alumnoSeleccionado.peso / (this.alumnoSeleccionado.altura * this.alumnoSeleccionado.altura)).toFixed(1));

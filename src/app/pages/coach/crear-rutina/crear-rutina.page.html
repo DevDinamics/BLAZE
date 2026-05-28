@@ -342,19 +342,18 @@
 
           <!-- ── 1 columna: Series o Descanso ── -->
           <ng-container *ngIf="pickerTipo !== 'reps'">
-            <div class="wheel-col"
+            <div class="wheel-col" #wheelCol1
                  style="flex:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;"
                  (scroll)="onWheelScroll($event, 1)">
-              <div style="height:86px;"></div>
+              <div style="height:88px;"></div>
               <div *ngFor="let opt of pickerOpciones"
-                   (click)="pickerValorSeleccionado = opt.value"
                    style="height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; cursor:pointer; transition: all 0.1s;"
                    [style.fontWeight]="pickerValorSeleccionado === opt.value ? '600' : '400'"
                    [style.color]="pickerValorSeleccionado === opt.value ? '#000' : '#8e8e93'"
                    [style.fontSize]="pickerValorSeleccionado === opt.value ? '22px' : '20px'">
                 {{ opt.text }}
               </div>
-              <div style="height:86px;"></div>
+              <div style="height:88px;"></div>
             </div>
           </ng-container>
 
@@ -362,19 +361,18 @@
           <ng-container *ngIf="pickerTipo === 'reps'">
 
             <!-- Columna MIN -->
-            <div class="wheel-col"
+            <div class="wheel-col" #wheelCol1
                  style="flex:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;"
                  (scroll)="onWheelScroll($event, 1)">
-              <div style="height:86px;"></div>
+              <div style="height:88px;"></div>
               <div *ngFor="let opt of pickerOpciones"
-                   (click)="pickerValorSeleccionado = opt.value"
                    style="height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; cursor:pointer; transition: all 0.1s;"
                    [style.fontWeight]="pickerValorSeleccionado === opt.value ? '600' : '400'"
                    [style.color]="pickerValorSeleccionado === opt.value ? '#000' : '#8e8e93'"
                    [style.fontSize]="pickerValorSeleccionado === opt.value ? '22px' : '20px'">
                 {{ opt.text }}
               </div>
-              <div style="height:86px;"></div>
+              <div style="height:88px;"></div>
             </div>
 
             <!-- Separador central -->
@@ -384,19 +382,18 @@
             </div>
 
             <!-- Columna MAX -->
-            <div class="wheel-col"
+            <div class="wheel-col" #wheelCol2
                  style="flex:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;"
                  (scroll)="onWheelScroll($event, 2)">
-              <div style="height:86px;"></div>
+              <div style="height:88px;"></div>
               <div *ngFor="let opt of pickerOpciones"
-                   (click)="pickerValorSeleccionado2 = opt.value"
                    style="height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; cursor:pointer; transition: all 0.1s;"
                    [style.fontWeight]="pickerValorSeleccionado2 === opt.value ? '600' : '400'"
                    [style.color]="pickerValorSeleccionado2 === opt.value ? '#000' : '#8e8e93'"
                    [style.fontSize]="pickerValorSeleccionado2 === opt.value ? '22px' : '20px'">
                 {{ opt.text }}
               </div>
-              <div style="height:86px;"></div>
+              <div style="height:88px;"></div>
             </div>
 
           </ng-container>

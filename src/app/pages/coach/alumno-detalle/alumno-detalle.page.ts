@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ActionSheetController, ToastController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { arrowBack, person, fitness, restaurant, checkmarkCircle, closeCircle, addCircle } from 'ionicons/icons';
+import { arrowBack, person, fitness, restaurant, checkmarkCircle, closeCircle, addCircle, chatbubblesOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-alumno-detalle',
@@ -14,44 +14,42 @@ import { arrowBack, person, fitness, restaurant, checkmarkCircle, closeCircle, a
 })
 export class AlumnoDetallePage implements OnInit {
 
-  // DATOS SIMULADOS DEL ALUMNO
+  // ID del alumno (necesario para el chat)
   alumno = {
+    id: '12345', // Asumimos que tienes un ID real del alumno aquí
     nombre: 'Carlos López',
     foto: 'https://i.pravatar.cc/300?u=carlos',
     objetivo: 'Perder Grasa',
     rutina: 'Full Body 3 Días',
-    dieta: null as string | null // <--- AQUÍ ESTÁ EL TRUCO: NULL significa que no tiene dieta asignada
+    dieta: null as string | null
   };
 
+  private navCtrl = inject(NavController);
+
   constructor(
-    private navCtrl: NavController,
     private actionSheetCtrl: ActionSheetController,
     private toastCtrl: ToastController
   ) {
-    addIcons({ arrowBack, person, fitness, restaurant, checkmarkCircle, closeCircle, addCircle });
+    addIcons({ arrowBack, person, fitness, restaurant, checkmarkCircle, closeCircle, addCircle, chatbubblesOutline });
   }
 
   ngOnInit() {}
   
   regresar() { this.navCtrl.back(); }
 
-  // FUNCIÓN PARA ASIGNAR DIETA
+  // NUEVA FUNCIÓN PARA CHAT
+  iniciarChatConAlumno() {
+    this.navCtrl.navigateForward(['/sala-chat'], {
+      state: { contacto: this.alumno }
+    });
+  }
+
   async asignarDieta() {
-    // Aquí simularíamos abrir un modal con la lista de "dietas.page"
-    // Usaremos un ActionSheet para simular la selección rápida
     const actionSheet = await this.actionSheetCtrl.create({
       header: 'Seleccionar Plantilla de Dieta',
       buttons: [
-        {
-          text: 'Déficit Estándar (1800 kcal)',
-          icon: 'restaurant',
-          handler: () => { this.guardarDieta('Déficit Estándar'); }
-        },
-        {
-          text: 'Aumento Masa (3000 kcal)',
-          icon: 'restaurant',
-          handler: () => { this.guardarDieta('Aumento Masa'); }
-        },
+        { text: 'Déficit Estándar (1800 kcal)', icon: 'restaurant', handler: () => { this.guardarDieta('Déficit Estándar'); } },
+        { text: 'Aumento Masa (3000 kcal)', icon: 'restaurant', handler: () => { this.guardarDieta('Aumento Masa'); } },
         { text: 'Cancelar', role: 'cancel' }
       ]
     });
@@ -59,15 +57,10 @@ export class AlumnoDetallePage implements OnInit {
   }
 
   async guardarDieta(nombreDieta: string) {
-    // 1. Asignamos la dieta al alumno
-    this.alumno.dieta = nombreDieta; // Ya no es null
-
-    // 2. Feedback
+    this.alumno.dieta = nombreDieta;
     const toast = await this.toastCtrl.create({
       message: `Plan "${nombreDieta}" asignado correctamente ✅`,
-      duration: 2000,
-      color: 'success',
-      position: 'top'
+      duration: 2000, color: 'success', position: 'top'
     });
     toast.present();
   }
