@@ -1,6 +1,11 @@
-[build]
-  command = "npm install --legacy-peer-deps && npm run build"
-  publish = "dist/app/browser"
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
 
-[[plugins]]
-  package = "@netlify/plugin-angular-runtime"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
