@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, query, orderBy, onSnapshot, where, getDocs, Timestamp } from '@angular/fire/firestore';
+// 👇 Asegúrate de que doc y updateDoc estén importados aquí
+import { Firestore, collection, addDoc, query, orderBy, onSnapshot, where, getDocs, Timestamp, doc, updateDoc } from '@angular/fire/firestore';
 
 @Injectable({
   providedIn: 'root'
@@ -20,10 +21,10 @@ export class ChatService {
     let chatIdEncontrado = null;
 
     // Filtramos para asegurar que uid2 también esté en esa misma sala
-    snapshot.forEach(doc => {
-      const participantes = doc.data()['participantes'];
+    snapshot.forEach(documento => {
+      const participantes = documento.data()['participantes'];
       if (participantes.includes(uid2)) {
-        chatIdEncontrado = doc.id;
+        chatIdEncontrado = documento.id;
       }
     });
 
@@ -57,16 +58,34 @@ export class ChatService {
 
     // onSnapshot es la magia: se dispara automáticamente cada vez que alguien escribe
     return onSnapshot(q, (snapshot) => {
-      const mensajes = snapshot.docs.map(doc => {
-        const data = doc.data();
+      const mensajes = snapshot.docs.map(documento => {
+        const data = documento.data();
         return {
-          id: doc.id,
+          id: documento.id,
           ...data,
           // Convertimos el tiempo de Firebase a formato JavaScript
           fecha: data['fecha'] ? data['fecha'].toDate() : new Date() 
         };
       });
       callback(mensajes);
+    });
+  }
+
+  // 👇 4️⃣ AVISA A FIREBASE QUE ESTÁS ESCRIBIENDO
+  actualizarEscribiendo(chatId: string, uid: string, estado: boolean) {
+    const chatRef = doc(this.firestore, `chats/${chatId}`);
+    updateDoc(chatRef, {
+      [`escribiendo_${uid}`]: estado
+    }).catch(() => {}); // Ignoramos el error si la sala acaba de nacer y aún no tiene este campo
+  }
+
+  // 👇 5️⃣ ESCUCHA SI EL OTRO USUARIO ESTÁ ESCRIBIENDO
+  escucharEstadoChat(chatId: string, callback: (data: any) => void) {
+    const chatRef = doc(this.firestore, `chats/${chatId}`);
+    return onSnapshot(chatRef, (docSnap) => {
+      if (docSnap.exists()) {
+        callback(docSnap.data());
+      }
     });
   }
 }

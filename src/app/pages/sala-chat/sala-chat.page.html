@@ -67,8 +67,18 @@
 
     </ng-container>
 
-  </div>
+    <div *ngIf="otroEscribiendo" class="flex justify-start animate-fade-in-up mt-2 mb-2 gap-2">
+      <img [src]="contacto?.foto || 'https://ui-avatars.com/api/?name=C'" 
+           class="h-7 w-7 rounded-full object-cover self-end mb-1 border border-gray-100">
+           
+      <div class="bg-[#f2f2f7] px-4 py-3 rounded-[20px] rounded-bl-[4px] border border-gray-100 shadow-sm flex items-center gap-1.5 w-16 h-[38px]">
+        <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+        <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+        <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+      </div>
+    </div>
 
+  </div>
 </ion-content>
 
 <ion-footer class="ion-no-border" style="background: #ffffff;">
@@ -78,10 +88,11 @@
       <ion-icon name="add-outline" class="text-3xl"></ion-icon>
     </button>
 
-    <div class="flex-1 bg-[#f2f2f7] border border-gray-200 rounded-[20px] flex items-end overflow-hidden min-h-[40px] px-4 py-2.5 transition-colors focus-within:bg-white focus-within:border-gray-300 shadow-inner">
+    <div class="flex-1 bg-[#f2f2f7] border border-gray-200 rounded-[20px] flex items-end overflow-hidden min-h-[40px] px-4 py-2.5 shadow-inner">
       <textarea 
         [(ngModel)]="nuevoMensaje"
         (keyup.enter)="enviarMensaje()"
+        (input)="alEscribir()" 
         rows="1"
         placeholder="Mensaje..." 
         class="w-full bg-transparent border-none outline-none text-black text-[15px] resize-none p-0 m-0 max-h-[100px]"
