@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-// 👇 Asegúrate de que doc y updateDoc estén importados aquí
-import { Firestore, collection, addDoc, query, orderBy, onSnapshot, where, getDocs, Timestamp, doc, updateDoc } from '@angular/fire/firestore';
+// 👇 Agregamos 'increment' a las importaciones
+import { Firestore, collection, addDoc, query, orderBy, onSnapshot, where, getDocs, Timestamp, doc, updateDoc, increment } from '@angular/fire/firestore';
 
 @Injectable({
   providedIn: 'root'
@@ -10,82 +10,80 @@ export class ChatService {
 
   constructor() { }
 
-  // 1️⃣ BUSCAR O CREAR LA SALA DE CHAT
   async obtenerIdChat(uid1: string, uid2: string): Promise<string> {
+    // ... (Mantén tu código actual de obtenerIdChat tal como estaba)
     const chatsRef = collection(this.firestore, 'chats');
-    
-    // Buscamos salas donde uid1 sea participante
     const q = query(chatsRef, where('participantes', 'array-contains', uid1));
     const snapshot = await getDocs(q);
-
     let chatIdEncontrado = null;
-
-    // Filtramos para asegurar que uid2 también esté en esa misma sala
     snapshot.forEach(documento => {
-      const participantes = documento.data()['participantes'];
-      if (participantes.includes(uid2)) {
-        chatIdEncontrado = documento.id;
-      }
+      if (documento.data()['participantes'].includes(uid2)) chatIdEncontrado = documento.id;
     });
-
-    // Si ya habían chateado, devolvemos esa sala
     if (chatIdEncontrado) return chatIdEncontrado;
-
-    // Si es la primera vez que hablan, creamos una sala nueva
-    const nuevoChat = await addDoc(chatsRef, {
-      participantes: [uid1, uid2],
-      creadoEn: Timestamp.now()
-    });
-
+    const nuevoChat = await addDoc(chatsRef, { participantes: [uid1, uid2], creadoEn: Timestamp.now() });
     return nuevoChat.id;
   }
 
-  // 2️⃣ ENVIAR UN MENSAJE
-  async enviarMensaje(chatId: string, texto: string, emisorId: string) {
+  // 👇 ACTUALIZADO: Ahora recibe quién es el RECEPTOR para subirle su contador
+  async enviarMensaje(chatId: string, texto: string, emisorId: string, receptorId: string) {
     const mensajesRef = collection(this.firestore, `chats/${chatId}/mensajes`);
-    await addDoc(mensajesRef, {
-      texto: texto,
-      emisorId: emisorId,
-      fecha: Timestamp.now()
+    
+    // 1. Guardamos el mensaje
+    await addDoc(mensajesRef, { texto, emisorId, fecha: Timestamp.now() });
+
+    // 2. Le sumamos +1 a las notificaciones del que lo recibe
+    const chatRef = doc(this.firestore, `chats/${chatId}`);
+    await updateDoc(chatRef, {
+      [`notificaciones_${receptorId}`]: increment(1)
+    }).catch(() => {});
+  }
+
+  // 👇 NUEVO: Pone el contador en 0 cuando entras a la sala
+  async limpiarNotificaciones(chatId: string, miUid: string) {
+    const chatRef = doc(this.firestore, `chats/${chatId}`);
+    await updateDoc(chatRef, {
+      [`notificaciones_${miUid}`]: 0
+    }).catch(() => {});
+  }
+
+  // 👇 NUEVO: Suma todas tus notificaciones de todos tus chats (para los Tabs)
+  escucharTotalSinLeer(miUid: string, callback: (total: number) => void) {
+    const chatsRef = collection(this.firestore, 'chats');
+    const q = query(chatsRef, where('participantes', 'array-contains', miUid));
+    
+    return onSnapshot(q, (snapshot) => {
+      let total = 0;
+      snapshot.docs.forEach(doc => {
+        // Buscamos cuántas notificaciones tienes en esta sala y las sumamos
+        const sinLeer = doc.data()[`notificaciones_${miUid}`] || 0;
+        total += sinLeer;
+      });
+      callback(total);
     });
   }
 
-  // 3️⃣ ESCUCHAR MENSAJES EN TIEMPO REAL
+  // ... (Mantén tus funciones escucharMensajes, actualizarEscribiendo y escucharEstadoChat igual)
   escucharMensajes(chatId: string, callback: (mensajes: any[]) => void) {
     const mensajesRef = collection(this.firestore, `chats/${chatId}/mensajes`);
-    // Ordenamos por fecha para que los más viejos salgan arriba y los nuevos abajo
     const q = query(mensajesRef, orderBy('fecha', 'asc'));
-
-    // onSnapshot es la magia: se dispara automáticamente cada vez que alguien escribe
     return onSnapshot(q, (snapshot) => {
       const mensajes = snapshot.docs.map(documento => {
         const data = documento.data();
-        return {
-          id: documento.id,
-          ...data,
-          // Convertimos el tiempo de Firebase a formato JavaScript
-          fecha: data['fecha'] ? data['fecha'].toDate() : new Date() 
-        };
+        return { id: documento.id, ...data, fecha: data['fecha'] ? data['fecha'].toDate() : new Date() };
       });
       callback(mensajes);
     });
   }
 
-  // 👇 4️⃣ AVISA A FIREBASE QUE ESTÁS ESCRIBIENDO
   actualizarEscribiendo(chatId: string, uid: string, estado: boolean) {
     const chatRef = doc(this.firestore, `chats/${chatId}`);
-    updateDoc(chatRef, {
-      [`escribiendo_${uid}`]: estado
-    }).catch(() => {}); // Ignoramos el error si la sala acaba de nacer y aún no tiene este campo
+    updateDoc(chatRef, { [`escribiendo_${uid}`]: estado }).catch(() => {}); 
   }
 
-  // 👇 5️⃣ ESCUCHA SI EL OTRO USUARIO ESTÁ ESCRIBIENDO
   escucharEstadoChat(chatId: string, callback: (data: any) => void) {
     const chatRef = doc(this.firestore, `chats/${chatId}`);
     return onSnapshot(chatRef, (docSnap) => {
-      if (docSnap.exists()) {
-        callback(docSnap.data());
-      }
+      if (docSnap.exists()) callback(docSnap.data());
     });
   }
 }

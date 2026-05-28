@@ -21,9 +21,14 @@
       <ion-label>Progreso</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="chat">
+    <ion-tab-button tab="chat" routerLink="/entreno/chat">
       <ion-icon name="chatbubbles"></ion-icon>
       <ion-label>Chat</ion-label>
+      
+      <ion-badge color="danger" *ngIf="mensajesSinLeer > 0">
+        {{ mensajesSinLeer }}
+      </ion-badge>
+      
     </ion-tab-button>
 
   </ion-tab-bar>

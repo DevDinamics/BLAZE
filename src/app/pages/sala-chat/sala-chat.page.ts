@@ -10,7 +10,7 @@ import { addIcons } from 'ionicons';
 import { arrowBack, send, addOutline, callOutline, videocamOutline } from 'ionicons/icons';
 
 import { AuthService } from 'src/app/services/auth';
-import { ChatService } from 'src/app/services/chat'; 
+import { ChatService } from 'src/app/services/chat'; // Asegúrate de que termine en .service si es necesario
 import { Subscription } from 'rxjs';
 
 interface Mensaje {
@@ -33,7 +33,7 @@ export class SalaChatPage implements OnInit, OnDestroy {
 
   private router = inject(Router);
   private chatService = inject(ChatService);
-  private cdr = inject(ChangeDetectorRef); // 🔥 EL MOTOR DEL TIEMPO REAL INMEDIATO
+  private cdr = inject(ChangeDetectorRef); 
 
   contacto: any = null;
   miUid: string = '';
@@ -42,7 +42,6 @@ export class SalaChatPage implements OnInit, OnDestroy {
   nuevoMensaje: string = '';
   mensajes: Mensaje[] = [];
   
-  // Variables para la animación estilo WhatsApp
   otroEscribiendo = false;
   typingTimeout: any;
 
@@ -67,32 +66,33 @@ export class SalaChatPage implements OnInit, OnDestroy {
       if (user && this.contacto) {
         this.miUid = user.uid;
         
-        // Buscamos el ID sin importar si viene como 'uid' o 'id'
         const contactoId = this.contacto.uid || this.contacto.id;
 
-        // Validamos que exista antes de llamar a Firebase
         if (!contactoId) {
           console.error('Error: No se encontró el identificador del contacto.', this.contacto);
           return;
         }
 
         try {
-          // Obtenemos el ID de la sala y empezamos a escuchar
           this.chatId = await this.chatService.obtenerIdChat(this.miUid, contactoId);
           
           if (this.chatId) {
             
-            // 1. Escuchar los mensajes instantáneos
+            // 👇 1. LIMPIAR NOTIFICACIONES AL ENTRAR A LA SALA
+            this.chatService.limpiarNotificaciones(this.chatId, this.miUid);
+
             this.unsubMensajes = this.chatService.escucharMensajes(this.chatId, (mensajes) => {
               this.mensajes = mensajes;
-              this.cdr.detectChanges(); // 🔥 OBLIGA A ANGULAR A MOSTRAR EL MENSAJE YA
+              this.cdr.detectChanges(); 
               this.hacerScrollAlFondo();
+
+              // 👇 2. SI LLEGA UN MENSAJE Y ESTÁS ADENTRO, SE MARCA COMO LEÍDO AL INSTANTE
+              this.chatService.limpiarNotificaciones(this.chatId, this.miUid);
             });
 
-            // 2. Escuchar si el otro usuario está escribiendo
             this.unsubChat = this.chatService.escucharEstadoChat(this.chatId, (data) => {
               this.otroEscribiendo = data[`escribiendo_${contactoId}`] || false;
-              this.cdr.detectChanges(); // Actualizamos la pantalla para mostrar la burbuja
+              this.cdr.detectChanges(); 
               if (this.otroEscribiendo) this.hacerScrollAlFondo();
             });
 
@@ -114,14 +114,11 @@ export class SalaChatPage implements OnInit, OnDestroy {
     this.navCtrl.back();
   }
 
-  // 👇 Se ejecuta cada vez que presionas una tecla en el input
   alEscribir() {
     if (!this.chatId) return;
 
-    // Avisamos a Firebase que estamos escribiendo
     this.chatService.actualizarEscribiendo(this.chatId, this.miUid, true);
 
-    // Si pasamos 2 segundos sin teclear, avisamos que ya dejamos de escribir
     clearTimeout(this.typingTimeout);
     this.typingTimeout = setTimeout(() => {
       this.chatService.actualizarEscribiendo(this.chatId, this.miUid, false);
@@ -129,18 +126,19 @@ export class SalaChatPage implements OnInit, OnDestroy {
   }
 
   async enviarMensaje() {
-    // Evitamos enviar si el input está vacío o si Firebase aún no nos da el chatId
     if (!this.nuevoMensaje.trim() || !this.chatId) return;
 
     const texto = this.nuevoMensaje.trim();
     this.nuevoMensaje = ''; 
 
-    // Al enviar, apagamos el "escribiendo..." de inmediato
     clearTimeout(this.typingTimeout);
     this.chatService.actualizarEscribiendo(this.chatId, this.miUid, false);
 
     try {
-      await this.chatService.enviarMensaje(this.chatId, texto, this.miUid);
+      // 👇 3. ENVIAR EL MENSAJE CON EL ID DEL OTRO USUARIO PARA QUE LE SUENE LA NOTIFICACIÓN
+      const contactoId = this.contacto.uid || this.contacto.id;
+      await this.chatService.enviarMensaje(this.chatId, texto, this.miUid, contactoId);
+      
       this.hacerScrollAlFondo();
     } catch (error) {
       console.error('Error al enviar el mensaje:', error);
