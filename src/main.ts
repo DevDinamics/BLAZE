@@ -1,4 +1,4 @@
-import { enableProdMode } from '@angular/core';
+import { enableProdMode, isDevMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
@@ -15,6 +15,7 @@ import { provideStorage, getStorage } from '@angular/fire/storage';
 
 // 👇 1. AGREGAMOS ESTA IMPORTACIÓN (Es la magia para la Web)
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import { provideServiceWorker } from '@angular/service-worker';
 
 if (environment.production) {
   enableProdMode();
@@ -35,7 +36,13 @@ bootstrapApplication(AppComponent, {
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage())
+    provideStorage(() => getStorage()), provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }), provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          })
   ],
 });
 
