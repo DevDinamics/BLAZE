@@ -19,6 +19,8 @@ import { StoryViewerPage } from 'src/app/modals/story-viewer/story-viewer.page';
 import { VerPerfilCoachComponent } from 'src/app/modals/ver-perfil-coach/ver-perfil-coach.component';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
+import { IonSkeletonText } from '@ionic/angular/standalone';
+
 import { addIcons } from 'ionicons';
 import { 
   flameOutline, barbellOutline, addCircleOutline, starOutline, playOutline, 
@@ -37,7 +39,7 @@ import {
   standalone: true,
   imports: [
     CommonModule, RouterModule, FormsModule, 
-    IonHeader, IonContent, IonIcon, IonSpinner, IonModal
+    IonHeader, IonContent, IonIcon, IonSpinner, IonModal, IonSkeletonText
   ] 
 })
 export class EntrenoDashboardPage implements OnDestroy { 
@@ -186,7 +188,7 @@ export class EntrenoDashboardPage implements OnDestroy {
       } catch (error) {
         console.error("Error:", error);
       } finally {
-        this.cargando = false; 
+        this.cargando = false; // validar que se oculte el spinner después de cargar los datos o si ocurre un error
       }
     });
   }

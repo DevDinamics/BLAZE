@@ -2,9 +2,7 @@ import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// ✅ FIX: Todo Ionic desde UN SOLO lugar — standalone.
-// Mezclar '@ionic/angular' con '@ionic/angular/standalone' en el mismo componente
-// funciona en localhost (JIT) pero explota silenciosamente en producción (AOT).
+// ✅ Todo Ionic desde UN SOLO lugar — standalone.
 import {
   NavController,
   LoadingController,
@@ -13,7 +11,7 @@ import {
   IonIcon,
   IonModal,
   IonDatetime,
-  
+  IonAlert // 👈 IMPORTADO AQUÍ
 } from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
@@ -24,8 +22,6 @@ import {
 } from 'ionicons/icons';
 
 import { firstValueFrom } from 'rxjs';
-// ✅ FIX: Agregamos take(1) para que firstValueFrom nunca se quede colgado
-// esperando un valor que en producción puede tardar o no llegar.
 import { filter, take } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
@@ -36,8 +32,8 @@ import { Firestore, doc, setDoc } from '@angular/fire/firestore';
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
-  // ✅ FIX: IonSpinner agregado — se usa en el HTML pero no estaba importado
-  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime]
+  // ✅ IonAlert agregado a los imports
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime, IonAlert]
 })
 export class OnboardingPage implements OnDestroy {
 
@@ -46,6 +42,11 @@ export class OnboardingPage implements OnDestroy {
   pasoActual: number = 1;
   totalPasos: number = 1;
   edadMostrada: number | null = null;
+  
+  // 🚨 Variable para controlar la alerta de edad de iOS
+  mostrarAlertaEdad: boolean = false;
+  // 🖼️ Variable para la carga suave de avatares
+  imagenesCargadas: { [url: string]: boolean } = {};
 
   avataresAtleta = [
     'assets/avatar-entreno/avatar_h_1.png',
@@ -147,7 +148,16 @@ export class OnboardingPage implements OnDestroy {
 
   actualizarEdad() {
     if (this.datos.fechaNacimiento) {
-      this.edadMostrada = this.calcularEdad(this.datos.fechaNacimiento);
+      const edadCalculada = this.calcularEdad(this.datos.fechaNacimiento);
+      
+      // Validación de 18 años
+      if (edadCalculada < 18) {
+        this.mostrarAlertaEdad = true;
+        this.datos.fechaNacimiento = ''; // Reseteamos la fecha
+        this.edadMostrada = null;
+      } else {
+        this.edadMostrada = edadCalculada;
+      }
     }
   }
 
@@ -164,8 +174,6 @@ export class OnboardingPage implements OnDestroy {
   }
 
   async finalizarOnboarding() {
-    console.log('🚀 finalizarOnboarding iniciado, paso:', this.pasoActual);
-
     const loading = await this.loadingCtrl.create({
       message: 'Creando tu perfil BLAZE...',
       spinner: 'crescent',
@@ -174,13 +182,8 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
-      // ✅ FIX: take(1) garantiza que el observable cierre aunque Firebase
-      // tarde en inicializarse — sin esto se queda colgado en producción.
       const user = await firstValueFrom(
-        this.authService.user$.pipe(
-          filter(u => u !== undefined),
-          take(1)
-        )
+        this.authService.user$.pipe(filter(u => u !== undefined), take(1))
       );
 
       if (!user) {
@@ -202,7 +205,6 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
 
-        // 🛡️ Escudos Anti-NaN
         const edadCalc = this.calcularEdad(this.datos.fechaNacimiento);
         perfilActualizado.edad = isNaN(edadCalc) ? 0 : edadCalc;
 
@@ -217,7 +219,6 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.bio = this.datos.bio || 'Coach en BLAZE';
       }
 
-      // Limpieza de nulos o indefinidos
       Object.keys(perfilActualizado).forEach(key => {
         if (perfilActualizado[key] === undefined || perfilActualizado[key] === null) {
           delete perfilActualizado[key];
@@ -240,26 +241,20 @@ export class OnboardingPage implements OnDestroy {
 
       setTimeout(async () => {
         const destino = this.datos.rol === 'coach' ? '/coach/dashboard' : '/entreno';
-        console.log(`Navegando a: ${destino}`);
-
         const viajeExitoso = await this.navCtrl.navigateRoot(destino, {
           animated: true,
           animationDirection: 'forward'
         });
 
         if (!viajeExitoso) {
-          console.warn('Angular bloqueó la navegación. Usando window.location...');
           window.location.href = destino;
         }
       }, 1500);
 
     } catch (error: any) {
-      console.error('❌ Error al guardar onboarding:', error);
       await loading.dismiss();
-
-      const mensajeError = error.message ? error.message : 'Error de conexión con Firebase.';
       const toast = await this.toastCtrl.create({
-        message: 'Error: ' + mensajeError,
+        message: 'Error: ' + (error.message || 'Error de conexión con Firebase.'),
         duration: 5000,
         color: 'danger',
         position: 'top',

@@ -11,6 +11,8 @@ import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';   
 import { addIcons } from 'ionicons';
 
+import { IonSkeletonText } from '@ionic/angular/standalone';
+
 import { 
   checkmarkCircleOutline, closeCircleOutline, timeOutline, personCircleOutline, 
   trophyOutline, flameOutline, barbellOutline, peopleOutline, clipboardOutline, 
@@ -30,7 +32,7 @@ import {
   standalone: true,
   imports: [IonSpinner, 
     CommonModule, FormsModule, RouterModule,
-    IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel
+    IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel, IonSkeletonText
   ]
 })
 export class CoachDashboardPage implements OnInit, OnDestroy { // 👈 EL NOMBRE IMPORTANTE
@@ -69,6 +71,8 @@ export class CoachDashboardPage implements OnInit, OnDestroy { // 👈 EL NOMBRE
   porcentajeActividad: number = 0;
   totalAlumnos: number = 0; 
   tieneNuevosAlumnos: boolean = false; 
+
+  cargando: boolean = true;
 
   constructor(
     private coachService: CoachService, 
@@ -236,6 +240,8 @@ export class CoachDashboardPage implements OnInit, OnDestroy { // 👈 EL NOMBRE
         } else {
           this.porcentajeActividad = 0;
         }
+
+        this.cargando = false;
       });
     });
   }

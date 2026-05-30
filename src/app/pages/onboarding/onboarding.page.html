@@ -64,7 +64,7 @@
 
         <div *ngIf="pasoActual === 3" class="animate-fade-in text-center w-full max-w-sm mx-auto">
           <h1 class="text-3xl font-bold mb-2 tracking-tight">¿Cuándo naciste?</h1>
-          <p class="text-gray-400 text-sm mb-10">Calcularemos tu edad para adaptar tu plan</p>
+          <p class="text-gray-400 text-sm mb-10">Debes tener al menos 18 años para unirte.</p>
 
           <button id="abrir-calendario" 
                   class="w-full bg-[#111111] rounded-3xl p-6 border-2 transition-all flex flex-col items-center justify-center gap-2 active:scale-95" 
@@ -86,17 +86,17 @@
             </div>
           </div>
 
-          <ion-modal trigger="abrir-calendario" [initialBreakpoint]="0.6" [breakpoints]="[0, 0.6]" class="ion-datetime-modal">
+          <ion-modal trigger="abrir-calendario" handle="true" [initialBreakpoint]="0.6" [breakpoints]="[0, 0.6]" class="ion-datetime-modal">
             <ng-template>
-              <div class="bg-[#111111] h-full flex flex-col pt-6 rounded-t-3xl">
-                <h2 class="text-white text-center font-bold text-lg mb-4">Selecciona tu fecha</h2>
+              <div class="bg-[#111111] h-full flex flex-col pt-4 rounded-t-3xl pb-10">
+                <h2 class="text-white text-center font-bold text-lg mb-2">Selecciona tu fecha</h2>
                 <ion-datetime 
+                  mode="ios"
                   presentation="date" 
                   [(ngModel)]="datos.fechaNacimiento" 
                   (ionChange)="actualizarEdad()"
-                  max="2016-12-31"
-                  color="light"
-                  class="mx-auto rounded-xl">
+                  max="2026-12-31"
+                  class="mx-auto custom-dark-calendar">
                 </ion-datetime>
               </div>
             </ng-template>
@@ -108,7 +108,6 @@
           <p class="text-gray-400 text-sm mb-10">Necesarias para calcular tu IMC y calorías</p>
 
           <div class="flex flex-col gap-5 items-center">
-            
             <div class="w-full bg-[#111111] rounded-3xl p-6 border-2 border-transparent focus-within:border-white transition-all flex justify-between items-center">
                <span class="text-gray-500 font-bold text-sm uppercase">Peso</span>
                <div class="flex items-baseline gap-2">
@@ -126,7 +125,6 @@
                  <span class="text-lg text-gray-500 font-bold">cm</span>
                </div>
             </div>
-
           </div>
         </div>
 
@@ -217,12 +215,18 @@
                (click)="datos.avatar = avatar"
                class="relative cursor-pointer transition-transform active:scale-95">
             
-            <div class="rounded-full p-1 transition-all duration-300"
+            <div class="rounded-full p-1 transition-all duration-300 relative"
                  [ngClass]="datos.avatar === avatar ? 'bg-white shadow-[0_0_20px_rgba(255,255,255,0.25)] scale-110' : 'bg-transparent scale-100 opacity-40 hover:opacity-80'">
-              <img [src]="avatar" class="w-full aspect-square rounded-full object-cover bg-gray-900 border border-gray-800">
+              
+              <div *ngIf="!imagenesCargadas[avatar]" class="absolute inset-1 rounded-full bg-gray-800 animate-pulse z-0"></div>
+
+              <img [src]="avatar" 
+                   (load)="imagenesCargadas[avatar] = true"
+                   class="w-full aspect-square rounded-full object-cover border border-gray-800 relative z-10 transition-opacity duration-700 ease-out"
+                   [ngClass]="imagenesCargadas[avatar] ? 'opacity-100' : 'opacity-0'">
             </div>
 
-            <div *ngIf="datos.avatar === avatar" class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md animate-fade-in z-10">
+            <div *ngIf="datos.avatar === avatar" class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md animate-fade-in z-20">
               <ion-icon name="checkmark-circle-outline" class="text-black text-xl block"></ion-icon>
             </div>
           </div>
@@ -239,4 +243,42 @@
     </div>
 
   </div>
+
+  <ion-alert
+    [isOpen]="mostrarAlertaEdad"
+    mode="ios"
+    header="Acceso Restringido"
+    message="Debes tener al menos 18 años para usar BLAZE."
+    [buttons]="['Entendido']"
+    (didDismiss)="mostrarAlertaEdad = false"
+    class="apple-dark-alert"
+  ></ion-alert>
+
 </ion-content>
+
+<style>
+  .custom-dark-calendar {
+    --background: transparent;
+    --title-color: #ffffff;
+    --text-color: #ffffff;
+    --wheel-highlight-background: rgba(255, 255, 255, 0.1);
+    --wheel-fade-background-rgb: 17, 17, 17;
+    color: white;
+  }
+
+  .apple-dark-alert {
+    --background: #1c1c1e;
+    --backdrop-opacity: 0.6;
+  }
+  .apple-dark-alert .alert-title {
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+  .apple-dark-alert .alert-message {
+    color: #ebebf599 !important; 
+  }
+  .apple-dark-alert .alert-button {
+    color: #0a84ff !important;
+    font-weight: 600;
+  }
+</style>

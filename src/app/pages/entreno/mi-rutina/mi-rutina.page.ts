@@ -16,10 +16,9 @@ import {
   timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
   playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
   flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
-  informationCircleOutline, trophyOutline, checkmarkCircle, close
+  informationCircleOutline, trophyOutline, checkmarkCircle, close, lockClosedOutline
 } from 'ionicons/icons';
 
-// 👇 1. IMPORTAMOS FIRESTORE Y SUS FUNCIONES MÁGICAS
 import { Firestore, doc, updateDoc, increment } from '@angular/fire/firestore';
 
 @Component({
@@ -36,9 +35,11 @@ export class MiRutinaPage implements OnDestroy {
 
   public window = window;
 
-  // 👇 2. INYECTAMOS FIRESTORE Y CREAMOS LA VARIABLE PARA EL ID DEL ALUMNO
   private firestore = inject(Firestore);
   uidAlumno: string = ''; 
+
+  // 👇 1. NUEVA VARIABLE PARA CONTROLAR LA PANTALLA DE BLOQUEO
+  tieneRutina: boolean = false;
 
   iconInfo = informationCircleOutline;
   iconTime = timeOutline;
@@ -74,11 +75,12 @@ export class MiRutinaPage implements OnDestroy {
     private studentService: StudentService,
     private route: ActivatedRoute
   ) {
+    // Asegúrate de tener lockClosedOutline si lo usaste en el HTML
     addIcons({ 
       timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
       playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
       flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
-      informationCircleOutline, trophyOutline, checkmarkCircle, close
+      informationCircleOutline, trophyOutline, checkmarkCircle, close, lockClosedOutline
     });
   }
 
@@ -86,14 +88,16 @@ export class MiRutinaPage implements OnDestroy {
     this.cargando = true;
     this.authService.user$.subscribe(async user => {
       if (user) {
-        // 👇 3. GUARDAMOS EL ID DEL ALUMNO APENAS ENTRA
         this.uidAlumno = user.uid; 
 
         const perfil = await this.studentService.obtenerMiPerfil(user.uid);
         if (perfil) {
           const rutinaRaw: any = await this.studentService.obtenerRutinaActual(user.uid, perfil['equipoId']);
           
-          if (rutinaRaw && rutinaRaw.sesiones) {
+          // 👇 2. VALIDAMOS SI REALMENTE HAY UNA RUTINA ASIGNADA
+          if (rutinaRaw && rutinaRaw.sesiones && rutinaRaw.sesiones.length > 0) {
+            
+            this.tieneRutina = true; // ¡Desbloqueamos la pantalla!
             this.cicloCompleto = rutinaRaw;
             
             let indiceSesionAEntrenar = 0;
@@ -132,6 +136,9 @@ export class MiRutinaPage implements OnDestroy {
 
               this.iniciarCronometroSesion();
             });
+          } else {
+            // No tiene rutina, mantenemos el bloqueo
+            this.tieneRutina = false;
           }
         }
         this.cargando = false;
@@ -234,7 +241,6 @@ export class MiRutinaPage implements OnDestroy {
     this.ejercicioSeleccionado = null;
   }
   
-  // 👇 4. AQUI METEMOS EL SUPERPODER PARA ACTUALIZAR FIREBASE
   async terminarRutina() { 
     if (this.intervaloSesion) clearInterval(this.intervaloSesion);
 
@@ -254,7 +260,6 @@ export class MiRutinaPage implements OnDestroy {
       }
     });
 
-    // LA MAGIA PARA EL DASHBOARD DEL COACH: Actualizamos fechas y sumamos 1 a la racha
     try {
       const alumnoRef = doc(this.firestore, `usuarios/${this.uidAlumno}`);
       await updateDoc(alumnoRef, {

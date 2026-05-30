@@ -134,7 +134,7 @@ export class LoginPage {
 
       const esAdmin = this.credenciales.email.toLowerCase() === 'admin@fitgo.com';
       if (!userCredential.user.emailVerified && !esAdmin) {
-        this.mostrarMensaje('⚠️ Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
+        this.mostrarMensaje('Verifica tu correo haciendo clic en el enlace que te enviamos.', 'warning');
         await this.auth.signOut();
         this.cargando = false;
         return;
@@ -167,7 +167,7 @@ export class LoginPage {
   }
 
   loginApple() {
-    this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. 🍏', 'warning');
+    this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. ', 'warning');
   }
 
   // ==========================================
