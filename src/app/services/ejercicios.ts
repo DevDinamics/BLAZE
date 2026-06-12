@@ -22,7 +22,7 @@ export class EjerciciosService {
     { id: '1', nombre: 'Press de Banca Plano', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Press-plano-bar.webp?raw=true' },
     { id: '2', nombre: 'Aperturas banco plano', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Aperturas_con_mancuernas%20.webp?raw=true' },
     { id: '3', nombre: 'Aperturas en banco inclinado', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Aperturas_inclinadas_con_mancuernas.webp?raw=true' },
-    { id: '4', nombre: 'Press de Banca Plano', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Press-plano-bar.webp?raw=true' },
+    { id: '4', nombre: 'Crossover en polea', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Cable-Crossover_.webp?raw=true' },
     { id: '5', nombre: 'Press de Banca Plano', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Press-plano-bar.webp?raw=true' },
     { id: '6', nombre: 'Press de Banca Plano', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Press-plano-bar.webp?raw=true' },
     { id: '7', nombre: 'Press de Banca Plano', musculo: 'Pecho', imagen: 'https://github.com/DevDinamics/baco_de_imagenes_guia/blob/main/pectorales/Press-plano-bar.webp?raw=true' },
