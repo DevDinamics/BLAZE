@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { 
   Firestore, collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, 
-  orderBy, onSnapshot, increment, arrayUnion, limit, writeBatch 
+  orderBy, onSnapshot, increment, arrayUnion, arrayRemove, limit, writeBatch 
 } from '@angular/fire/firestore';
 
-// 👇 IMPORTANTE: Importamos Storage desde su propio paquete
+// Storage importado correctamente
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Injectable({
@@ -13,7 +13,7 @@ import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage
 export class CoachService {
 
   private firestore = inject(Firestore);
-  private storage = inject(Storage); // 👈 Inyectamos Storage correctamente
+  private storage = inject(Storage);
 
   constructor() { }
 
@@ -73,6 +73,29 @@ export class CoachService {
       });
     }
     await batch.commit(); 
+  }
+
+  // ⚡ NUEVO: Desvincular un alumno individual del Team y actualizar ambos documentos en atómico
+  async desvincularAlumnoDelTeam(uidAlumno: string, equipoId?: string) {
+    const batch = writeBatch(this.firestore);
+
+    // 1. Limpiamos al alumno en la colección 'usuarios'
+    const alumnoRef = doc(this.firestore, 'usuarios', uidAlumno);
+    batch.update(alumnoRef, {
+      coachId: null,
+      equipoId: null,
+      nombreEquipo: null
+    });
+
+    // 2. Si viene el ID del equipo, lo sacamos también de la lista 'miembros' del equipo
+    if (equipoId) {
+      const equipoRef = doc(this.firestore, 'equipos', equipoId);
+      batch.update(equipoRef, {
+        miembros: arrayRemove(uidAlumno)
+      });
+    }
+
+    await batch.commit();
   }
 
   // ==========================================
@@ -227,16 +250,11 @@ export class CoachService {
     }
   }
 
-  // 👇 FUNCIÓN DE STORAGE CORREGIDA
+  // FUNCIÓN DE STORAGE
   async subirFotoPerfil(blob: Blob, uid: string): Promise<string> {
     try {
-      // Usamos 'ref' importado de '@angular/fire/storage'
       const storageRef = ref(this.storage, `coaches/${uid}/perfil.jpg`);
-      
-      // Subimos el archivo
       await uploadBytes(storageRef, blob);
-      
-      // Obtenemos la URL
       const url = await getDownloadURL(storageRef);
       return url;
     } catch (error) {
@@ -245,8 +263,7 @@ export class CoachService {
     }
   }
 
-  // 👇 FUNCIONES DE PERFIL
-  
+  // FUNCIONES DE PERFIL
   async obtenerMiPerfilCoach(uid: string) {
     const docRef = doc(this.firestore, 'usuarios', uid);
     const docSnap = await getDoc(docRef);
@@ -265,7 +282,7 @@ export class CoachService {
       certificaciones: datos.certificaciones || '', 
       credenciales: datos.certificaciones || '', 
       bio: datos.bio || '',
-      foto: datos.foto // Se guarda la URL de la foto si existe
+      foto: datos.foto
     });
   }
 

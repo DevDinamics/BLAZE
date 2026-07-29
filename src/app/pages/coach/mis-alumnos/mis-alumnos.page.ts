@@ -1,17 +1,27 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common'; // DatePipe necesario en standalone para usar | date
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router'; 
-import { IonicModule, NavController, LoadingController } from '@ionic/angular';
-import { addIcons } from 'ionicons';
 
+import { 
+  NavController, 
+  LoadingController, 
+  AlertController,
+  IonContent,
+  IonIcon,
+  IonModal,
+  IonSpinner
+} from '@ionic/angular/standalone';
+
+import { addIcons } from 'ionicons';
 import { 
   arrowBackOutline, searchOutline, personOutline, scaleOutline, bodyOutline, 
   fitnessOutline, closeOutline, barbellOutline, restaurantOutline, starOutline,
-  mailOutline, calendarOutline, flagOutline, chatbubblesOutline // ✅ Agregado chatbubblesOutline
+  mailOutline, calendarOutline, flagOutline, chatbubblesOutline, trashOutline
 } from 'ionicons/icons';
 
-import { Firestore, collection, query, where, getDocs, writeBatch, doc } from '@angular/fire/firestore';
+// ⚡ Agregamos arrayRemove a la importación
+import { Firestore, collection, query, where, getDocs, writeBatch, doc, updateDoc, arrayRemove } from '@angular/fire/firestore';
 import { AuthService } from 'src/app/services/auth';
 import { Subscription } from 'rxjs';
 
@@ -20,7 +30,15 @@ import { Subscription } from 'rxjs';
   templateUrl: './mis-alumnos.page.html',
   styleUrls: ['./mis-alumnos.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    DatePipe, // 👈 Agregado para que compile en producción
+    IonContent, 
+    IonIcon, 
+    IonModal, 
+    IonSpinner
+  ]
 })
 export class MisAlumnosPage implements OnInit, OnDestroy {
 
@@ -38,16 +56,33 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
   mostrarExpediente = false;
   alumnoSeleccionado: any = null;
 
+  // 🛡️ Bindings directos para Producción (AOT)
+  iconArrowBack = arrowBackOutline;
+  iconSearch = searchOutline;
+  iconPerson = personOutline;
+  iconMail = mailOutline;
+  iconClose = closeOutline;
+  iconStar = starOutline;
+  iconCalendar = calendarOutline;
+  iconFlag = flagOutline;
+  iconScale = scaleOutline;
+  iconBody = bodyOutline;
+  iconFitness = fitnessOutline;
+  iconChatbubbles = chatbubblesOutline;
+  iconBarbell = barbellOutline;
+  iconRestaurant = restaurantOutline;
+  iconTrash = trashOutline;
+
   constructor(
     private navCtrl: NavController,
     private authService: AuthService,
-    private loadingCtrl: LoadingController
+    private loadingCtrl: LoadingController,
+    private alertCtrl: AlertController
   ) {
-    // ✅ Registramos el ícono del chat
     addIcons({ 
       arrowBackOutline, searchOutline, personOutline, scaleOutline, bodyOutline, 
       fitnessOutline, closeOutline, barbellOutline, restaurantOutline, starOutline,
-      mailOutline, calendarOutline, flagOutline, chatbubblesOutline
+      mailOutline, calendarOutline, flagOutline, chatbubblesOutline, trashOutline
     });
   }
 
@@ -88,6 +123,7 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
           altura: data['altura'] || 0,
           objetivo: data['objetivo'] || 'No definido',
           experiencia: data['experiencia'] || 'Principiante',
+          equipoId: data['equipoId'] || null, // 👈 Lo necesitamos para el borrado
           fechaRegistro: data['fechaRegistro']?.toDate() || new Date(),
           vistoPorCoach: data['vistoPorCoach'] !== undefined ? data['vistoPorCoach'] : true,
           rol: data['rol'] 
@@ -123,7 +159,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     if (requiereActualizacion) {
       try {
         await batch.commit();
-        console.log('Se apagaron los foquitos de nuevos alumnos.');
       } catch (error) {
         console.error('Error al limpiar las notificaciones:', error);
       }
@@ -152,11 +187,6 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     this.navCtrl.back();
   }
 
-  // ==========================================
-  // 🚀 ACCIONES RÁPIDAS Y CHAT
-  // ==========================================
-
-  // ✅ NUEVA FUNCIÓN PARA INICIAR EL CHAT
   iniciarChatConAlumno() {
     const alumno = this.alumnoSeleccionado;
     this.cerrarExpediente();
@@ -181,9 +211,79 @@ export class MisAlumnosPage implements OnInit, OnDestroy {
     });
   }
 
+  async confirmarEliminarAlumno() {
+    const alumno = this.alumnoSeleccionado;
+    if (!alumno) return;
+
+    const alert = await this.alertCtrl.create({
+      mode: 'ios',
+      header: 'Remover del Team',
+      message: `¿Estás seguro de desvincular a ${alumno.nombre} ${alumno.apellido} de tu equipo? Su cuenta permanecerá activa pero ya no aparecerá en tu directorio.`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'alert-button-cancel'
+        },
+        {
+          text: 'Remover',
+          role: 'destructive',
+          handler: () => {
+            this.eliminarAlumno(alumno);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  private async eliminarAlumno(alumno: any) {
+    const loading = await this.loadingCtrl.create({
+      message: 'Desvinculando...',
+      spinner: 'crescent',
+      mode: 'ios'
+    });
+    await loading.present();
+
+    try {
+      // 1. Limpiamos la vinculación en el perfil del alumno
+      const alumnoRef = doc(this.firestore, 'usuarios', alumno.uid);
+      await updateDoc(alumnoRef, { 
+        coachId: null,
+        equipoId: null,
+        nombreEquipo: null
+      });
+
+      // 2. ⚡ FIX: Removemos su UID del arreglo del equipo
+      if (alumno.equipoId) {
+        const equipoRef = doc(this.firestore, 'equipos', alumno.equipoId);
+        await updateDoc(equipoRef, { 
+          miembros: arrayRemove(alumno.uid) 
+        });
+      }
+
+      this.todosLosAlumnos = this.todosLosAlumnos.filter(a => a.uid !== alumno.uid);
+      this.alumnosFiltrados = this.alumnosFiltrados.filter(a => a.uid !== alumno.uid);
+
+      this.cerrarExpediente();
+    } catch (error) {
+      console.error('Error al remover alumno:', error);
+    } finally {
+      await loading.dismiss();
+    }
+  }
+
+  // 🚀 FIX: Lógica mejorada del cálculo de BMI
   get bmi() {
     if (!this.alumnoSeleccionado || !this.alumnoSeleccionado.peso || !this.alumnoSeleccionado.altura) return 0;
-    return parseFloat((this.alumnoSeleccionado.peso / (this.alumnoSeleccionado.altura * this.alumnoSeleccionado.altura)).toFixed(1));
+    
+    let alturaMetros = this.alumnoSeleccionado.altura;
+    if (alturaMetros > 3) {
+      alturaMetros = alturaMetros / 100;
+    }
+
+    return parseFloat((this.alumnoSeleccionado.peso / (alturaMetros * alturaMetros)).toFixed(1));
   }
 
   get imcEstado() {

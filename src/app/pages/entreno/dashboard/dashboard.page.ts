@@ -4,9 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router'; 
 
 import { 
-  IonHeader, IonContent, IonIcon, IonSpinner, IonModal, 
-  ModalController, LoadingController, ToastController, 
-  NavController, AlertController 
+  IonHeader, IonContent, IonIcon, IonModal, 
+  ModalController, LoadingController, ToastController, NavController 
 } from '@ionic/angular/standalone';
 
 import { AuthService } from 'src/app/services/auth';
@@ -18,8 +17,6 @@ import { UploadPreviewPage } from 'src/app/modals/upload-preview/upload-preview.
 import { StoryViewerPage } from 'src/app/modals/story-viewer/story-viewer.page';
 import { VerPerfilCoachComponent } from 'src/app/modals/ver-perfil-coach/ver-perfil-coach.component';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-
-import { IonSkeletonText } from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
 import { 
@@ -37,9 +34,10 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
+  // 🧹 FIX: Removimos IonSpinner e IonSkeletonText para matar el warning de la consola
   imports: [
     CommonModule, RouterModule, FormsModule, 
-    IonHeader, IonContent, IonIcon, IonSpinner, IonModal, IonSkeletonText
+    IonHeader, IonContent, IonIcon, IonModal
   ] 
 })
 export class EntrenoDashboardPage implements OnDestroy { 
@@ -63,15 +61,19 @@ export class EntrenoDashboardPage implements OnDestroy {
   iconConstruct = constructOutline;
   iconMoon = moonOutline;
   iconSparkles = sparklesOutline; 
+  iconClose = close;
+  iconPersonAdd = personAdd;
 
   perfil: any = null;
   rutinaActual: any = null;
   coachActual: any = null;
-  
   codigoInput = '';
   cargando = true;
   mostrarBienvenida = false;
   
+  // 🚨 NUEVA VARIABLE PARA EL MODAL PREMIUM
+  mostrarModalExpulsion = false;
+
   suscripcionPerfil: any; 
   suscripcionStories: any; 
   suscripcionAuth: Subscription | null = null; 
@@ -87,7 +89,6 @@ export class EntrenoDashboardPage implements OnDestroy {
   fraseMotivacional: string = '';
   diaSeleccionadoIndex: number = 0;
   diaActualCalendario: number = 0; 
-  
   frasesDescanso = [
     "Los músculos crecen cuando descansas, no cuando entrenas.",
     "Recarga energías hoy para romper tus límites mañana.",
@@ -114,8 +115,7 @@ export class EntrenoDashboardPage implements OnDestroy {
     private modalCtrl: ModalController,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
-    private navCtrl: NavController,
-    private alertController: AlertController
+    private navCtrl: NavController
   ) {
     addIcons({ close, 'person-add': personAdd });
   }
@@ -143,11 +143,11 @@ export class EntrenoDashboardPage implements OnDestroy {
 
   async cargarDatos(uid: string) {
     this.cargando = true;
-    
     if (this.suscripcionPerfil) this.suscripcionPerfil();
 
     this.suscripcionPerfil = this.studentService.escucharPerfil(uid, async (datosPerfil) => {
-  
+      
+      // ⚡ Aquí detonamos el nuevo modal hermoso
       if (this.perfil?.equipoId && !datosPerfil?.equipoId) {
         this.mostrarAlertaExpulsion();
         this.limpiarDatosLocales();
@@ -165,7 +165,7 @@ export class EntrenoDashboardPage implements OnDestroy {
 
       try {
         if (this.perfil?.equipoId) {
-          const rutina: any = await this.studentService.obtenerRutinaActual(uid, this.perfil.equipoId);        
+          const rutina: any = await this.studentService.obtenerRutinaActual(uid, this.perfil.equipoId); 
           const coach = await this.studentService.obtenerCoach(this.perfil.coachId);
           this.coachActual = coach;
           this.rutinaActual = rutina;
@@ -188,7 +188,7 @@ export class EntrenoDashboardPage implements OnDestroy {
       } catch (error) {
         console.error("Error:", error);
       } finally {
-        this.cargando = false; // validar que se oculte el spinner después de cargar los datos o si ocurre un error
+        this.cargando = false; 
       }
     });
   }
@@ -199,12 +199,11 @@ export class EntrenoDashboardPage implements OnDestroy {
 
     if (this.rutinaActual && this.rutinaActual.sesiones) {
       let diaSemana = new Date().getDay(); 
-      diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; // Lunes = 0
+      diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; 
 
       this.diaActualCalendario = diaSemana;
       const totalSesiones = this.rutinaActual.sesiones.length;
 
-      // Autoseleccionar hoy, o el último día si hoy cae fuera del arreglo
       const diaASeleccionar = diaSemana >= totalSesiones ? totalSesiones - 1 : diaSemana;
       this.seleccionarDia(diaASeleccionar); 
 
@@ -214,27 +213,20 @@ export class EntrenoDashboardPage implements OnDestroy {
     }
   }
 
-  // 👇 LA LÓGICA INTELIGENTE DE DETECCIÓN
   seleccionarDia(index: number) {
     this.diaSeleccionadoIndex = index;
-    
     if (this.rutinaActual && this.rutinaActual.sesiones && this.rutinaActual.sesiones[index]) {
       const sesion = this.rutinaActual.sesiones[index];
-      
-      // Verificamos si la sesión tiene ejercicios y si el arreglo de ejercicios tiene al menos 1 elemento
       const tieneEjercicios = sesion.ejercicios && Array.isArray(sesion.ejercicios) && sesion.ejercicios.length > 0;
 
       if (!tieneEjercicios) {
-        // Es un día vacío -> DESCANSO
         this.esDiaDeDescanso = true;
         this.fraseMotivacional = this.frasesDescanso[Math.floor(Math.random() * this.frasesDescanso.length)];
       } else {
-        // Tiene ejercicios -> ENTRENO
         this.esDiaDeDescanso = false;
         this.sesionHoyTexto = sesion.nombre || `Día ${index + 1}`;
       }
     } else {
-      // Por seguridad, si falla la lectura, asumimos descanso
       this.esDiaDeDescanso = true;
       this.fraseMotivacional = this.frasesDescanso[Math.floor(Math.random() * this.frasesDescanso.length)];
     }
@@ -291,17 +283,20 @@ export class EntrenoDashboardPage implements OnDestroy {
   }
 
   limpiarDatosLocales() {
-    this.rutinaActual = null; this.coachActual = null;
-    this.diasRestantes = null; this.historias = []; this.rankingTeam = [];
+    this.rutinaActual = null; 
+    this.coachActual = null;
+    this.diasRestantes = null; 
+    this.historias = []; 
+    this.rankingTeam = [];
   }
 
-  async mostrarAlertaExpulsion() {
-    const alert = await this.alertController.create({
-      header: 'ACCESO REVOCADO 🚫', subHeader: 'Ya no formas parte del Team',
-      message: 'Tu coach te ha eliminado del equipo o el grupo ha sido disuelto.',
-      buttons: ['ENTENDIDO'], backdropDismiss: false
-    });
-    await alert.present();
+  // 🚀 LÓGICA DEL NUEVO MODAL PRO MAX
+  mostrarAlertaExpulsion() {
+    this.mostrarModalExpulsion = true;
+  }
+
+  cerrarModalExpulsion() {
+    this.mostrarModalExpulsion = false;
   }
 
   async subirStory() {
@@ -379,19 +374,34 @@ export class EntrenoDashboardPage implements OnDestroy {
     this.mostrarBienvenida = true;
   }
 
-  cerrarBienvenida() { this.mostrarBienvenida = false; }
+  cerrarBienvenida() {
+    this.mostrarBienvenida = false;
+  }
 
-  irAEntrenar() {
-    if (this.esDiaDeDescanso) return; // Si es descanso, no hay nada que iniciar
-
+  async irAEntrenar() {
+    // 1. Cerramos la ventana de bienvenida si está abierta
     if (this.mostrarBienvenida) {
       this.cerrarBienvenida();
-      setTimeout(() => {
-        this.navCtrl.navigateForward(['/entreno/mi-rutina'], { queryParams: { dia: this.diaSeleccionadoIndex } });
-      }, 350); 
-    } else {
-      this.navCtrl.navigateForward(['/entreno/mi-rutina'], { queryParams: { dia: this.diaSeleccionadoIndex } });
     }
+
+    // 2. Determinamos qué día abrir (si el seleccionado es descanso, buscamos el primer día activo)
+    let diaAEnviar = this.diaSeleccionadoIndex;
+
+    if (this.esDiaDeDescanso && this.rutinaActual?.sesiones) {
+      const primerDiaConEjercicios = this.rutinaActual.sesiones.findIndex(
+        (s: any) => s.ejercicios && Array.isArray(s.ejercicios) && s.ejercicios.length > 0
+      );
+      if (primerDiaConEjercicios !== -1) {
+        diaAEnviar = primerDiaConEjercicios;
+      }
+    }
+
+    // 3. Navegación limpia
+    setTimeout(() => {
+      this.navCtrl.navigateForward(['/entreno/mi-rutina'], { 
+        queryParams: { dia: diaAEnviar } 
+      });
+    }, 200);
   }
 
   async unirse() {

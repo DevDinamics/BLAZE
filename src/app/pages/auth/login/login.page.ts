@@ -1,18 +1,23 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
-import { addIcons } from 'ionicons';
-import { AuthService } from 'src/app/services/auth';
 
+// Standalone Imports puros
+import { 
+  IonContent, IonIcon, IonModal, IonSpinner, 
+  NavController, ToastController 
+} from '@ionic/angular/standalone';
+
+import { AuthService } from 'src/app/services/auth';
+import { addIcons } from 'ionicons';
 import { 
   mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
   arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, 
   alertCircleOutline, keyOutline 
 } from 'ionicons/icons';
 
-import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 @Component({
@@ -20,7 +25,7 @@ import { Firestore, doc, getDoc } from '@angular/fire/firestore';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, RouterModule]
+  imports: [CommonModule, FormsModule, RouterModule, IonContent, IonIcon, IonModal, IonSpinner]
 })
 export class LoginPage {
 
@@ -34,12 +39,20 @@ export class LoginPage {
   emailRecuperacion = '';
   enviandoCorreo = false;
 
-  private authSub: any = null;
-
   dominiosBloqueados = [
     'yopmail.com', 'temp-mail.org', '10minutemail.com',
     'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
   ];
+
+  // Bindings directos para los íconos
+  iconMail = mailOutline;
+  iconLock = lockClosedOutline;
+  iconEye = eyeOutline;
+  iconEyeOff = eyeOffOutline;
+  iconArrow = arrowForwardOutline;
+  iconGoogle = logoGoogle;
+  iconApple = logoApple;
+  iconKey = keyOutline;
 
   constructor(
     private auth: Auth,
@@ -53,26 +66,6 @@ export class LoginPage {
       arrowForwardOutline, logoGoogle, logoApple, checkmarkCircleOutline, 
       alertCircleOutline, keyOutline 
     });
-  }
-
-  async ionViewDidEnter() {
-    this.cargandoGoogle = true;
-
-    // Espía de sesión: detecta si ya hay una sesión activa (ej. al refrescar la página)
-    this.authSub = onAuthStateChanged(this.auth, async (user) => {
-      if (user) {
-        await this.redirigirPorRol(user.uid);
-      } else {
-        this.cargandoGoogle = false;
-      }
-    });
-  }
-
-  ionViewWillLeave() {
-    if (this.authSub) {
-      this.authSub();
-      this.authSub = null;
-    }
   }
 
   esEmailSeguro(email: string): boolean {
@@ -91,21 +84,33 @@ export class LoginPage {
   }
 
   async enviarCorreoRecuperacion() {
-    if (!this.emailRecuperacion || !this.esEmailSeguro(this.emailRecuperacion)) {
+    const emailLimpio = this.emailRecuperacion.trim().toLowerCase();
+
+    if (!emailLimpio || !this.esEmailSeguro(emailLimpio)) {
       this.mostrarMensaje('Ingresa un correo electrónico válido.', 'warning');
       return;
     }
+
     this.enviandoCorreo = true;
+
     try {
-      await sendPasswordResetEmail(this.auth, this.emailRecuperacion);
-      this.mostrarMensaje('¡Enlace enviado! Revisa tu bandeja de entrada o spam.', 'success');
+      // 🚀 Enviamos directamente mediante Firebase Auth
+      await sendPasswordResetEmail(this.auth, emailLimpio);
+      
       this.modalRecuperarAbierto = false;
+      this.mostrarMensaje('Enlace enviado. Revisa tu bandeja de entrada o spam.', 'success');
+
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-        this.mostrarMensaje('No encontramos una cuenta con este correo.', 'danger');
+      console.error('Error de recuperación:', error);
+      
+      // Manejo exacto de códigos de respuesta de Firebase Auth
+      if (['auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-email'].includes(error.code)) {
+        this.mostrarMensaje('No existe ninguna cuenta registrada con este correo.', 'danger');
+      } else if (error.code === 'auth/too-many-requests') {
+        this.mostrarMensaje('Demasiados intentos. Intenta más tarde.', 'warning');
       } else {
-        this.mostrarMensaje('Si el correo existe, recibirás un enlace en breve.', 'success');
         this.modalRecuperarAbierto = false;
+        this.mostrarMensaje('Si el correo está registrado, recibirás un enlace en breve.', 'success');
       }
     } finally {
       this.enviandoCorreo = false;
@@ -140,7 +145,7 @@ export class LoginPage {
         return;
       }
 
-      // El onAuthStateChanged detecta el login y redirige automáticamente
+      await this.redirigirPorRol(userCredential.user.uid);
 
     } catch (error: any) {
       this.cargando = false;
@@ -154,20 +159,18 @@ export class LoginPage {
   async loginGoogle() {
     this.cargandoGoogle = true;
     try {
-      // ✅ loginConGoogle() ya regresa el usuario directo desde el popup
-      // No esperamos al spy — redirigimos inmediatamente con el uid en mano
       const user = await this.authService.loginConGoogle();
-      await this.redirigirPorRol(user.uid);
+      if (user && user.uid) {
+        await this.redirigirPorRol(user.uid);
+      } else {
+        this.cargandoGoogle = false;
+      }
     } catch (error: any) {
       this.cargandoGoogle = false;
       if (error.code !== 'auth/popup-closed-by-user') {
         this.mostrarMensaje('Error al iniciar con Google.', 'danger');
       }
     }
-  }
-
-  loginApple() {
-    this.mostrarMensaje('El inicio de sesión con Apple estará disponible muy pronto. ', 'warning');
   }
 
   // ==========================================
@@ -190,13 +193,11 @@ export class LoginPage {
       const rol = data['rol'];
       const onboardingComplete = data['onboardingComplete'];
 
-      // Onboarding pendiente → a completarlo
       if (!onboardingComplete || rol === 'pendiente') {
         this.navCtrl.navigateRoot('/onboarding');
         return;
       }
 
-      // Onboarding completo → su dashboard
       if (rol === 'coach') {
         this.navCtrl.navigateRoot('/coach/dashboard');
       } else if (rol === 'alumno' || rol === 'atleta') {

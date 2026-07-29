@@ -4,7 +4,6 @@ import {
   arrayUnion, getDoc, orderBy, limit, increment, onSnapshot 
 } from '@angular/fire/firestore';
 
-// 👇 1. IMPORTAR STORAGE (Faltaba esto)
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Injectable({
@@ -13,8 +12,6 @@ import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage
 export class StudentService {
 
   private firestore = inject(Firestore);
-  
-  // 👇 2. INYECTAR STORAGE (Faltaba esto para usar this.storage)
   private storage = inject(Storage);
 
   constructor() { }
@@ -26,24 +23,28 @@ export class StudentService {
     const q = query(collection(this.firestore, 'equipos'), where('codigo', '==', codigo));
     const snapshot = await getDocs(q);
 
-    if (snapshot.empty) throw new Error('Código no válido 🚫');
+    if (snapshot.empty) throw new Error('Código no válido.');
 
     const equipoDoc = snapshot.docs[0];
     const equipoData = equipoDoc.data();
 
-    if (equipoData['miembros'].length >= equipoData['limite']) {
-      throw new Error('El equipo está lleno 😱 Dile a tu coach que aumente su plan.');
+    const alumnoRef = doc(this.firestore, 'usuarios', uidAlumno);
+    const alumnoSnap = await getDoc(alumnoRef);
+    const perfilAlumno = alumnoSnap.data();
+
+    if (perfilAlumno?.['equipoId'] === equipoDoc.id) {
+      throw new Error('¡Ya eres parte de este equipo!');
     }
 
-    if (equipoData['miembros'].includes(uidAlumno)) {
-      throw new Error('¡Ya eres parte de este equipo! 😎');
+    if (equipoData['miembros'].length >= equipoData['limite']) {
+      throw new Error('El equipo está lleno. Dile a tu coach que aumente su plan.');
     }
 
     await updateDoc(doc(this.firestore, 'equipos', equipoDoc.id), {
       miembros: arrayUnion(uidAlumno)
     });
 
-    await updateDoc(doc(this.firestore, 'usuarios', uidAlumno), {
+    await updateDoc(alumnoRef, {
       equipoId: equipoDoc.id,
       coachId: equipoData['coachId'],
       nombreEquipo: equipoData['nombre']
@@ -65,7 +66,6 @@ export class StudentService {
   // 3. OBTENER RUTINA
   // ==========================================
   async obtenerRutinaActual(uidAlumno: string, equipoId: string) {
-    console.log('--- DIAGNÓSTICO DE RUTINA ---');
     const qIndividual = query(
       collection(this.firestore, 'rutinas'),
       where('alumnoId', '==', uidAlumno),
@@ -79,7 +79,7 @@ export class StudentService {
         return { id: snapIndividual.docs[0].id, ...snapIndividual.docs[0].data() };
       }
     } catch (error) {
-      console.error('❌ ERROR CRÍTICO:', error);
+      console.error('Error al obtener rutina:', error);
     }
     return null;
   }
@@ -106,7 +106,7 @@ export class StudentService {
   }
 
   // ==========================================
-  // 6. GUARDAR ENTRENO
+  // 6. GUARDAR ENTRENO (CORREGIDO DEPURACIÓN)
   // ==========================================
   async registrarTerminoRutina(uid: string, datosRutina: any) {
     const userRef = doc(this.firestore, 'usuarios', uid);
@@ -116,20 +116,24 @@ export class StudentService {
     const userData = userSnap.data();
     const hoy = new Date().toISOString().split('T')[0];
     
-    if (userData['ultimoEntrenoFecha'] === hoy) {
-      throw new Error('¡Ya registraste tu entreno de hoy! 🛑 Vuelve mañana.');
+    // 💡 MODO DESARROLLO: Ponlo en false cuando lances la app a producción real
+    const MODO_DESARROLLO = true; 
+
+    if (!MODO_DESARROLLO && userData['ultimoEntrenoFecha'] === hoy) {
+      throw new Error('¡Ya registraste tu entreno de hoy! Vuelve mañana.');
     }
 
     await updateDoc(userRef, { ultimoEntrenoFecha: hoy });
 
     await addDoc(collection(this.firestore, 'solicitudes_aprobacion'), {
-      coachId: userData['coachId'], 
+      coachId: userData['coachId'] || '', 
       alumnoId: uid,
-      nombreAlumno: userData['nombre'],
+      nombreAlumno: userData['nombre'] || 'Atleta BLAZE',
       fotoAlumno: userData['foto'] || '',
-      nombreRutina: datosRutina.nombreRutina,
-      xpReclamada: datosRutina.xpGanada,
-      totalKilos: datosRutina.totalKilos,
+      nombreRutina: datosRutina.nombreRutina || 'Entrenamiento',
+      xpReclamada: datosRutina.xpGanada || 500,
+      totalKilos: datosRutina.totalKilos || 0,
+      duracionMinutos: datosRutina.duracionMinutos || 0,
       fecha: new Date(),
       estado: 'pendiente'
     });
@@ -145,19 +149,15 @@ export class StudentService {
   }
 
   // ==========================================
-  // 📸 7. HISTORIAS (STORIES)
+  // 7. HISTORIAS (STORIES)
   // ==========================================
-  
   async subirHistoria(archivo: Blob, usuario: any) {
-    // 1. Referencia única en Storage
     const ruta = `stories/${usuario.equipoId}/${usuario.uid}/${Date.now()}.jpg`;
     const storageRef = ref(this.storage, ruta);
     
-    // 2. Subir el Blob
     await uploadBytes(storageRef, archivo);
     const url = await getDownloadURL(storageRef);
 
-    // 3. Guardar en Firestore
     const historia = {
       uidUsuario: usuario.uid,
       nombreUsuario: usuario.nombre,
@@ -171,16 +171,34 @@ export class StudentService {
     await addDoc(collection(this.firestore, 'historias'), historia);
   }
 
-  // 👇 AGREGUÉ ESTO PARA QUE PUEDAS VER LAS HISTORIAS EN EL DASHBOARD
   obtenerHistoriasDelTeam(equipoId: string, callback: (historias: any[]) => void) {
     const ayer = new Date();
-    ayer.setHours(ayer.getHours() - 24); // 👈 Calculamos hace 24h
+    ayer.setHours(ayer.getHours() - 24); 
   
     const q = query(
       collection(this.firestore, 'historias'),
       where('equipoId', '==', equipoId),
-      where('fecha', '>', ayer), // 👈 ESTA ES LA MAGIA
+      where('fecha', '>', ayer), 
       orderBy('fecha', 'asc')
     );
+
+    return onSnapshot(q, (snapshot) => {
+      const historiasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const gruposMap = new Map<string, any>();
+      
+      historiasData.forEach((historia: any) => {
+        if (!gruposMap.has(historia.uidUsuario)) {
+          gruposMap.set(historia.uidUsuario, {
+            uidUsuario: historia.uidUsuario,
+            nombreUsuario: historia.nombreUsuario,
+            fotoUsuario: historia.fotoUsuario,
+            historias: []
+          });
+        }
+        gruposMap.get(historia.uidUsuario).historias.push(historia);
+      });
+
+      callback(Array.from(gruposMap.values()));
+    });
   }
 }

@@ -1,19 +1,22 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, AlertController, LoadingController, ToastController } from '@ionic/angular';
+import { RouterModule } from '@angular/router';
+
+import { 
+  IonContent, IonIcon, IonModal, IonSpinner,
+  NavController, AlertController, LoadingController, ToastController 
+} from '@ionic/angular/standalone';
+
 import { CoachService } from 'src/app/services/coach';
 import { AuthService } from 'src/app/services/auth';
-
-// Herramientas de Firebase
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 import { addIcons } from 'ionicons';
 import { 
   add, timeOutline, layersOutline, chevronForward, barbell, arrowBack, copy, 
   person, trash, create, close, search, documentTextOutline, folderOpenOutline, 
-  personOutline, copyOutline, ellipsisVertical,
-  createOutline, trashOutline 
+  personOutline, copyOutline, ellipsisVertical, createOutline, trashOutline 
 } from 'ionicons/icons'; 
 
 @Component({
@@ -21,7 +24,10 @@ import {
   templateUrl: './rutinas.page.html',
   styleUrls: ['./rutinas.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  imports: [
+    CommonModule, FormsModule, RouterModule,
+    IonContent, IonIcon, IonModal, IonSpinner
+  ]
 })
 export class RutinasPage { 
 
@@ -32,6 +38,17 @@ export class RutinasPage {
 
   mostrarModalOpciones = false;
   rutinaSeleccionada: any = null;
+
+  // 🛡️ Bindings de iconos para AOT
+  iconAdd = add;
+  iconArrowBack = arrowBack;
+  iconEllipsis = ellipsisVertical;
+  iconDocumentText = documentTextOutline;
+  iconFolderOpen = folderOpenOutline;
+  iconCopy = copyOutline;
+  iconLayers = layersOutline;
+  iconCreate = createOutline;
+  iconTrash = trashOutline;
 
   constructor(
     private firestore: Firestore,
@@ -64,21 +81,54 @@ export class RutinasPage {
             this.misPlantillas = todas.filter((r: any) => r.esPlantilla === true);
             this.rutinasActivas = todas.filter((r: any) => !r.esPlantilla);
 
-            // MAGIA PARA TRAER LOS AVATARES
+            // ⚡ OBTENER NOMBRE Y FOTO REAL DEL ALUMNO + TOTAL DE EJERCICIOS
             for (let rutina of this.rutinasActivas) {
+              
+              // 1. Calcular total de ejercicios
+              let totalEj = 0;
+              if (rutina.sesiones && Array.isArray(rutina.sesiones)) {
+                rutina.sesiones.forEach((s: any) => {
+                  if (s.ejercicios && Array.isArray(s.ejercicios)) {
+                    totalEj += s.ejercicios.length;
+                  }
+                });
+              }
+              rutina.totalEjercicios = totalEj;
+
+              // 2. Traer datos del alumno si tiene un ID asignado
               if (rutina.alumnoId) { 
                 try {
                   const alumnoRef = doc(this.firestore, `usuarios/${rutina.alumnoId}`);
                   const alumnoSnap = await getDoc(alumnoRef);
                   
                   if (alumnoSnap.exists()) {
-                    rutina.fotoAlumno = alumnoSnap.data()['foto'];
+                    const datosAlumno = alumnoSnap.data();
+                    const nombre = datosAlumno['nombre'] || '';
+                    const apellido = datosAlumno['apellido'] || '';
+                    
+                    // 🎯 GUARDAMOS EL NOMBRE Y LA FOTO
+                    rutina.nombreAlumno = `${nombre} ${apellido}`.trim() || 'Atleta BLAZE';
+                    rutina.fotoAlumno = datosAlumno['foto'] || 'assets/avatar-h-1.png';
                   }
                 } catch (e) {
-                  console.error('Error buscando foto del alumno:', e);
+                  console.error('Error buscando datos del alumno:', e);
                 }
               }
             }
+
+            // Mismo cálculo de ejercicios para las plantillas
+            for (let plan of this.misPlantillas) {
+              let totalEj = 0;
+              if (plan.sesiones && Array.isArray(plan.sesiones)) {
+                plan.sesiones.forEach((s: any) => {
+                  if (s.ejercicios && Array.isArray(s.ejercicios)) {
+                    totalEj += s.ejercicios.length;
+                  }
+                });
+              }
+              plan.totalEjercicios = totalEj;
+            }
+
           } else {
             this.misPlantillas = [];
             this.rutinasActivas = [];
@@ -98,7 +148,7 @@ export class RutinasPage {
 
   crearNuevo() {
     if (this.segmento === 'plantillas') {
-      this.navCtrl.navigateForward(['/coach/crear-rutina', { modo: 'plantilla' }]);
+      this.navCtrl.navigateForward(['/coach/crear-rutina'], { queryParams: { modo: 'plantilla' } });
     } else {
       this.navCtrl.navigateForward('/coach/crear-rutina');
     }
@@ -111,7 +161,6 @@ export class RutinasPage {
 
   cerrarOpciones() {
     this.mostrarModalOpciones = false;
-    // Damos tiempo a que la animación termine antes de limpiar la variable
     setTimeout(() => {
       if (!this.mostrarModalOpciones) {
         this.rutinaSeleccionada = null;
@@ -119,24 +168,25 @@ export class RutinasPage {
     }, 400); 
   }
 
-  // 👇 SOLUCIÓN 1: Evitamos chocar con la animación del modal
   editarRutina() {
     const id = this.rutinaSeleccionada?.id;
-    this.mostrarModalOpciones = false; // Disparamos el cierre
+    const esPlantilla = this.rutinaSeleccionada?.esPlantilla;
+    this.mostrarModalOpciones = false;
     
     if (id) {
-      // Esperamos 350ms a que el modal se cierre por completo antes de viajar
       setTimeout(() => {
-        this.navCtrl.navigateForward(['/coach/crear-rutina', { id: id }]);
+        if (esPlantilla) {
+          this.navCtrl.navigateForward([`/coach/crear-rutina/${id}`], { queryParams: { modo: 'plantilla' } });
+        } else {
+          this.navCtrl.navigateForward([`/coach/crear-rutina/${id}`]);
+        }
       }, 350);
     }
   }
 
-  // 👇 SOLUCIÓN 2: Lanzamos la alerta encima del modal sin cerrarlo primero
   async iniciarBorrado() {
     const rutina = this.rutinaSeleccionada;
     if (rutina) {
-      // Directo a la confirmación, sin cerrar el modal todavía
       await this.confirmarBorrar(rutina);
     }
   }
@@ -147,22 +197,17 @@ export class RutinasPage {
       message: `Se eliminará permanentemente ${rutina.esPlantilla ? 'esta plantilla' : 'este plan asignado'}.`,
       mode: 'ios',
       buttons: [
-        { 
-          text: 'Cancelar', 
-          role: 'cancel' 
-        },
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Sí, Borrar',
           handler: async () => {
-            // Cerramos el modal ahora que ya confirmaron
             this.mostrarModalOpciones = false; 
-            
             const loading = await this.loadingCtrl.create({ message: 'Borrando...', mode: 'ios' });
             await loading.present();
             
             try {
               await this.coachService.eliminarRutina(rutina.id);
-              this.mostrarToast('Eliminado correctamente 🗑️', 'success');
+              this.mostrarToast('Eliminado correctamente', 'success');
               this.cargarRutinas(); 
             } catch (error) {
               console.error('Error al borrar de Firestore:', error);
@@ -174,7 +219,6 @@ export class RutinasPage {
         }
       ]
     });
-    
     await alert.present();
   }
 

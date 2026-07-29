@@ -5,7 +5,7 @@
     <div class="px-6 pt-14 pb-4 flex items-center justify-between gap-4">
       <button (click)="pasoAnterior()" [disabled]="pasoActual === 1" 
               class="h-8 w-8 flex items-center justify-center rounded-full disabled:opacity-0 active:scale-90 transition-all bg-white/5 hover:bg-white/10">
-        <ion-icon name="arrow-back-outline" class="text-xl text-white"></ion-icon>
+        <ion-icon [icon]="iconArrowBack" class="text-xl text-white"></ion-icon>
       </button>
 
       <div class="flex-1 flex gap-1 h-1.5">
@@ -27,7 +27,7 @@
         <button (click)="seleccionarRol('atleta')" 
                 class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 mb-4 border-2 transition-all duration-300 active:scale-[0.98]"
                 [ngClass]="datos.rol === 'atleta' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
-          <ion-icon name="person-outline" class="text-2xl" [ngClass]="datos.rol === 'atleta' ? 'text-white' : 'text-gray-500'"></ion-icon>
+          <ion-icon [icon]="iconPerson" class="text-2xl" [ngClass]="datos.rol === 'atleta' ? 'text-white' : 'text-gray-500'"></ion-icon>
           <div class="text-left">
             <p class="font-bold text-base text-white">Atleta</p>
             <p class="text-gray-500 text-xs mt-0.5">Entrena, sigue tu progreso y alcanza tus metas</p>
@@ -37,7 +37,7 @@
         <button (click)="seleccionarRol('coach')" 
                 class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
                 [ngClass]="datos.rol === 'coach' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
-          <ion-icon name="people-outline" class="text-2xl" [ngClass]="datos.rol === 'coach' ? 'text-white' : 'text-gray-500'"></ion-icon>
+          <ion-icon [icon]="iconPeople" class="text-2xl" [ngClass]="datos.rol === 'coach' ? 'text-white' : 'text-gray-500'"></ion-icon>
           <div class="text-left">
             <p class="font-bold text-base text-white">Instructor</p>
             <p class="text-gray-500 text-xs mt-0.5">Gestiona estudiantes y crea planes personalizados</p>
@@ -56,12 +56,13 @@
                     (click)="datos.genero = gen"
                     class="w-full bg-[#111111] p-5 rounded-2xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
                     [ngClass]="datos.genero === gen ? 'border-white shadow-lg shadow-white/10 opacity-100 scale-105' : 'border-transparent opacity-50 hover:opacity-100'">
-              <ion-icon name="person-outline" class="text-xl" [ngClass]="datos.genero === gen ? 'text-white' : 'text-gray-500'"></ion-icon>
+              <ion-icon [icon]="iconPerson" class="text-xl" [ngClass]="datos.genero === gen ? 'text-white' : 'text-gray-500'"></ion-icon>
               <span class="font-bold text-sm">{{ gen }}</span>
             </button>
           </div>
         </div>
 
+        <!-- CALENDARIO ESTILO IOS -->
         <div *ngIf="pasoActual === 3" class="animate-fade-in text-center w-full max-w-sm mx-auto">
           <h1 class="text-3xl font-bold mb-2 tracking-tight">¿Cuándo naciste?</h1>
           <p class="text-gray-400 text-sm mb-10">Debes tener al menos 18 años para unirte.</p>
@@ -70,7 +71,7 @@
                   class="w-full bg-[#111111] rounded-3xl p-6 border-2 transition-all flex flex-col items-center justify-center gap-2 active:scale-95" 
                   [ngClass]="datos.fechaNacimiento ? 'border-white shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'border-gray-800'">
             
-            <ion-icon name="calendar-outline" class="text-4xl mb-2" [ngClass]="datos.fechaNacimiento ? 'text-white' : 'text-gray-500'"></ion-icon>
+            <ion-icon [icon]="iconCalendar" class="text-4xl mb-2" [ngClass]="datos.fechaNacimiento ? 'text-white' : 'text-gray-500'"></ion-icon>
             
             <span *ngIf="!datos.fechaNacimiento" class="text-gray-400 font-bold">Toca para seleccionar</span>
             
@@ -137,7 +138,7 @@
                     class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
                     [ngClass]="datos.objetivo === 'Perder peso' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
               <div class="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                <ion-icon name="scale-outline" class="text-xl text-gray-300"></ion-icon>
+                <ion-icon [icon]="iconScale" class="text-xl text-gray-300"></ion-icon>
               </div>
               <div>
                 <p class="font-bold text-sm text-white">Perder peso</p>
@@ -149,7 +150,7 @@
                     class="w-full bg-[#111111] p-5 rounded-3xl flex items-center gap-4 border-2 transition-all duration-300 active:scale-[0.98]"
                     [ngClass]="datos.objetivo === 'Ganar músculo' ? 'border-white scale-105 shadow-lg shadow-white/10 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
               <div class="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                <ion-icon name="barbell-outline" class="text-xl text-gray-300"></ion-icon>
+                <ion-icon [icon]="iconBarbell" class="text-xl text-gray-300"></ion-icon>
               </div>
               <div>
                 <p class="font-bold text-sm text-white">Ganar músculo</p>
@@ -206,6 +207,7 @@
         </div>
       </ng-container>
 
+      <!-- CARGA DE AVATARES TIPO APPLE -->
       <div *ngIf="pasoActual === totalPasos && pasoActual > 1" class="animate-fade-in text-center pb-8">
         <h1 class="text-3xl font-bold mb-2 tracking-tight text-white">Elige tu avatar</h1>
         <p class="text-gray-400 text-sm mb-10">Tu identidad en la comunidad BLAZE</p>
@@ -227,7 +229,7 @@
             </div>
 
             <div *ngIf="datos.avatar === avatar" class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md animate-fade-in z-20">
-              <ion-icon name="checkmark-circle-outline" class="text-black text-xl block"></ion-icon>
+              <ion-icon [icon]="iconCheckmark" class="text-black text-xl block"></ion-icon>
             </div>
           </div>
         </div>

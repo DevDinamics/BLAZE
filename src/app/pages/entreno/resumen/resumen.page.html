@@ -8,7 +8,7 @@
         
         <div class="h-28 w-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-md border border-gray-100 relative">
           <div class="absolute inset-0 bg-[#f57c00]/10 rounded-full blur-md"></div>
-          <ion-icon name="trophy-outline" class="text-6xl text-[#f57c00] relative z-10"></ion-icon>
+          <ion-icon [icon]="iconTrophy" class="text-6xl text-[#f57c00] relative z-10"></ion-icon>
         </div>
         
         <h1 class="text-4xl font-black text-black tracking-tight leading-none mb-2">
@@ -27,7 +27,6 @@
           </div>
           <div class="text-right pb-1">
              <p class="text-sm font-black text-black">Nivel {{ resumen.nivelUsuario }}</p>
-             <p class="text-[10px] text-gray-500 font-bold">Coach Pro</p>
           </div>
         </div>
 
@@ -46,18 +45,23 @@
         
         <div class="bg-white p-5 rounded-3xl border border-gray-200 flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md transition-shadow">
           <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 mb-1 border border-gray-100">
-            <ion-icon name="time-outline" class="text-xl"></ion-icon>
+            <ion-icon [icon]="iconTime" class="text-xl"></ion-icon>
           </div>
           <p class="text-2xl font-black text-black tracking-tight">{{ resumen.tiempo }}</p>
           <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Duración</p>
         </div>
 
+        <!-- 🚀 FIX EN KILOS MOVIDOS: Condicional para no dividir si es menor a 1000 kg -->
         <div class="bg-white p-5 rounded-3xl border border-gray-200 flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md transition-shadow">
           <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 mb-1 border border-gray-100">
-            <ion-icon name="barbell-outline" class="text-xl"></ion-icon>
+            <ion-icon [icon]="iconBarbell" class="text-xl"></ion-icon>
           </div>
-          <p class="text-2xl font-black text-black tracking-tight">{{ resumen.totalKilos / 1000 | number:'1.1-1' }}k</p>
-          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Kg Movidos</p>
+          <p class="text-2xl font-black text-black tracking-tight">
+            {{ resumen.totalKilos >= 1000 ? ((resumen.totalKilos / 1000 | number:'1.1-1') + 'k') : (resumen.totalKilos | number:'1.0-0') }}
+          </p>
+          <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+            {{ resumen.totalKilos >= 1000 ? 'Toneladas Movidas' : 'Kg Movidos' }}
+          </p>
         </div>
 
       </div>
@@ -65,17 +69,10 @@
     </div>
 
     <div class="w-full space-y-3 pt-8 pb-4 animate-fade-in-up" style="animation-delay: 0.3s;">
-      
-      <button (click)="compartir()" class="w-full bg-gray-50 border border-gray-200 py-4 rounded-full text-black font-bold text-sm shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-100">
-        <ion-icon name="share-social-outline" class="text-lg"></ion-icon>
-        Compartir Logro
-      </button>
-
       <button (click)="volverAlHome()" class="w-full bg-black py-4 rounded-full text-white font-bold text-sm shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-900">
-        <ion-icon name="home-outline" class="text-lg"></ion-icon>
+        <ion-icon [icon]="iconHome" class="text-lg"></ion-icon>
         Volver al Inicio
       </button>
-
     </div>
 
   </div>

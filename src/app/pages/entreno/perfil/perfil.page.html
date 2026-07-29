@@ -9,19 +9,23 @@
           <img [src]="usuario.avatar" class="h-full w-full object-contain mix-blend-multiply">
         </div>
         <button *ngIf="editando" (click)="abrirModalFoto()" class="absolute bottom-0 right-0 h-9 w-9 bg-black text-white rounded-full border-4 border-white shadow-sm flex items-center justify-center cursor-pointer active:scale-90 transition-transform">
-          <ion-icon name="camera-outline" class="text-sm"></ion-icon>
+          <ion-icon [icon]="iconCamera" class="text-sm"></ion-icon>
         </button>
       </div>
       
       <div class="text-center px-4">
         <h1 class="text-2xl font-black tracking-tight text-black flex items-center justify-center gap-1 mb-1">
           {{ usuario.nombre }} {{ usuario.apellido }}
-          <ion-icon name="checkmark-circle" class="text-green-500 text-xl"></ion-icon>
+          <ion-icon [icon]="iconCheckmarkCircle" class="text-green-500 text-xl"></ion-icon>
         </h1>
         
         <div class="flex items-center justify-center gap-3 mt-3 text-gray-500 text-xs font-medium">
-          <span class="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100"><ion-icon name="happy-outline"></ion-icon> 26 años</span>
-          <span class="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100"><ion-icon name="calendar-outline"></ion-icon> Se unió en {{ usuario.miembroDesde }}</span>
+          <span class="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100">
+            <ion-icon [icon]="iconHappy"></ion-icon> {{ usuario.edad || 26 }} años
+          </span>
+          <span class="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100">
+            <ion-icon [icon]="iconCalendar"></ion-icon> Se unió en {{ usuario.miembroDesde }}
+          </span>
         </div>
 
         <button (click)="alternarEdicion()" class="mt-6 bg-black text-white font-bold text-sm px-8 py-3 rounded-full active:scale-95 transition-transform shadow-md hover:bg-gray-800">
@@ -30,6 +34,7 @@
       </div>
     </div>
 
+    <!-- Pestañas -->
     <div class="flex overflow-x-auto gap-3 px-6 mb-8 pb-2 scrollbar-hide">
       <button (click)="tabActual = 'personal'" 
               class="px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
@@ -48,8 +53,8 @@
       </button>
     </div>
 
+    <!-- TAB: Personal -->
     <div *ngIf="tabActual === 'personal'" class="px-6 animate-fade-in">
-      
       <div class="mb-10">
         <h3 class="font-black text-xl tracking-tight text-black mb-1">Información de contacto</h3>
         <p class="text-gray-500 text-sm font-medium mb-6">Datos de contacto y comunicación</p>
@@ -70,27 +75,27 @@
 
           <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
             <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
-              <ion-icon name="mail-outline" class="text-gray-600 text-lg"></ion-icon>
+              <ion-icon [icon]="iconMail" class="text-gray-600 text-lg"></ion-icon>
             </div>
             <div class="flex-1">
               <p class="text-sm font-bold text-black">Correo electrónico</p>
-              <p class="text-gray-500 text-sm truncate">diegoarmando6090@gmail.com</p>
+              <p class="text-gray-500 text-sm truncate">{{ usuario.email || 'armando.delgado1@ukuepa.com' }}</p>
             </div>
           </div>
 
           <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
             <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
-              <ion-icon name="gift-outline" class="text-gray-600 text-lg"></ion-icon>
+              <ion-icon [icon]="iconGift" class="text-gray-600 text-lg"></ion-icon>
             </div>
             <div class="flex-1">
               <p class="text-sm font-bold text-black">Fecha de nacimiento</p>
-              <p class="text-gray-500 text-sm">8 de octubre de 1998</p>
+              <p class="text-gray-500 text-sm">{{ usuario.fechaNacimientoFormateada || 'No registrada' }}</p>
             </div>
           </div>
 
           <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
             <div class="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
-              <ion-icon name="person-outline" class="text-gray-600 text-lg"></ion-icon>
+              <ion-icon [icon]="iconPerson" class="text-gray-600 text-lg"></ion-icon>
             </div>
             <div class="flex-1">
               <p class="text-sm font-bold text-black">Nombre</p>
@@ -110,7 +115,7 @@
           
           <div class="flex items-center p-4 border-b border-gray-200/60">
             <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
-              <ion-icon name="scale-outline" class="text-gray-600 text-lg"></ion-icon>
+              <ion-icon [icon]="iconScale" class="text-gray-600 text-lg"></ion-icon>
             </div>
             <div class="flex-1">
               <p class="font-bold text-sm text-black mb-1">Peso Actual</p>
@@ -125,7 +130,7 @@
 
           <div class="flex items-center p-4 border-b border-gray-200/60">
             <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 shadow-sm border border-gray-100">
-              <ion-icon name="body-outline" class="text-gray-600 text-lg"></ion-icon>
+              <ion-icon [icon]="iconBody" class="text-gray-600 text-lg"></ion-icon>
             </div>
             <div class="flex-1">
               <p class="font-bold text-sm text-black mb-1">Estatura</p>
@@ -140,7 +145,7 @@
 
           <div class="flex items-center p-4">
             <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mr-4 relative shadow-sm border border-gray-100">
-              <ion-icon name="fitness-outline" class="text-gray-600 text-lg"></ion-icon>
+              <ion-icon [icon]="iconFitness" class="text-gray-600 text-lg"></ion-icon>
               <div class="absolute top-0 right-0 h-3 w-3 rounded-full border-2 border-white" [ngClass]="imcColor"></div>
             </div>
             <div class="flex-1">
@@ -152,12 +157,13 @@
         </div>
 
         <button (click)="intentarCerrarSesion()" class="w-full bg-white text-gray-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 hover:text-black">
-           <ion-icon name="log-out-outline" class="text-lg"></ion-icon> Cerrar Sesión
+           <ion-icon [icon]="iconLogOut" class="text-lg"></ion-icon> Cerrar Sesión
         </button>
 
       </div>
     </div>
 
+    <!-- TAB: Preferencias -->
     <div *ngIf="tabActual === 'preferencias'" class="px-6 animate-fade-in">
       <h3 class="font-black text-xl tracking-tight text-black mb-1">Preferencias de perfil</h3>
       <p class="text-gray-500 text-sm font-medium mb-8">Personaliza tu experiencia de entrenamiento</p>
@@ -175,7 +181,7 @@
             <div (click)="abrirMenuOpciones('objetivo', 'Elige tu Objetivo', opcionesObjetivo)"
                  class="relative w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-bold shadow-sm flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer hover:border-black">
               <span class="text-black">{{ usuario.objetivo || 'Selecciona un objetivo' }}</span>
-              <ion-icon name="chevron-down-outline" class="text-gray-400 text-lg"></ion-icon>
+              <ion-icon [icon]="iconChevronDown" class="text-gray-400 text-lg"></ion-icon>
             </div>
           </div>
         </div>
@@ -191,7 +197,7 @@
             <div (click)="abrirMenuOpciones('experiencia', 'Nivel de Experiencia', opcionesExperiencia)"
                  class="relative w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-bold shadow-sm flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer hover:border-black">
               <span class="text-black">{{ usuario.experiencia || 'Selecciona tu nivel' }}</span>
-              <ion-icon name="chevron-down-outline" class="text-gray-400 text-lg"></ion-icon>
+              <ion-icon [icon]="iconChevronDown" class="text-gray-400 text-lg"></ion-icon>
             </div>
           </div>
         </div>
@@ -219,13 +225,14 @@
       </div>
     </div>
 
+    <!-- TAB: Actividad -->
     <div *ngIf="tabActual === 'actividad'" class="px-6 animate-fade-in">
        <h3 class="font-black text-xl tracking-tight text-black mb-4">Estadísticas de Racha</h3>
       
        <div class="grid grid-cols-2 gap-4 mb-10">
          <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
            <div class="h-12 w-12 rounded-full bg-orange-50 flex items-center justify-center mb-3 border border-orange-100">
-              <ion-icon name="flame" class="text-[#f57c00] text-2xl"></ion-icon>
+              <ion-icon [icon]="iconFlame" class="text-[#f57c00] text-2xl"></ion-icon>
            </div>
            <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Racha Actual</p>
            <p class="font-black text-3xl text-black tracking-tight">{{ usuario.rachaActual }} <span class="text-sm font-bold text-gray-400">días</span></p>
@@ -233,7 +240,7 @@
          
          <div class="border border-gray-200 rounded-3xl p-5 shadow-sm bg-white">
            <div class="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center mb-3 border border-gray-100">
-              <ion-icon name="barbell-outline" class="text-black text-2xl"></ion-icon>
+              <ion-icon [icon]="iconBarbell" class="text-black text-2xl"></ion-icon>
            </div>
            <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Entrenos</p>
            <p class="font-black text-3xl text-black tracking-tight">{{ usuario.totalEntrenos }} <span class="text-sm font-bold text-gray-400">total</span></p>
@@ -244,6 +251,7 @@
   </div>
 </ion-content>
 
+<!-- Modal Avatares -->
 <ion-modal [isOpen]="mostrarModalAvatares" (didDismiss)="mostrarModalAvatares = false" [initialBreakpoint]="0.6" [breakpoints]="[0, 0.6, 0.8]" class="avatar-modal">
   <ng-template>
     <ion-content style="--background: #ffffff;">
@@ -258,7 +266,7 @@
               <img [src]="avatar" class="w-full aspect-square rounded-full object-cover bg-gray-100 border border-gray-200 mix-blend-multiply">
             </div>
             <div *ngIf="usuario.avatar === avatar" class="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 shadow-md animate-fade-in z-10 border-2 border-white">
-              <ion-icon name="checkmark-outline" class="text-white text-lg block font-bold"></ion-icon>
+              <ion-icon [icon]="iconCheckmarkOutline" class="text-white text-lg block font-bold"></ion-icon>
             </div>
           </div>
         </div>
@@ -267,38 +275,42 @@
   </ng-template>
 </ion-modal>
 
+<!-- Modal Selector de Opciones -->
 <ion-modal [isOpen]="modalMenuAbierto" (didDismiss)="modalMenuAbierto = false" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.75]">
   <ng-template>
-    <div class="h-full bg-white px-6 pt-8 pb-10 overflow-y-auto">
-      <h3 class="text-2xl font-black text-gray-900 mb-6 tracking-tight">{{ menuTitulo }}</h3>
-      
-      <div class="space-y-3">
-        <button *ngFor="let opt of menuOpciones"
-                (click)="seleccionarOpcion(opt.value)"
-                class="w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98]"
-                [ngClass]="usuario[menuCampoTarget] === opt.value ? 'bg-gray-50 border-black shadow-sm' : 'bg-white border-gray-200 hover:border-gray-300'">
-          
-          <span class="font-bold text-sm" [ngClass]="usuario[menuCampoTarget] === opt.value ? 'text-black' : 'text-gray-600'">
-            {{ opt.label }}
-          </span>
-          
-          <div *ngIf="usuario[menuCampoTarget] === opt.value" class="h-6 w-6 bg-black rounded-full flex items-center justify-center animate-fade-in">
-             <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
-          </div>
+    <ion-content style="--background: #ffffff;">
+      <div class="px-6 pt-8 pb-10">
+        <h3 class="text-2xl font-black text-gray-900 mb-6 tracking-tight">{{ menuTitulo }}</h3>
+        
+        <div class="space-y-3">
+          <button *ngFor="let opt of menuOpciones"
+                  (click)="seleccionarOpcion(opt.value)"
+                  class="w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98]"
+                  [ngClass]="usuario[menuCampoTarget] === opt.value ? 'bg-gray-50 border-black shadow-sm' : 'bg-white border-gray-200 hover:border-gray-300'">
+            
+            <span class="font-bold text-sm" [ngClass]="usuario[menuCampoTarget] === opt.value ? 'text-black' : 'text-gray-600'">
+              {{ opt.label }}
+            </span>
+            
+            <div *ngIf="usuario[menuCampoTarget] === opt.value" class="h-6 w-6 bg-black rounded-full flex items-center justify-center animate-fade-in">
+               <ion-icon [icon]="iconCheckmark" class="text-white text-sm"></ion-icon>
+            </div>
 
-        </button>
+          </button>
+        </div>
       </div>
-    </div>
+    </ion-content>
   </ng-template>
 </ion-modal>
 
+<!-- Modal Alerta Cambios Sin Guardar -->
 <ion-modal [isOpen]="modalAlertaAbierto" class="custom-alert-modal" (didDismiss)="modalAlertaAbierto = false">
   <ng-template>
     <div class="flex items-center justify-center h-full px-4">
       <div class="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl text-center border border-gray-100">
         
         <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
-          <ion-icon name="warning" class="text-red-500 text-3xl"></ion-icon>
+          <ion-icon [icon]="iconWarning" class="text-red-500 text-3xl"></ion-icon>
         </div>
         
         <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">Cambios sin guardar</h3>
@@ -322,7 +334,9 @@
 </ion-modal>
 
 <style>
-  /* 👇 Estilo crítico para que el Modal de Alerta se vea como Dialogo Flotante y no pantalla completa */
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
   ion-modal.custom-alert-modal {
     --width: 90%;
     --max-width: 400px;

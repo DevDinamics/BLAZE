@@ -2,6 +2,7 @@ import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { 
   IonHeader, IonToolbar, IonContent, IonIcon, IonFooter, 
@@ -38,9 +39,9 @@ export class MiRutinaPage implements OnDestroy {
   private firestore = inject(Firestore);
   uidAlumno: string = ''; 
 
-  // 👇 1. NUEVA VARIABLE PARA CONTROLAR LA PANTALLA DE BLOQUEO
   tieneRutina: boolean = false;
 
+  // 🛡️ Bindings directos para los íconos
   iconInfo = informationCircleOutline;
   iconTime = timeOutline;
   iconFlame = flameOutline;
@@ -53,6 +54,8 @@ export class MiRutinaPage implements OnDestroy {
   iconClose = closeOutline;
   iconBulb = bulbOutline;
   iconTrophy = trophyOutline;
+  iconLock = lockClosedOutline;
+  iconBarbell = barbellOutline;
 
   modalTecnicaAbierto = false;
   ejercicioSeleccionado: any = null;
@@ -67,6 +70,9 @@ export class MiRutinaPage implements OnDestroy {
   sesionHoy: any = null;
   cargando = true;
 
+  private subUser: Subscription | null = null;
+  private subQueryParams: Subscription | null = null;
+
   constructor(
     private navCtrl: NavController,
     private toastCtrl: ToastController,
@@ -75,18 +81,23 @@ export class MiRutinaPage implements OnDestroy {
     private studentService: StudentService,
     private route: ActivatedRoute
   ) {
-    // Asegúrate de tener lockClosedOutline si lo usaste en el HTML
     addIcons({ 
       timeOutline, barbellOutline, checkmarkOutline, arrowBackOutline, flameOutline, 
       playCircleOutline, reloadOutline, playOutline, closeOutline, bulbOutline, 
       flashOutline, repeatOutline, checkmarkDoneOutline, addOutline, listOutline, 
-      informationCircleOutline, trophyOutline, checkmarkCircle, close, lockClosedOutline
+      informationCircleOutline, trophyOutline, checkmarkCircle, close, lockClosedOutline,
+      'trophy-outline': trophyOutline,
+      'lock-closed-outline': lockClosedOutline,
+      'barbell-outline': barbellOutline,
+      'flash-outline': flashOutline
     });
   }
 
   async ionViewWillEnter() {
     this.cargando = true;
-    this.authService.user$.subscribe(async user => {
+    this.limpiarSuscripciones();
+
+    this.subUser = this.authService.user$.subscribe(async user => {
       if (user) {
         this.uidAlumno = user.uid; 
 
@@ -94,15 +105,19 @@ export class MiRutinaPage implements OnDestroy {
         if (perfil) {
           const rutinaRaw: any = await this.studentService.obtenerRutinaActual(user.uid, perfil['equipoId']);
           
-          // 👇 2. VALIDAMOS SI REALMENTE HAY UNA RUTINA ASIGNADA
           if (rutinaRaw && rutinaRaw.sesiones && rutinaRaw.sesiones.length > 0) {
             
-            this.tieneRutina = true; // ¡Desbloqueamos la pantalla!
+            this.tieneRutina = true;
             this.cicloCompleto = rutinaRaw;
             
-            let indiceSesionAEntrenar = 0;
-            
-            this.route.queryParams.subscribe(params => {
+            this.subQueryParams = this.route.queryParams.subscribe(params => {
+              // 🚀 FIX: Si la sesión ya fue cargada previamente en memoria, no la reiniciamos para no perder el peso
+              if (this.sesionHoy && this.sesionHoy.ejercicios && this.sesionHoy.ejercicios.length > 0) {
+                this.cargando = false;
+                return;
+              }
+
+              let indiceSesionAEntrenar = 0;
               if (params['dia'] !== undefined) {
                 indiceSesionAEntrenar = parseInt(params['dia'], 10);
               } else {
@@ -112,12 +127,13 @@ export class MiRutinaPage implements OnDestroy {
               }
               
               const datosSesion = rutinaRaw.sesiones[indiceSesionAEntrenar];
+              if (!datosSesion) return;
               
               let diaReal = new Date().getDay();
               diaReal = diaReal === 0 ? 6 : diaReal - 1;
               const esDiaCorrecto = indiceSesionAEntrenar === diaReal;
 
-              const duracionEstimada = datosSesion.ejercicios.length * 5;
+              const duracionEstimada = datosSesion.ejercicios ? datosSesion.ejercicios.length * 5 : 30;
 
               this.sesionHoy = {
                 ...datosSesion,
@@ -125,10 +141,10 @@ export class MiRutinaPage implements OnDestroy {
                 esDiaCorrecto: esDiaCorrecto,
                 xp: 500, 
                 duracion: duracionEstimada, 
-                ejercicios: datosSesion.ejercicios.map((e: any) => ({
+                ejercicios: (datosSesion.ejercicios || []).map((e: any) => ({
                   ...e,
                   seriesHechas: 0,
-                  peso: null,
+                  peso: e.peso || null,
                   completado: false,
                   nota: e.nota || '' 
                 }))
@@ -137,13 +153,42 @@ export class MiRutinaPage implements OnDestroy {
               this.iniciarCronometroSesion();
             });
           } else {
-            // No tiene rutina, mantenemos el bloqueo
             this.tieneRutina = false;
           }
         }
         this.cargando = false;
       }
     });
+  }
+
+  ionViewWillLeave() {
+    this.limpiarSuscripciones();
+    if (this.intervaloDescanso) clearInterval(this.intervaloDescanso); 
+    if (this.intervaloSesion) clearInterval(this.intervaloSesion); 
+  }
+
+  ngOnDestroy() { 
+    this.limpiarSuscripciones();
+    if (this.intervaloDescanso) clearInterval(this.intervaloDescanso); 
+    if (this.intervaloSesion) clearInterval(this.intervaloSesion); 
+  }
+
+  private limpiarSuscripciones() {
+    if (this.subUser) this.subUser.unsubscribe();
+    if (this.subQueryParams) this.subQueryParams.unsubscribe();
+  }
+
+  trackByEjercicios(index: number, item: any) {
+    return item.nombre || index;
+  }
+
+  // ⚡ INYECCIÓN DE PESO EN TIEMPO REAL
+  actualizarPeso(index: number, val: any) {
+    if (this.sesionHoy && this.sesionHoy.ejercicios && this.sesionHoy.ejercicios[index]) {
+      const parsed = parseFloat(val);
+      this.sesionHoy.ejercicios[index].peso = isNaN(parsed) ? 0 : parsed;
+      console.log(`⚖️ Peso asignado al ejercicio ${index + 1}:`, this.sesionHoy.ejercicios[index].peso);
+    }
   }
 
   getNotaClass(nota: string) {
@@ -156,11 +201,6 @@ export class MiRutinaPage implements OnDestroy {
       return 'bg-blue-50 border-blue-100 text-blue-600';
       
     return 'bg-orange-50 border-orange-100 text-orange-600';
-  }
-
-  ngOnDestroy() { 
-    if (this.intervaloDescanso) clearInterval(this.intervaloDescanso); 
-    if (this.intervaloSesion) clearInterval(this.intervaloSesion); 
   }
 
   iniciarCronometroSesion() {
@@ -246,19 +286,44 @@ export class MiRutinaPage implements OnDestroy {
 
     let volumenTotal = 0;
 
-    this.sesionHoy.ejercicios.forEach((ej: any) => {
-      if (ej.peso && ej.peso > 0) {
-        let repeticionesPromedio = 10;
-        if (ej.reps) {
-           const numerosEnReps = String(ej.reps).match(/\d+/);
-           if (numerosEnReps) {
-             repeticionesPromedio = parseInt(numerosEnReps[0]);
-           }
+    console.log('🔍 DEPURANDO EJERCICIOS AL FINALIZAR:', this.sesionHoy?.ejercicios);
+
+    if (this.sesionHoy && Array.isArray(this.sesionHoy.ejercicios)) {
+      this.sesionHoy.ejercicios.forEach((ej: any, idx: number) => {
+        
+        // 1. Lectura del peso
+        const pesoNum = Number(ej.peso) || parseFloat(ej.peso) || 0;
+
+        if (pesoNum > 0) {
+          // 2. Series efectivas: Si marcó con botón usamos seriesHechas, si no, tomamos la meta del ejercicio o 1
+          const seriesTotales = (ej.seriesHechas && ej.seriesHechas > 0) 
+            ? ej.seriesHechas 
+            : (Number(ej.series) || Number(ej.seriesObjetivo) || 1);
+
+          // 3. Repeticiones
+          let repsNum = 10;
+          if (ej.repsMin) {
+            repsNum = Number(ej.repsMin);
+          } else if (ej.reps) {
+            const extraido = String(ej.reps).match(/\d+/);
+            if (extraido) repsNum = Number(extraido[0]);
+          }
+
+          const subtotal = pesoNum * repsNum * seriesTotales;
+          
+          console.log(`🏋️ Ejercicio ${idx + 1} (${ej.nombre}):`, {
+            pesoLeido: pesoNum,
+            seriesUsadas: seriesTotales,
+            repsUsadas: repsNum,
+            subtotalKilos: subtotal
+          });
+
+          volumenTotal += subtotal;
         }
-        const volumenDelEjercicio = ej.peso * repeticionesPromedio * ej.seriesHechas;
-        volumenTotal += volumenDelEjercicio;
-      }
-    });
+      });
+    }
+
+    console.log('🔥 VOLUMEN TOTAL CALCULADO:', volumenTotal);
 
     try {
       const alumnoRef = doc(this.firestore, `usuarios/${this.uidAlumno}`);
@@ -274,8 +339,8 @@ export class MiRutinaPage implements OnDestroy {
     this.navCtrl.navigateRoot(['/entreno/resumen'], {
       state: { 
         datos: {
-          nombreRutina: this.sesionHoy.nombre, 
-          xpGanada: this.sesionHoy.xp,
+          nombreRutina: this.sesionHoy?.nombre || 'Entrenamiento', 
+          xpGanada: this.sesionHoy?.xp || 500,
           totalKilos: volumenTotal, 
           tiempo: this.obtenerTiempoFormateado() 
         }

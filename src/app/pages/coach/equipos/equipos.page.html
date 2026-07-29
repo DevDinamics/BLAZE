@@ -57,11 +57,11 @@
               <p class="text-gray-500 text-xs font-medium truncate max-w-[150px]">{{ equipo.descripcion || 'Sin descripción' }}</p>
             </div>
             <div class="flex items-center gap-1 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 mt-1">
-              <ion-icon name="people" class="text-gray-500 text-sm"></ion-icon> 
-              <span class="text-[11px] font-bold" [ngClass]="(equipo.miembros?.length || 0) >= miPlan.maxMiembrosPorEquipo ? 'text-red-500' : 'text-gray-700'">
-                {{ equipo.miembros?.length || 0 }} / {{ miPlan.maxMiembrosPorEquipo }}
-              </span>
-            </div>
+  <ion-icon name="people" class="text-gray-500 text-sm"></ion-icon> 
+  <span class="text-[11px] font-bold" [ngClass]="(equipo.cantidadMiembrosReales || 0) >= miPlan.maxMiembrosPorEquipo ? 'text-red-500' : 'text-gray-700'">
+    {{ equipo.cantidadMiembrosReales || 0 }} / {{ miPlan.maxMiembrosPorEquipo }}
+  </span>
+</div>
           </div>
 
           <div class="bg-gray-50 border border-dashed border-gray-300 rounded-2xl p-4 flex items-center justify-between relative">

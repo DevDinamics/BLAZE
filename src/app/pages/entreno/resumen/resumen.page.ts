@@ -1,21 +1,24 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router'; 
+
+import { IonContent, IonIcon, NavController, ToastController } from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth';
 import { StudentService } from 'src/app/services/student';
 import { addIcons } from 'ionicons';
 
-// 👇 Íconos limpios (Outline)
-import { homeOutline, shareSocialOutline, timeOutline, barbellOutline, flameOutline, ribbonOutline, trophyOutline, alertCircleOutline } from 'ionicons/icons';
+import { 
+  homeOutline, shareSocialOutline, timeOutline, barbellOutline, 
+  flameOutline, ribbonOutline, trophyOutline, alertCircleOutline 
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-resumen',
   templateUrl: './resumen.page.html',
   styleUrls: ['./resumen.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
 export class ResumenPage implements OnInit {
 
@@ -31,6 +34,12 @@ export class ResumenPage implements OnInit {
   xpDisplay = 0; 
   guardadoExitoso = false;
 
+  // 🛡️ Bindings directos de iconos
+  iconHome = homeOutline;
+  iconTime = timeOutline;
+  iconBarbell = barbellOutline;
+  iconTrophy = trophyOutline;
+
   constructor(
     private navCtrl: NavController,
     private router: Router, 
@@ -38,7 +47,10 @@ export class ResumenPage implements OnInit {
     private studentService: StudentService,
     private toastCtrl: ToastController 
   ) {
-    addIcons({ homeOutline, shareSocialOutline, timeOutline, barbellOutline, flameOutline, ribbonOutline, trophyOutline, alertCircleOutline });
+    addIcons({ 
+      homeOutline, shareSocialOutline, timeOutline, barbellOutline, 
+      flameOutline, ribbonOutline, trophyOutline, alertCircleOutline 
+    });
 
     const navigation = this.router.getCurrentNavigation();
     
@@ -68,17 +80,14 @@ export class ResumenPage implements OnInit {
           this.resumen.nivelUsuario = nuevoNivel;
           this.resumen.progresoNivel = xpEnNivelActual / 1000;
 
-          // 👇 EL TRUCO: Convertimos "MM:SS" a un número total de minutos
           let minutosEntrenados = 0;
           if (this.resumen.tiempo && this.resumen.tiempo.includes(':')) {
              const partes = this.resumen.tiempo.split(':');
              const minutos = parseInt(partes[0], 10) || 0;
              const segundos = parseInt(partes[1], 10) || 0;
-             // Sumamos los minutos y si los segundos pasan de 30, redondeamos hacia arriba
              minutosEntrenados = minutos + (segundos > 30 ? 1 : 0);
           }
 
-          // 👇 AHORA SÍ, ENVIAMOS EL CAMPO 'duracionMinutos' PARA QUE LO LEA EL DASHBOARD
           await this.studentService.registrarTerminoRutina(user.uid, {
             ...this.resumen,
             fecha: new Date(),
@@ -126,9 +135,5 @@ export class ResumenPage implements OnInit {
 
   volverAlHome() {
     this.navCtrl.navigateRoot('/entreno'); 
-  }
-
-  compartir() {
-    console.log("📸 Generando Story para Instagram...");
   }
 }

@@ -5,7 +5,6 @@
     <div class="flex-1 flex flex-col justify-center px-8 pt-12 pb-8">
       
       <div class="text-center mb-10"> 
-        
         <div class="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 px-4 py-2 rounded-full mb-6 shadow-sm animate-fade-in-up">
            <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">FASE BETA VALIDADA EN COLABORACIÓN CON</span>
            <img src="assets/fitgo-logo.png" alt="Partner Gym" class="h-6 w-auto object-contain brightness(0)">
@@ -24,20 +23,20 @@
       <div class="space-y-4">
         
         <div class="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm flex items-center gap-4 group focus-within:border-gray-400 transition-all focus-within:bg-[#f9fafb]">
-          <ion-icon name="mail-outline" class="text-gray-400 group-focus-within:text-gray-900 transition-colors text-xl shrink-0"></ion-icon>
+          <ion-icon [icon]="iconMail" class="text-gray-400 group-focus-within:text-gray-900 transition-colors text-xl shrink-0"></ion-icon>
           <input [(ngModel)]="credenciales.email" type="email" 
                  class="bg-transparent w-full text-gray-900 font-bold text-sm outline-none placeholder-gray-400"
                  placeholder="Correo electrónico">
         </div>
 
         <div class="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm flex items-center gap-4 group focus-within:border-gray-400 transition-all focus-within:bg-[#f9fafb] relative mt-2">
-          <ion-icon name="lock-closed-outline" class="text-gray-400 group-focus-within:text-gray-900 transition-colors text-xl shrink-0"></ion-icon>
+          <ion-icon [icon]="iconLock" class="text-gray-400 group-focus-within:text-gray-900 transition-colors text-xl shrink-0"></ion-icon>
           <input [(ngModel)]="credenciales.password" [type]="mostrarPassword ? 'text' : 'password'"
                  class="bg-transparent w-full text-gray-900 font-bold text-sm outline-none placeholder-gray-400 pr-10"
                  placeholder="Contraseña">
           
           <div class="absolute inset-y-0 right-0 flex items-center pr-5 cursor-pointer z-10" (click)="mostrarPassword = !mostrarPassword">
-            <ion-icon [name]="mostrarPassword ? 'eye-off-outline' : 'eye-outline'" class="text-gray-400 hover:text-gray-900 transition-colors text-xl"></ion-icon>
+            <ion-icon [icon]="mostrarPassword ? iconEyeOff : iconEye" class="text-gray-400 hover:text-gray-900 transition-colors text-xl"></ion-icon>
           </div>
         </div>
 
@@ -53,7 +52,7 @@
           class="flex w-full mt-4 justify-center items-center gap-2 rounded-full bg-gray-900 text-white font-bold py-5 text-sm active:scale-[0.98] transition-all shadow-md shadow-gray-200 disabled:opacity-30 hover:bg-black">
           
           <ng-container *ngIf="!cargando">
-            Ingresar <ion-icon name="arrow-forward-outline" class="text-lg"></ion-icon>
+            Ingresar <ion-icon [icon]="iconArrow" class="text-lg"></ion-icon>
           </ng-container>
 
           <ion-spinner *ngIf="cargando" name="crescent" color="light"></ion-spinner>
@@ -77,11 +76,9 @@
           [disabled]="cargandoGoogle || cargando"
           class="h-14 w-14 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100">
           <ion-spinner *ngIf="cargandoGoogle" name="crescent" color="dark" class="h-5 w-5"></ion-spinner>
-          <ion-icon *ngIf="!cargandoGoogle" name="logo-google" class="text-xl"></ion-icon>
+          <ion-icon *ngIf="!cargandoGoogle" [icon]="iconGoogle" class="text-xl"></ion-icon>
         </button>
 
-        
-        
       </div>
 
     </div> 
@@ -104,7 +101,7 @@
       <div class="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl text-center border border-gray-100">
         
         <div class="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-          <ion-icon name="key-outline" class="text-gray-900 text-3xl"></ion-icon>
+          <ion-icon [icon]="iconKey" class="text-gray-900 text-3xl"></ion-icon>
         </div>
         
         <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">Recuperar acceso</h3>
@@ -113,7 +110,7 @@
         </p>
 
         <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 flex items-center gap-3 mb-6 focus-within:border-black transition-all text-left">
-          <ion-icon name="mail-outline" class="text-gray-400 text-lg"></ion-icon>
+          <ion-icon [icon]="iconMail" class="text-gray-400 text-lg"></ion-icon>
           <input [(ngModel)]="emailRecuperacion" type="email" placeholder="tu@correo.com" 
                  class="bg-transparent w-full text-gray-900 font-bold text-sm outline-none placeholder-gray-400">
         </div>
@@ -136,7 +133,6 @@
 </ion-modal>
 
 <style>
-  /* 👇 Estilo crítico para que flote bonito y no ocupe toda la pantalla */
   ion-modal.custom-alert-modal {
     --width: 90%;
     --max-width: 400px;

@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, ElementRef }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
-  IonContent, IonIcon, IonSpinner, IonModal, IonHeader, IonToolbar, IonFooter,
+  IonContent, IonIcon, IonModal, IonHeader, IonToolbar, IonFooter,
   NavController, ToastController, LoadingController, ModalController, AlertController
 } from '@ionic/angular/standalone'; 
 import { ActivatedRoute } from '@angular/router'; 
@@ -25,7 +25,7 @@ import {
   styleUrls: ['./crear-rutina.page.scss'],
   standalone: true,
   imports: [
-    IonContent, IonIcon, IonSpinner, IonModal,
+    IonContent, IonIcon, IonModal,
     IonHeader, IonToolbar, IonFooter,
     CommonModule, FormsModule
   ] 
@@ -41,8 +41,24 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
   rutinaId: string | null = null; 
   uidCoach: string | null = null;
   cargandoDatos = true;
-  esModoPlantilla = false;
+  esModoPlantilla = false; // 👈 Maneja la UI
   sesionActivaIndex = 0; 
+
+  iconArrowBack = arrowBack;
+  iconCopy = copyOutline;
+  iconSearch = searchOutline;
+  iconDocumentText = documentTextOutline;
+  iconPerson = personOutline;
+  iconChevronDown = chevronDownOutline;
+  iconCreate = createOutline;
+  iconBarbell = barbellOutline;
+  iconTrash = trashOutline;
+  iconFlash = flashOutline;
+  iconAddCircle = addCircleOutline;
+  iconClose = closeOutline;
+  iconDownload = downloadOutline;
+  iconCheckmark = checkmarkOutline;
+  iconSave = saveOutline;
 
   rutina = {
     nombre: '',
@@ -67,13 +83,12 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
   modalPlantillasAbierto = false;
   modalAlumnosAbierto = false; 
 
-  // ─── Picker custom (scroll-snap, sin ion-picker) ──────────────────────────
   mostrarModalPicker = false;
   pickerTipo: 'series' | 'reps' | 'descanso' = 'series';
   ejercicioSeleccionadoIndex: number = -1;
   pickerOpciones: any[] = [];
   pickerValorSeleccionado: any = null;
-  pickerValorSeleccionado2: any = null; // Solo para reps (max)
+  pickerValorSeleccionado2: any = null;
 
   constructor(
     private navCtrl: NavController,
@@ -86,6 +101,21 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
     private route: ActivatedRoute 
   ) {
     addIcons({ 
+      'arrow-back': arrowBack,
+      'copy-outline': copyOutline,
+      'search-outline': searchOutline,
+      'document-text-outline': documentTextOutline,
+      'person-outline': personOutline,
+      'chevron-down-outline': chevronDownOutline,
+      'create-outline': createOutline,
+      'barbell-outline': barbellOutline,
+      'trash-outline': trashOutline,
+      'flash-outline': flashOutline,
+      'add-circle-outline': addCircleOutline,
+      'close-outline': closeOutline,
+      'download-outline': downloadOutline,
+      'checkmark-outline': checkmarkOutline,
+      'save-outline': saveOutline,
       arrowBack, copyOutline, searchOutline, documentTextOutline, personOutline, 
       chevronDownOutline, createOutline, barbellOutline, trashOutline, flashOutline, 
       addCircleOutline, closeOutline, downloadOutline, checkmarkOutline, saveOutline,
@@ -97,6 +127,18 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
   ngAfterViewInit() {}
 
   ngOnInit() {
+    // 🎯 Detecta si la URL trae modo=plantilla o esPlantilla=true (Matrix Params o Query Params)
+    const params = this.route.snapshot.params;
+    const queryParams = this.route.snapshot.queryParams;
+    
+    if (
+      params['modo'] === 'plantilla' || 
+      queryParams['modo'] === 'plantilla' || 
+      queryParams['esPlantilla'] === 'true'
+    ) {
+      this.esModoPlantilla = true;
+    }
+
     this.authService.user$.subscribe(async user => {
       if (user) {
         this.uidCoach = user.uid; 
@@ -106,6 +148,7 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
         this.rutinasActivasDelCoach = todasRutinas.filter((r: any) => r.active === true && !r.esPlantilla);
         this.misPlantillas = await this.coachService.obtenerMisPlantillas(this.uidCoach);
         this.plantillasFiltradas = [...this.misPlantillas];
+        
         this.rutinaId = this.route.snapshot.paramMap.get('id');
         if (this.rutinaId) await this.cargarDatosParaEditar(this.rutinaId);
         else this.cargandoDatos = false; 
@@ -165,17 +208,23 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
     const loading = await this.loadingCtrl.create({ message: 'Guardando...', mode: 'ios' });
     await loading.present();
     try {
-      await this.coachService.crearRutina({ ...this.rutina, coachId: this.uidCoach, active: true });
-      this.mostrarToast('Plan guardado con éxito', 'success');
+      // ⚡ FIX: Guardamos la propiedad esPlantilla según el modo actual
+      await this.coachService.crearRutina({ 
+        ...this.rutina, 
+        coachId: this.uidCoach, 
+        active: true,
+        esPlantilla: this.esModoPlantilla 
+      });
+      
+      const msj = this.esModoPlantilla ? 'Plantilla guardada con éxito' : 'Plan asignado con éxito';
+      this.mostrarToast(msj, 'success');
       this.navCtrl.back();
     } catch (e) {
-      this.mostrarToast('Error', 'danger');
+      this.mostrarToast('Error al guardar', 'danger');
     } finally {
       loading.dismiss();
     }
   }
-
-  // ─── Picker Logic ─────────────────────────────────────────────────────────
 
   get tituloPicker(): string {
     if (this.pickerTipo === 'series') return 'Series';
@@ -183,7 +232,6 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
     return 'Descanso';
   }
 
-  /** Altura fija de cada ítem en el wheel (debe coincidir con el CSS) */
   private readonly ITEM_H = 44;
 
   abrirPicker(tipo: 'series' | 'reps' | 'descanso', indexEjercicio: number) {
@@ -217,7 +265,6 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
     }
 
     this.mostrarModalPicker = true;
-    // Espera a que Angular renderice las columnas y posiciona sin animación
     setTimeout(() => this.scrollToCurrentValues(false), 80);
   }
 
@@ -237,10 +284,6 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
     }
   }
 
-  /**
-   * confirmarPicker — guarda los valores en el ejercicio y cierra el modal.
-   * Para reps usa pickerValorSeleccionado (min) y pickerValorSeleccionado2 (max).
-   */
   confirmarPicker() {
     const ej = this.rutina.sesiones[this.sesionActivaIndex].ejercicios[this.ejercicioSeleccionadoIndex];
 
@@ -248,7 +291,6 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
       ej.series = this.pickerValorSeleccionado;
 
     } else if (this.pickerTipo === 'reps') {
-      // Nos aseguramos de que ambos valores existan antes de guardar
       ej.repsMin = this.pickerValorSeleccionado  ?? ej.repsMin;
       ej.repsMax = this.pickerValorSeleccionado2 ?? ej.repsMax;
 
@@ -259,20 +301,6 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
     this.mostrarModalPicker = false;
   }
 
-  /**
-   * onWheelScroll — actualiza el valor seleccionado mientras el usuario arrastra.
-   * Cada ítem ocupa 44px. El padding inicial (spacer) es de 86px pero el
-   * scrollTop empieza en 0 justo cuando el primer ítem entra al centro,
-   * así que el índice es simplemente Math.round(scrollTop / 44).
-   *
-   * @param event   Evento nativo de scroll del div
-   * @param columna 1 = columna izquierda/única  |  2 = columna derecha (repsMax)
-   */
-  /**
-   * onWheelScroll — usa un debounce de 80ms para detectar el final del scroll
-   * y hace snap programático al ítem más cercano, luego actualiza el valor.
-   * Esto soluciona el problema de que el dedo se levanta entre dos ítems.
-   */
   onWheelScroll(event: Event, columna: number) {
     const el = event.target as HTMLElement;
 
@@ -300,8 +328,6 @@ export class CrearRutinaPage implements OnInit, AfterViewInit {
       }, 80);
     }
   }
-
-  // ─── Navigation & Helpers ─────────────────────────────────────────────────
 
   regresar() { this.navCtrl.back(); }
 

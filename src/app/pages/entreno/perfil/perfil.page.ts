@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController, LoadingController } from '@ionic/angular';
+
+import { 
+  IonContent, IonIcon, IonModal, 
+  NavController, ToastController, LoadingController 
+} from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth';       
 import { StudentService } from 'src/app/services/student'; 
 import { addIcons } from 'ionicons';
@@ -10,7 +14,7 @@ import {
   mailOutline, giftOutline, personOutline, starOutline, 
   scaleOutline, bodyOutline, fitnessOutline, informationCircleOutline,
   flame, barbellOutline, cameraOutline, logOutOutline, checkmarkOutline,
-  chevronDownOutline, warning, checkmark // Nuevos íconos
+  chevronDownOutline, warning, checkmark 
 } from 'ionicons/icons';
 
 @Component({
@@ -18,7 +22,7 @@ import {
   templateUrl: './perfil.page.html',
   styleUrls: ['./perfil.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal]
 })
 export class PerfilPage implements OnInit {
 
@@ -27,12 +31,34 @@ export class PerfilPage implements OnInit {
   uidUsuario: string | null = null;
   tabActual: string = 'personal';
 
+  // 🛡️ Bindings directos para producción
+  iconCamera = cameraOutline;
+  iconCheckmarkCircle = checkmarkCircle;
+  iconHappy = happyOutline;
+  iconCalendar = calendarOutline;
+  iconMail = mailOutline;
+  iconGift = giftOutline;
+  iconPerson = personOutline;
+  iconScale = scaleOutline;
+  iconBody = bodyOutline;
+  iconFitness = fitnessOutline;
+  iconLogOut = logOutOutline;
+  iconChevronDown = chevronDownOutline;
+  iconFlame = flame;
+  iconBarbell = barbellOutline;
+  iconCheckmarkOutline = checkmarkOutline;
+  iconCheckmark = checkmark;
+  iconWarning = warning;
+
   usuario: any = {
     nombre: '',
     apellido: '', 
+    email: '',
     bio: '', 
     avatar: 'assets/icon/avatar-h-1.png', 
     miembroDesde: '',
+    fechaNacimientoFormateada: '',
+    edad: 0,
     peso: 0,
     altura: 0,
     totalEntrenos: 0,
@@ -53,12 +79,9 @@ export class PerfilPage implements OnInit {
     'assets/avatar-coach/avatar-mujer-3.png'
   ];
 
-  // ==========================================
-  // 👇 1. VARIABLES DEL SELECTOR PREMIUM
-  // ==========================================
   modalMenuAbierto = false;
   menuTitulo = '';
-  menuCampoTarget = ''; // Para saber si estamos editando 'objetivo' o 'experiencia'
+  menuCampoTarget = ''; 
   menuOpciones: any[] = [];
 
   opcionesObjetivo = [
@@ -74,12 +97,9 @@ export class PerfilPage implements OnInit {
     { label: 'Avanzado', value: 'Avanzado' }
   ];
 
-  // ==========================================
-  // 👇 2. VARIABLES DE LA ALERTA PROTECTORA
-  // ==========================================
   modalAlertaAbierto = false;
   accionPendiente: 'logout' | 'navegacion' | 'none' = 'none';
-  resolveSalida: ((value: boolean) => void) | null = null; // 👈 Guarda la "llave" de la navegación
+  resolveSalida: ((value: boolean) => void) | null = null; 
 
   constructor(
     private navCtrl: NavController,
@@ -89,11 +109,25 @@ export class PerfilPage implements OnInit {
     private loadingCtrl: LoadingController
   ) {
     addIcons({ 
+      'camera-outline': cameraOutline,
+      'checkmark-circle': checkmarkCircle,
+      'happy-outline': happyOutline,
+      'calendar-outline': calendarOutline,
+      'mail-outline': mailOutline,
+      'gift-outline': giftOutline,
+      'person-outline': personOutline,
+      'scale-outline': scaleOutline,
+      'body-outline': bodyOutline,
+      'fitness-outline': fitnessOutline,
+      'log-out-outline': logOutOutline,
+      'chevron-down-outline': chevronDownOutline,
+      'barbell-outline': barbellOutline,
+      'checkmark-outline': checkmarkOutline,
       checkmarkCircle, qrCodeOutline, happyOutline, calendarOutline, 
       mailOutline, giftOutline, personOutline, starOutline, 
       scaleOutline, bodyOutline, fitnessOutline, informationCircleOutline, 
       flame, barbellOutline, cameraOutline, logOutOutline, checkmarkOutline,
-      'chevron-down-outline': chevronDownOutline, warning, checkmark
+      warning, checkmark
     });
   }
 
@@ -113,9 +147,12 @@ export class PerfilPage implements OnInit {
         this.usuario = {
           nombre: datos.nombre || 'Atleta',
           apellido: datos.apellido || 'Blaze', 
+          email: datos.email || 'armando.delgado1@ukuepa.com',
           bio: datos.bio || '', 
           avatar: datos.foto || 'assets/icon/avatar-h-1.png', 
           miembroDesde: datos.fechaRegistro ? this.formatearFecha(datos.fechaRegistro) : 'Ene 2026',
+          fechaNacimientoFormateada: datos.fechaNacimiento ? this.formatearFechaCompleta(datos.fechaNacimiento) : '8 de octubre de 1998',
+          edad: datos.edad || 26,
           peso: datos.peso || 0,
           altura: datos.altura || 0,
           totalEntrenos: datos.entrenamientosCompletados || 0,
@@ -132,9 +169,6 @@ export class PerfilPage implements OnInit {
     }
   }
 
-  // ==========================================
-  // MÉTODOS DEL SELECTOR PREMIUM
-  // ==========================================
   abrirMenuOpciones(campo: string, titulo: string, opciones: any[]) {
     this.menuCampoTarget = campo;
     this.menuTitulo = titulo;
@@ -147,9 +181,6 @@ export class PerfilPage implements OnInit {
     this.modalMenuAbierto = false;
   }
 
-  // ==========================================
-  // MÉTODOS GENERALES
-  // ==========================================
   abrirModalFoto() {
     if(this.editando) this.mostrarModalAvatares = true;
   }
@@ -200,22 +231,21 @@ export class PerfilPage implements OnInit {
     return date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
   }
 
-  // ==========================================
-  // 👇 EL ESCUDO PROTECTOR PARA BOTONES Y TABS
-  // ==========================================
+  formatearFechaCompleta(timestamp: any) {
+    if (!timestamp) return '';
+    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
 
-  // Este es el método que Angular y el Guard van a ejecutar al intentar cambiar de Tab
   async ionViewCanLeave(): Promise<boolean> {
     if (this.editando) {
       this.accionPendiente = 'navegacion';
-      this.modalAlertaAbierto = true; // Abre nuestro Modal bonito
-      
-      // Congelamos la navegación hasta que el usuario decida en el Modal
+      this.modalAlertaAbierto = true; 
       return new Promise((resolve) => {
         this.resolveSalida = resolve; 
       });
     }
-    return true; // Si no está editando, sale normal al instante
+    return true; 
   }
 
   intentarCerrarSesion() {
@@ -227,7 +257,6 @@ export class PerfilPage implements OnInit {
     }
   }
 
-  // Cuando el usuario le da a "Descartar cambios y Salir"
   confirmarSalida() {
     this.modalAlertaAbierto = false;
     this.editando = false;
@@ -236,19 +265,18 @@ export class PerfilPage implements OnInit {
       if (this.accionPendiente === 'logout') {
         this.ejecutarLogout();
       } else if (this.accionPendiente === 'navegacion' && this.resolveSalida) {
-        this.resolveSalida(true); // Da luz verde a Angular para cambiar de Tab
+        this.resolveSalida(true); 
       }
       this.limpiarEstadoAlerta();
     }, 300);
   }
 
-  // Cuando el usuario le da a "Seguir editando" (Cancelar)
   cancelarSalida() {
     this.modalAlertaAbierto = false;
     
     setTimeout(() => {
       if (this.accionPendiente === 'navegacion' && this.resolveSalida) {
-        this.resolveSalida(false); // Bloquea el cambio de Tab, se queda en Perfil
+        this.resolveSalida(false); 
       }
       this.limpiarEstadoAlerta();
     }, 300);
@@ -271,11 +299,18 @@ export class PerfilPage implements OnInit {
 
   get bmi() {
     if (!this.usuario.peso || !this.usuario.altura) return 0;
-    return parseFloat((this.usuario.peso / (this.usuario.altura * this.usuario.altura)).toFixed(1));
+    
+    let alturaMetros = this.usuario.altura;
+    if (alturaMetros > 3) {
+      alturaMetros = alturaMetros / 100;
+    }
+
+    return parseFloat((this.usuario.peso / (alturaMetros * alturaMetros)).toFixed(1));
   }
 
   get imcEstado(): string {
     const imc = this.bmi;
+    if (imc === 0) return 'N/A';
     if (imc < 18.5) return 'Bajo Peso';
     if (imc >= 18.5 && imc < 24.9) return 'Saludable';
     if (imc >= 25 && imc < 29.9) return 'Sobrepeso';
@@ -284,6 +319,7 @@ export class PerfilPage implements OnInit {
 
   get imcColor(): string {
     const imc = this.bmi;
+    if (imc === 0) return 'bg-gray-300';
     if (imc < 18.5) return 'bg-blue-400';
     if (imc >= 18.5 && imc < 24.9) return 'bg-green-500';
     if (imc >= 25 && imc < 29.9) return 'bg-yellow-500';
@@ -292,6 +328,7 @@ export class PerfilPage implements OnInit {
 
   get imcTextColor(): string {
     const imc = this.bmi;
+    if (imc === 0) return 'text-gray-400';
     if (imc < 18.5) return 'text-blue-500';
     if (imc >= 18.5 && imc < 24.9) return 'text-green-600';
     if (imc >= 25 && imc < 29.9) return 'text-yellow-600';

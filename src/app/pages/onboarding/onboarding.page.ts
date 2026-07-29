@@ -1,8 +1,7 @@
 import { Component, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common'; // 👈 DatePipe Agregado
 import { FormsModule } from '@angular/forms';
 
-// ✅ Todo Ionic desde UN SOLO lugar — standalone.
 import {
   NavController,
   LoadingController,
@@ -11,7 +10,7 @@ import {
   IonIcon,
   IonModal,
   IonDatetime,
-  IonAlert // 👈 IMPORTADO AQUÍ
+  IonAlert
 } from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
@@ -21,7 +20,7 @@ import {
   chevronBack, chevronForward, caretDown, caretUp, chevronDown
 } from 'ionicons/icons';
 
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth';
@@ -32,8 +31,8 @@ import { Firestore, doc, setDoc } from '@angular/fire/firestore';
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
   standalone: true,
-  // ✅ IonAlert agregado a los imports
-  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonModal, IonDatetime, IonAlert]
+  // 🛡️ DatePipe agregado aquí para evitar fallas AOT en prod
+  imports: [CommonModule, FormsModule, DatePipe, IonContent, IonIcon, IonModal, IonDatetime, IonAlert]
 })
 export class OnboardingPage implements OnDestroy {
 
@@ -43,9 +42,7 @@ export class OnboardingPage implements OnDestroy {
   totalPasos: number = 1;
   edadMostrada: number | null = null;
   
-  // 🚨 Variable para controlar la alerta de edad de iOS
   mostrarAlertaEdad: boolean = false;
-  // 🖼️ Variable para la carga suave de avatares
   imagenesCargadas: { [url: string]: boolean } = {};
 
   avataresAtleta = [
@@ -65,6 +62,15 @@ export class OnboardingPage implements OnDestroy {
     'assets/avatar-coach/avatar-mujer-2.png',
     'assets/avatar-coach/avatar-mujer-3.png'
   ];
+
+  // 🛡️ Exponemos los íconos como propiedades para evitar fallos de string en prod
+  iconArrowBack = arrowBackOutline;
+  iconPerson = personOutline;
+  iconPeople = peopleOutline;
+  iconCalendar = calendarOutline;
+  iconScale = scaleOutline;
+  iconBarbell = barbellOutline;
+  iconCheckmark = checkmarkCircleOutline;
 
   get avataresDisponibles() {
     return this.datos.rol === 'coach' ? this.avataresCoach : this.avataresAtleta;
@@ -90,7 +96,17 @@ export class OnboardingPage implements OnDestroy {
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
   ) {
+    // 🛡️ Registramos tanto la variable como el nombre string explícito
     addIcons({
+      'arrow-back-outline': arrowBackOutline,
+      'person-outline': personOutline,
+      'people-outline': peopleOutline,
+      'scale-outline': scaleOutline,
+      'barbell-outline': barbellOutline,
+      'checkmark-circle-outline': checkmarkCircleOutline,
+      'calendar-outline': calendarOutline,
+      'body-outline': bodyOutline,
+      'medkit-outline': medkitOutline,
       arrowBackOutline, personOutline, peopleOutline, scaleOutline,
       barbellOutline, checkmarkCircleOutline, calendarOutline, bodyOutline, medkitOutline,
       chevronBack, chevronForward, caretDown, caretUp, chevronDown
@@ -114,18 +130,18 @@ export class OnboardingPage implements OnDestroy {
     if (this.datos.rol === 'atleta') {
       if (this.pasoActual === 2) return this.datos.genero !== '';
       if (this.pasoActual === 3) return this.datos.fechaNacimiento !== '';
-      if (this.pasoActual === 4) return this.datos.peso > 0 && this.datos.estatura > 0;
+      if (this.pasoActual === 4) return Number(this.datos.peso) > 0 && Number(this.datos.estatura) > 0;
       if (this.pasoActual === 5) return this.datos.objetivo !== '';
       if (this.pasoActual === 6) {
         if (this.datos.tieneLesion === null) return false;
-        if (this.datos.tieneLesion && this.datos.detalleLesion.trim() === '') return false;
+        if (this.datos.tieneLesion && !this.datos.detalleLesion?.trim()) return false;
         return true;
       }
       if (this.pasoActual === 7) return this.datos.avatar !== '';
     }
 
     if (this.datos.rol === 'coach') {
-      if (this.pasoActual === 2) return this.datos.especialidad !== '' && this.datos.bio !== '';
+      if (this.pasoActual === 2) return !!this.datos.especialidad?.trim() && !!this.datos.bio?.trim();
       if (this.pasoActual === 3) return this.datos.avatar !== '';
     }
 
@@ -150,10 +166,9 @@ export class OnboardingPage implements OnDestroy {
     if (this.datos.fechaNacimiento) {
       const edadCalculada = this.calcularEdad(this.datos.fechaNacimiento);
       
-      // Validación de 18 años
       if (edadCalculada < 18) {
         this.mostrarAlertaEdad = true;
-        this.datos.fechaNacimiento = ''; // Reseteamos la fecha
+        this.datos.fechaNacimiento = '';
         this.edadMostrada = null;
       } else {
         this.edadMostrada = edadCalculada;
@@ -170,7 +185,7 @@ export class OnboardingPage implements OnDestroy {
     if (mes < 0 || (mes === 0 && hoy.getDate() < cumpleanos.getDate())) {
       edad--;
     }
-    return edad;
+    return isNaN(edad) ? 0 : edad;
   }
 
   async finalizarOnboarding() {
@@ -182,9 +197,14 @@ export class OnboardingPage implements OnDestroy {
     await loading.present();
 
     try {
+      // 🛡️ FIX PRODUCCIÓN: Timeout por si Firebase se congela
       const user = await firstValueFrom(
-        this.authService.user$.pipe(filter(u => u !== undefined), take(1))
-      );
+        this.authService.user$.pipe(
+          filter(u => u !== undefined),
+          take(1),
+          timeout(7000)
+        )
+      ).catch(() => null);
 
       if (!user) {
         await loading.dismiss();
@@ -202,7 +222,7 @@ export class OnboardingPage implements OnDestroy {
         perfilActualizado.genero = this.datos.genero;
         perfilActualizado.fechaNacimiento = this.datos.fechaNacimiento;
         perfilActualizado.objetivo = this.datos.objetivo;
-        perfilActualizado.tieneLesion = this.datos.tieneLesion || false;
+        perfilActualizado.tieneLesion = !!this.datos.tieneLesion;
         perfilActualizado.detalleLesion = this.datos.tieneLesion ? this.datos.detalleLesion : '';
 
         const edadCalc = this.calcularEdad(this.datos.fechaNacimiento);
@@ -249,13 +269,13 @@ export class OnboardingPage implements OnDestroy {
         if (!viajeExitoso) {
           window.location.href = destino;
         }
-      }, 1500);
+      }, 1200);
 
     } catch (error: any) {
       await loading.dismiss();
       const toast = await this.toastCtrl.create({
         message: 'Error: ' + (error.message || 'Error de conexión con Firebase.'),
-        duration: 5000,
+        duration: 4000,
         color: 'danger',
         position: 'top',
         mode: 'ios'

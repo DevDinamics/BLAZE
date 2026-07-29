@@ -3,7 +3,7 @@
 
     <div class="flex justify-between items-center mb-6">
       <button (click)="regresar()" class="h-10 w-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-black active:scale-95 transition-transform hover:bg-gray-50">
-        <ion-icon name="arrow-back" class="text-xl"></ion-icon>
+        <ion-icon [icon]="iconArrowBack" class="text-xl"></ion-icon>
       </button>
       
       <div class="text-center">
@@ -14,7 +14,7 @@
       </div>
 
       <button (click)="crearNuevo()" class="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white active:scale-95 transition-all shadow-md hover:bg-gray-800">
-        <ion-icon name="add" class="text-xl"></ion-icon>
+        <ion-icon [icon]="iconAdd" class="text-xl"></ion-icon>
       </button>
     </div>
 
@@ -39,7 +39,7 @@
       
       <div *ngIf="rutinasActivas.length === 0" class="flex flex-col items-center justify-center py-16 opacity-60">
         <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200">
-          <ion-icon name="document-text-outline" class="text-4xl text-gray-400"></ion-icon>
+          <ion-icon [icon]="iconDocumentText" class="text-4xl text-gray-400"></ion-icon>
         </div>
         <p class="text-black font-bold text-lg tracking-tight">Cero rutinas activas</p>
         <p class="text-sm text-gray-500 mt-1 max-w-[220px] text-center font-medium leading-relaxed">Crea un plan y asígnalo a tus alumnos.</p>
@@ -48,7 +48,7 @@
       <div *ngFor="let item of rutinasActivas" class="bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 relative border border-gray-100 mb-5 group cursor-pointer" (click)="abrirOpciones(item)">
 
         <button (click)="abrirOpciones(item); $event.stopPropagation()" class="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-gray-700 hover:bg-white transition-colors z-20 active:scale-90 shadow-sm">
-          <ion-icon name="ellipsis-vertical" class="text-lg"></ion-icon>
+          <ion-icon [icon]="iconEllipsis" class="text-lg"></ion-icon>
         </button>
 
         <div class="h-40 w-full relative bg-[#2a2d34] flex items-center justify-center overflow-hidden">
@@ -67,7 +67,7 @@
           
           <div class="flex items-center gap-2 mb-4">
             <div class="h-6 w-6 rounded-full bg-gray-100 overflow-hidden shadow-sm border border-gray-200">
-              <img [src]="item.fotoAlumno || 'https://ui-avatars.com/api/?name=' + (item.nombreAlumno || 'A') + '&background=f9fafb&color=f57c00&font-weight=bold'" class="w-full h-full object-cover">
+              <img [src]="item.fotoAlumno || 'assets/avatar-h-1.png'" class="w-full h-full object-cover">
             </div>
             <p class="text-[#f57c00] text-xs font-bold uppercase truncate tracking-wide">
               {{ item.nombreAlumno || 'Sin Asignar' }}
@@ -90,16 +90,16 @@
 
       <div *ngIf="misPlantillas.length === 0" class="flex flex-col items-center justify-center py-16 opacity-60">
         <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200">
-          <ion-icon name="folder-open-outline" class="text-4xl text-gray-400"></ion-icon>
+          <ion-icon [icon]="iconFolderOpen" class="text-4xl text-gray-400"></ion-icon>
         </div>
         <p class="text-black font-bold text-lg tracking-tight">Tu librería está vacía</p>
-        <p class="text-sm text-gray-500 mt-1 max-w-[220px] text-center font-medium leading-relaxed">Marca "Guardar como plantilla" al crear una rutina.</p>
+        <p class="text-sm text-gray-500 mt-1 max-w-[220px] text-center font-medium leading-relaxed">Crea un molde en la sección de plantillas.</p>
       </div>
 
       <div *ngFor="let plan of misPlantillas" (click)="abrirOpciones(plan)" class="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-5 relative active:scale-[0.98] transition-all cursor-pointer hover:border-[#f57c00]/50 hover:bg-[#fff9f0]">
         
         <div class="absolute top-4 right-4 h-10 w-10 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100">
-            <ion-icon name="copy-outline" class="text-lg text-gray-400"></ion-icon>
+            <ion-icon [icon]="iconCopy" class="text-lg text-gray-400"></ion-icon>
         </div>
 
         <span class="bg-blue-50 text-blue-600 text-[9px] font-bold px-2.5 py-1 rounded-md border border-blue-100 uppercase tracking-widest mb-3 inline-block">
@@ -111,7 +111,7 @@
         </h3>
         
         <p class="text-xs text-gray-500 font-medium flex items-center gap-1.5">
-          <ion-icon name="layers-outline"></ion-icon> {{ plan.totalEjercicios || 0 }} Ejercicios <span class="text-gray-300">•</span> {{ plan.nivel || 'General' }}
+          <ion-icon [icon]="iconLayers"></ion-icon> {{ plan.totalEjercicios || 0 }} Ejercicios <span class="text-gray-300">•</span> {{ plan.nivel || 'General' }}
         </p>
       </div>
 
@@ -141,11 +141,11 @@
         <div class="space-y-3">
           
           <button (click)="editarRutina()" class="w-full bg-gray-50 border border-gray-200 text-black font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-100 shadow-sm">
-            <ion-icon name="create-outline" class="text-lg"></ion-icon> Editar / Ver Plan
+            <ion-icon [icon]="iconCreate" class="text-lg"></ion-icon> Editar / Ver Plan
           </button>
 
           <button (click)="iniciarBorrado()" class="w-full bg-red-50 border border-red-100 text-red-600 font-bold text-sm py-4 rounded-2xl active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-red-100 shadow-sm">
-            <ion-icon name="trash-outline" class="text-lg"></ion-icon> Eliminar permanentemente
+            <ion-icon [icon]="iconTrash" class="text-lg"></ion-icon> Eliminar permanentemente
           </button>
 
         </div>

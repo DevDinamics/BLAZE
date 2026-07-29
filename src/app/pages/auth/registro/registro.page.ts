@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
-import { AuthService } from 'src/app/services/auth'; 
 import { RouterLink } from '@angular/router';
-import { addIcons } from 'ionicons';
 
+import { 
+  IonContent, IonIcon, IonSpinner, IonModal, 
+  NavController, ToastController 
+} from '@ionic/angular/standalone';
+
+import { AuthService } from 'src/app/services/auth'; 
+import { addIcons } from 'ionicons';
 import { 
   personOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline, 
   arrowForwardOutline, arrowBackOutline, checkmarkCircleOutline, alertCircleOutline
@@ -16,23 +20,35 @@ import {
   templateUrl: './registro.page.html',
   styleUrls: ['./registro.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, RouterLink]
+  imports: [CommonModule, FormsModule, RouterLink, IonContent, IonIcon, IonSpinner, IonModal]
 })
 export class RegistroPage implements OnInit {
 
   usuario = {
     nombre: '',
     email: '',
-    password: ''
+    password: '',
+    repetirPassword: ''
   };
 
   mostrarPassword = false;
+  mostrarPassword2 = false;
   cargando = false;
+
+  mostrarModalVerificacion = false;
 
   dominiosBloqueados = [
     'yopmail.com', 'temp-mail.org', '10minutemail.com', 
     'guerrillamail.com', 'mailinator.com', 'sharklasers.com'
   ];
+
+  iconPerson = personOutline;
+  iconMail = mailOutline;
+  iconLock = lockClosedOutline;
+  iconEye = eyeOutline;
+  iconEyeOff = eyeOffOutline;
+  iconArrowForward = arrowForwardOutline;
+  iconArrowBack = arrowBackOutline;
 
   constructor(
     private authService: AuthService,
@@ -52,14 +68,11 @@ export class RegistroPage implements OnInit {
     if (!regex.test(email)) return false;
 
     const dominio = email.split('@')[1].toLowerCase();
-    if (this.dominiosBloqueados.includes(dominio)) {
-      return false;
-    }
-    return true;
+    return !this.dominiosBloqueados.includes(dominio);
   }
 
   async registrar() {
-    if (!this.usuario.nombre || !this.usuario.email || !this.usuario.password) {
+    if (!this.usuario.nombre || !this.usuario.email || !this.usuario.password || !this.usuario.repetirPassword) {
       this.mostrarMensaje('Por favor completa todos los campos', 'warning');
       return;
     }
@@ -74,21 +87,28 @@ export class RegistroPage implements OnInit {
       return;
     }
 
+    if (this.usuario.password !== this.usuario.repetirPassword) {
+      this.mostrarMensaje('Las contraseñas no coinciden', 'danger');
+      return;
+    }
+
     this.cargando = true;
 
     try {
-      // 1. Registramos al usuario (el AuthService envía el correo de verificación por detrás)
+      // 1. Registramos al usuario y enviamos correo
       await this.authService.registrar(
         this.usuario.email, 
         this.usuario.password, 
         this.usuario.nombre
       );
 
-      this.mostrarMensaje('¡Bienvenido! Te enviamos un correo para verificar tu cuenta. 🚀', 'success');
-      
-      // 2. PASE DE CORTESÍA: Como Firebase ya inició su sesión, lo mandamos directo al Onboarding
-      // sin cerrarle la sesión, logrando la misma fluidez que Google.
-      this.navCtrl.navigateRoot('/onboarding');
+      // 2. 🛡️ CERRAR SESIÓN INMEDIATAMENTE
+      // Obliga a que verifique antes de poder iniciar sesión
+      await this.authService.logout();
+
+      this.cargando = false;
+      // Mostramos el modal estando AÚN en la pantalla de registro
+      this.mostrarModalVerificacion = true;
 
     } catch (error: any) {
       this.cargando = false;
@@ -101,6 +121,11 @@ export class RegistroPage implements OnInit {
       
       this.mostrarMensaje(mensaje, 'danger');
     }
+  }
+
+  irAlLogin() {
+    this.mostrarModalVerificacion = false;
+    this.navCtrl.navigateRoot('/login');
   }
 
   async mostrarMensaje(mensaje: string, color: 'success' | 'warning' | 'danger') {

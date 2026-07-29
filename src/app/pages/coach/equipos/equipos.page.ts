@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+// Architecture Fix: Standalone directo
 import { 
   IonContent, IonIcon, IonSpinner, IonModal, 
   NavController, ToastController, LoadingController 
@@ -17,6 +18,9 @@ import {
   rocketOutline, closeOutline, createOutline, trashOutline, warning
 } from 'ionicons/icons';
 
+// Import de Firestore para recalcular miembros reales en vivo
+import { Firestore, collection, query, where, getDocs } from '@angular/fire/firestore';
+
 @Component({
   selector: 'app-equipos',
   templateUrl: './equipos.page.html',
@@ -25,6 +29,8 @@ import {
   imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSpinner, IonModal]
 })
 export class EquiposPage implements OnInit {
+
+  private firestore = inject(Firestore);
 
   uidCoach: string | null = null;
   
@@ -39,11 +45,9 @@ export class EquiposPage implements OnInit {
   cargando = true;
 
   mostrarModalPro = false;
-  
   mostrarModalOpciones = false;
   equipoSeleccionado: any = null;
 
-  // 👇 Variables para los nuevos Modales Premium
   mostrarModalFormEquipo = false;
   modoFormEquipo: 'crear' | 'editar' = 'crear';
   tempEquipo = { id: '', nombre: '', desc: '' };
@@ -79,7 +83,26 @@ export class EquiposPage implements OnInit {
     if (!this.uidCoach) return;
     this.cargando = true;
     try {
-      this.equipos = await this.coachService.obtenerMisEquipos(this.uidCoach);
+      const listaEquipos = await this.coachService.obtenerMisEquipos(this.uidCoach);
+
+      // 🔍 FIX CONTADOR: Verificamos los miembros REALES en Firestore por cada equipo
+      this.equipos = await Promise.all(
+        listaEquipos.map(async (equipo: any) => {
+          const qMiembros = query(
+            collection(this.firestore, 'usuarios'),
+            where('coachId', '==', this.uidCoach),
+            where('equipoId', '==', equipo.id)
+          );
+          const snapMiembros = await getDocs(qMiembros);
+          
+          return {
+            ...equipo,
+            // Sustituimos la cantidad hardcodeada por el conteo real en tiempo de ejecución
+            cantidadMiembrosReales: snapMiembros.size 
+          };
+        })
+      );
+
     } catch (error) {
       console.error('Error cargando equipos', error);
     } finally {
@@ -131,7 +154,7 @@ export class EquiposPage implements OnInit {
     } else {
       await this.coachService.actualizarEquipo(this.tempEquipo.id, this.tempEquipo.nombre);
       this.mostrarToast('Nombre actualizado con éxito', 'success');
-      this.cargarPerfilYEquipos();
+      await this.cargarPerfilYEquipos();
     }
   }
 
